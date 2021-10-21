@@ -40,6 +40,13 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
                         .position(3)
                         .clickHandler((viewer, item) -> viewer.sendMessage("rainbow smokes"))
                         .build())
+                .input(BukkitMenu.input()
+                        .position(4)
+                        .inputHandler((viewer, menuInput, item) -> {
+                            viewer.sendMessage("input into " + menuInput + ": " + item);
+                            return true;
+                        })
+                        .build())
                 .item(BukkitMenu.item()
                         .display("rainbow2")
                         .displayProvider(new TestItemProvider())
