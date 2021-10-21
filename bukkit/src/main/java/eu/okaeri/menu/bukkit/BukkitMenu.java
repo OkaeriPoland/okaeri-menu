@@ -2,9 +2,9 @@ package eu.okaeri.menu.bukkit;
 
 import eu.okaeri.menu.core.display.DisplayProvider;
 import eu.okaeri.menu.core.meta.MenuBuilder;
-import eu.okaeri.menu.core.meta.MenuDeclaration;
+import eu.okaeri.menu.core.meta.MenuMeta;
 import eu.okaeri.menu.core.meta.MenuItemBuilder;
-import eu.okaeri.menu.core.meta.MenuItemDeclaration;
+import eu.okaeri.menu.core.meta.MenuItemMeta;
 import lombok.Data;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
@@ -17,15 +17,15 @@ import java.util.Map;
 @Data
 public class BukkitMenu {
 
-    private final MenuDeclaration declaration;
-    private final Map<Integer, MenuItemDeclaration<HumanEntity, ItemStack>> itemMap;
+    private final MenuMeta<HumanEntity, ItemStack> meta;
+    private final Map<Integer, MenuItemMeta<HumanEntity, ItemStack>> itemMap;
     private final Map<Integer, DisplayProvider<HumanEntity, ItemStack>> providerMap;
     private final BukkitMenuProvider menuProvider;
 
     public BukkitMenuInstance open(@NonNull HumanEntity viewer) {
 
-        int size = this.declaration.getMenuChestSize();
-        Inventory inventory = Bukkit.createInventory(null, size, this.declaration.getName());
+        int size = this.meta.getMenuChestSize();
+        Inventory inventory = Bukkit.createInventory(null, size, this.meta.getName());
 
         this.itemMap.forEach((position, item) -> {
             ItemStack itemStack = this.providerMap.get(position).displayFor(viewer, item);

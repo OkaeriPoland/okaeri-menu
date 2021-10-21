@@ -1,9 +1,9 @@
 package eu.okaeri.menu.core;
 
-import eu.okaeri.menu.core.meta.MenuDeclaration;
+import eu.okaeri.menu.core.meta.MenuMeta;
 import lombok.NonNull;
 
 public interface MenuProvider<V, I, M> {
 
-    M create(@NonNull MenuDeclaration<V, I> menu);
+    M create(@NonNull MenuMeta<V, I> menu);
 }

@@ -1,7 +1,7 @@
 package eu.okaeri.menu.bukkit.display;
 
 import eu.okaeri.menu.core.display.DisplayProvider;
-import eu.okaeri.menu.core.meta.MenuItemDeclaration;
+import eu.okaeri.menu.core.meta.MenuItemMeta;
 import lombok.NonNull;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -12,12 +12,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * stone:1 10
+ */
 public class InventoryDisplayProvider implements DisplayProvider<HumanEntity, ItemStack> {
 
-    private static final Map<MenuItemDeclaration, ItemStack> ITEM_CACHE = new ConcurrentHashMap<>();
+    private static final Map<MenuItemMeta, ItemStack> ITEM_CACHE = new ConcurrentHashMap<>();
 
     @Override
-    public ItemStack displayFor(@NonNull HumanEntity viewer, @NonNull MenuItemDeclaration menuItem) {
+    public ItemStack displayFor(@NonNull HumanEntity viewer, @NonNull MenuItemMeta menuItem) {
 
         if (ITEM_CACHE.containsKey(menuItem)) {
             return ITEM_CACHE.get(menuItem).clone();

@@ -3,8 +3,8 @@ package eu.okaeri.menu.bukkit;
 import eu.okaeri.menu.bukkit.display.InventoryDisplayProvider;
 import eu.okaeri.menu.core.MenuProvider;
 import eu.okaeri.menu.core.display.DisplayProvider;
-import eu.okaeri.menu.core.meta.MenuDeclaration;
-import eu.okaeri.menu.core.meta.MenuItemDeclaration;
+import eu.okaeri.menu.core.meta.MenuMeta;
+import eu.okaeri.menu.core.meta.MenuItemMeta;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +13,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -32,10 +33,12 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
         return this.knownMenuMap.containsKey(inventory);
     }
 
+    @Nullable
     public BukkitMenuInstance findInstance(@NonNull Inventory inventory) {
         return this.knownMenuMap.get(inventory);
     }
 
+    @Nullable
     public BukkitMenuInstance removeInstance(@NonNull Inventory inventory) {
         return this.knownMenuMap.remove(inventory);
     }
@@ -56,16 +59,16 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
     }
 
     @Override
-    public BukkitMenu create(@NonNull MenuDeclaration<HumanEntity, ItemStack> menu) {
+    public BukkitMenu create(@NonNull MenuMeta<HumanEntity, ItemStack> menu) {
 
-        Map<Integer, MenuItemDeclaration<HumanEntity, ItemStack>> itemMap = new LinkedHashMap<>();
+        Map<Integer, MenuItemMeta<HumanEntity, ItemStack>> itemMap = new LinkedHashMap<>();
         Map<Integer, DisplayProvider<HumanEntity, ItemStack>> providerMap = new LinkedHashMap<>();
         DisplayProvider<HumanEntity, ItemStack> menuDisplayProvider = menu.getDisplayProvider();
 
         int size = menu.getMenuChestSize();
-        int lastItemPosition = 0;
+        int lastItemPosition = -1;
 
-        for (MenuItemDeclaration<HumanEntity, ItemStack> item : menu.getItems()) {
+        for (MenuItemMeta<HumanEntity, ItemStack> item : menu.getItems()) {
 
             int[] itemPositions = item.getPositionAsIntArr();
 

@@ -31,7 +31,7 @@ public class MenuItemBuilder<V, I> {
         return this;
     }
 
-    public MenuItemBuilder<V, I> position(@NonNull int position) {
+    public MenuItemBuilder<V, I> position(int position) {
         this.position = String.valueOf(position);
         return this;
     }
@@ -46,7 +46,7 @@ public class MenuItemBuilder<V, I> {
         return this;
     }
 
-    public MenuItemBuilder<V, I> clickHandler(@NonNull SimpleClickHandler<V> clickHandler) {
+    public MenuItemBuilder<V, I> clickHandler(@NonNull SimpleClickHandler<V, I> clickHandler) {
         this.clickHandler = (viewer, menuItem, item) -> clickHandler.onClick(viewer, menuItem);
         return this;
     }
@@ -57,7 +57,7 @@ public class MenuItemBuilder<V, I> {
     }
 
     @SuppressWarnings("unchecked")
-    public MenuItemDeclaration<V, I> build() {
-        return new MenuItemDeclaration<>(this.display, this.name, this.position, this.description, this.clickHandler, this.displayProvider);
+    public MenuItemMeta<V, I> build() {
+        return new MenuItemMeta<>(this.display, this.name, this.position, this.description, this.clickHandler, this.displayProvider);
     }
 }
