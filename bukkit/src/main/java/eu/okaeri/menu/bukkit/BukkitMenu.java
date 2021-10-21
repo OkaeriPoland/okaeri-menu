@@ -44,4 +44,8 @@ public class BukkitMenu {
     public static MenuItemBuilder<HumanEntity, ItemStack> item() {
         return new MenuItemBuilder<>();
     }
+
+    public static MenuInputBuilder<HumanEntity, ItemStack> input() {
+        return new MenuInputBuilder<>();
+    }
 }
