@@ -1,6 +1,7 @@
 package eu.okaeri.menu.bukkit;
 
 import eu.okaeri.menu.core.display.DisplayProvider;
+import eu.okaeri.menu.core.meta.MenuInputMeta;
 import eu.okaeri.menu.core.meta.MenuItemMeta;
 import eu.okaeri.menu.core.meta.MenuMeta;
 import lombok.Data;
@@ -24,5 +25,9 @@ public class BukkitMenuInstance {
 
     public DisplayProvider<HumanEntity, ItemStack> getProvider(int slot) {
         return this.getMenu().getProviderMap().get(slot);
+    }
+
+    public MenuInputMeta<HumanEntity, ItemStack> getInput(int slot) {
+        return this.getMenu().getInputMap().get(slot);
     }
 }

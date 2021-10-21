@@ -19,7 +19,6 @@ public class MenuItemMeta<V, I> {
     private static final MethodHandles.Lookup HANDLE_LOOKUP = MethodHandles.lookup();
 
     @SneakyThrows
-    @SuppressWarnings("unchecked")
     public static <V, I> MenuItemMeta<V, I> of(@NonNull MenuHandler handler, @NonNull Method method) {
 
         MenuItem menuItem = method.getAnnotation(MenuItem.class);
@@ -27,7 +26,7 @@ public class MenuItemMeta<V, I> {
             throw new IllegalArgumentException("cannot create MenuItemMeta from method without @MenuItem: " + method);
         }
 
-        DisplayProvider<V, I> displayProvider = (menuItem.displayProvider() == MenuItem.DEFAULT_DISPLAY_PROVIDER.class)
+        @SuppressWarnings("unchecked") DisplayProvider<V, I> displayProvider = (menuItem.displayProvider() == MenuItem.DEFAULT_DISPLAY_PROVIDER.class)
                 ? null
                 : menuItem.displayProvider().newInstance();
 

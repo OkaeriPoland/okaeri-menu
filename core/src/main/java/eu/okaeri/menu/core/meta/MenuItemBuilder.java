@@ -14,7 +14,7 @@ public class MenuItemBuilder<V, I> {
     private String position = "-1";
     private String description;
     private ClickHandler<V, I> clickHandler;
-    private DisplayProvider displayProvider;
+    private DisplayProvider<V, I> displayProvider;
 
     public MenuItemBuilder<V, I> display(@NonNull String display) {
         this.display = display;
@@ -51,12 +51,11 @@ public class MenuItemBuilder<V, I> {
         return this;
     }
 
-    public MenuItemBuilder<V, I> displayProvider(@NonNull DisplayProvider displayProvider) {
+    public MenuItemBuilder<V, I> displayProvider(@NonNull DisplayProvider<V, I> displayProvider) {
         this.displayProvider = displayProvider;
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     public MenuItemMeta<V, I> build() {
         return new MenuItemMeta<>(this.display, this.name, this.position, this.description, this.clickHandler, this.displayProvider);
     }

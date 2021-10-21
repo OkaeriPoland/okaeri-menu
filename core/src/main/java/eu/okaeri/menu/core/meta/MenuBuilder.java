@@ -19,6 +19,7 @@ public class MenuBuilder<V, I> {
 
     private DisplayProvider<V, I> displayProvider;
     private List<MenuItemMeta<V, I>> items = new ArrayList<>();
+    private List<MenuInputMeta<V, I>> inputs = new ArrayList<>();
 
     private OutsideClickHandler<V> outsideClickHandler;
     private FallbackClickHandler<V, I> fallbackClickHandler;
@@ -54,6 +55,16 @@ public class MenuBuilder<V, I> {
         return this;
     }
 
+    public MenuBuilder<V, I> inputs(@NonNull List<MenuInputMeta<V, I>> inputs) {
+        this.inputs = inputs;
+        return this;
+    }
+
+    public MenuBuilder<V, I> input(@NonNull MenuInputMeta<V, I> input) {
+        this.inputs.add(input);
+        return this;
+    }
+
     public MenuBuilder<V, I> outsideClickHandler(@NonNull OutsideClickHandler<V> outsideClickHandler) {
         this.outsideClickHandler = outsideClickHandler;
         return this;
@@ -75,6 +86,7 @@ public class MenuBuilder<V, I> {
                 this.rows,
                 this.displayProvider,
                 Collections.unmodifiableList(this.items),
+                Collections.unmodifiableList(this.inputs),
                 this.outsideClickHandler,
                 this.fallbackClickHandler,
                 this.closeHandler
