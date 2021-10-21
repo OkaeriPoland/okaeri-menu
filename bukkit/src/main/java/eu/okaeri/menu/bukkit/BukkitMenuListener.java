@@ -72,8 +72,15 @@ public class BukkitMenuListener implements Listener {
                 continue;
             }
 
-            // call handler and allow input
-            inputHandler.onInput(whoClicked, menuInput, item);
+            // call handler
+            if (inputHandler.onInput(whoClicked, menuInput, item)) {
+                // item in gui
+                continue;
+            }
+
+            // requested cancellation
+            event.setCancelled(true);
+            return;
         }
     }
 
