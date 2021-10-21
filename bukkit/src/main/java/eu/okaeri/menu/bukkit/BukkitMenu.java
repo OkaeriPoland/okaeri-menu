@@ -1,10 +1,7 @@
 package eu.okaeri.menu.bukkit;
 
 import eu.okaeri.menu.core.display.DisplayProvider;
-import eu.okaeri.menu.core.meta.MenuBuilder;
-import eu.okaeri.menu.core.meta.MenuMeta;
-import eu.okaeri.menu.core.meta.MenuItemBuilder;
-import eu.okaeri.menu.core.meta.MenuItemMeta;
+import eu.okaeri.menu.core.meta.*;
 import lombok.Data;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
@@ -19,6 +16,7 @@ public class BukkitMenu {
 
     private final MenuMeta<HumanEntity, ItemStack> meta;
     private final Map<Integer, MenuItemMeta<HumanEntity, ItemStack>> itemMap;
+    private final Map<Integer, MenuInputMeta<HumanEntity, ItemStack>> inputMap;
     private final Map<Integer, DisplayProvider<HumanEntity, ItemStack>> providerMap;
     private final BukkitMenuProvider menuProvider;
 

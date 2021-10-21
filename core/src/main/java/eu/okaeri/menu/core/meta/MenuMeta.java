@@ -37,8 +37,20 @@ public class MenuMeta<V, I> {
                 .map(method -> MenuItemMeta.<V, I>of(handler, method))
                 .collect(Collectors.toList());
 
+        // TODO: find inputs
+        List<MenuInputMeta<V, I>> inputs = new ArrayList<>();
+
         // TODO: find methods for handling outsideClickHandler/fallbackClickHandler/...
-        return new MenuMeta<V, I>(menu.name(), menu.rows(), displayProvider, Collections.unmodifiableList(items), null, null, null);
+        return new MenuMeta<V, I>(
+                menu.name(),
+                menu.rows(),
+                displayProvider,
+                Collections.unmodifiableList(items),
+                Collections.unmodifiableList(inputs),
+                null,
+                null,
+                null
+        );
     }
 
     @Getter private final String name;
@@ -46,6 +58,7 @@ public class MenuMeta<V, I> {
 
     @Getter private final DisplayProvider<V, I> displayProvider;
     @Getter private final List<MenuItemMeta<V, I>> items;
+    @Getter private final List<MenuInputMeta<V, I>> inputs;
 
     @Getter private final OutsideClickHandler<V> outsideClickHandler;
     @Getter private final FallbackClickHandler<V, I> fallbackClickHandler;

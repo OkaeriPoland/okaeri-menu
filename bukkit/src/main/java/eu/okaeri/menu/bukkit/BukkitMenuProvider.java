@@ -3,6 +3,7 @@ package eu.okaeri.menu.bukkit;
 import eu.okaeri.menu.bukkit.display.InventoryDisplayProvider;
 import eu.okaeri.menu.core.MenuProvider;
 import eu.okaeri.menu.core.display.DisplayProvider;
+import eu.okaeri.menu.core.meta.MenuInputMeta;
 import eu.okaeri.menu.core.meta.MenuMeta;
 import eu.okaeri.menu.core.meta.MenuItemMeta;
 import lombok.AccessLevel;
@@ -62,24 +63,25 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
     public BukkitMenu create(@NonNull MenuMeta<HumanEntity, ItemStack> menu) {
 
         Map<Integer, MenuItemMeta<HumanEntity, ItemStack>> itemMap = new LinkedHashMap<>();
+        Map<Integer, MenuInputMeta<HumanEntity, ItemStack>> inputMap = new LinkedHashMap<>();
         Map<Integer, DisplayProvider<HumanEntity, ItemStack>> providerMap = new LinkedHashMap<>();
         DisplayProvider<HumanEntity, ItemStack> menuDisplayProvider = menu.getDisplayProvider();
 
         int size = menu.getMenuChestSize();
-        int lastItemPosition = -1;
+        int lastPosition = -1;
 
         for (MenuItemMeta<HumanEntity, ItemStack> item : menu.getItems()) {
 
-            int[] itemPositions = item.getPositionAsIntArr();
+            int[] positions = item.getPositionAsIntArr();
 
-            for (int itemPosition : itemPositions) {
+            for (int position : positions) {
 
-                if (itemPosition == -1) {
-                    itemPosition = lastItemPosition + 1;
+                if (position == -1) {
+                    position = lastPosition + 1;
                 }
 
-                if (itemPosition > size) {
-                    throw new IllegalArgumentException("position cannot be greater than menu size (" + itemPosition + " > " + size + ")");
+                if (position > size) {
+                    throw new IllegalArgumentException("position cannot be greater than menu size (" + position + " > " + size + ")");
                 }
 
                 DisplayProvider<HumanEntity, ItemStack> itemDisplayProvider = item.getDisplayProvider();
@@ -89,15 +91,38 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
                         ? menuDisplayProvider
                         : this.defaultDisplayProvider);
 
-                if (providerMap.put(itemPosition, currentDisplayProvider) != null) {
-                    throw new IllegalArgumentException("item position cannot be overridden: " + itemPosition);
+                if (providerMap.put(position, currentDisplayProvider) != null) {
+                    throw new IllegalArgumentException("item position cannot be overridden: " + position);
                 }
 
-                lastItemPosition = itemPosition;
-                itemMap.put(itemPosition, item);
+                lastPosition = position;
+                itemMap.put(position, item);
             }
         }
 
-        return new BukkitMenu(menu, itemMap, providerMap, this);
+        for (MenuInputMeta<HumanEntity, ItemStack> input : menu.getInputs()) {
+
+            int[] positions = input.getPositionAsIntArr();
+
+            for (int position : positions) {
+
+                if (position == -1) {
+                    position = lastPosition + 1;
+                }
+
+                if (position > size) {
+                    throw new IllegalArgumentException("position cannot be greater than menu size (" + position + " > " + size + ")");
+                }
+
+                if (itemMap.containsKey(position) || inputMap.containsKey(position)) {
+                    throw new IllegalArgumentException("item/input position cannot be overridden: " + position);
+                }
+
+                lastPosition = position;
+                inputMap.put(position, input);
+            }
+        }
+
+        return new BukkitMenu(menu, itemMap, inputMap, providerMap, this);
     }
 }

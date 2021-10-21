@@ -1,9 +1,7 @@
 package eu.okaeri.menu.bukkit;
 
-import eu.okaeri.menu.core.handler.ClickHandler;
-import eu.okaeri.menu.core.handler.CloseHandler;
-import eu.okaeri.menu.core.handler.FallbackClickHandler;
-import eu.okaeri.menu.core.handler.OutsideClickHandler;
+import eu.okaeri.menu.core.handler.*;
+import eu.okaeri.menu.core.meta.MenuInputMeta;
 import eu.okaeri.menu.core.meta.MenuItemMeta;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.HumanEntity;
@@ -12,9 +10,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.Map;
 
 import static org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY;
 
@@ -24,8 +25,62 @@ public class BukkitMenuListener implements Listener {
     private final BukkitMenuProvider provider;
 
     @EventHandler
+    public void handleDrag(InventoryDragEvent event) {
+
+        System.out.println("drag");
+        System.out.println(event.getResult());
+        System.out.println(event.getCursor());
+
+        Inventory inventory = event.getInventory();
+        HumanEntity whoClicked = event.getWhoClicked();
+
+        if (!this.provider.knowsInstance(inventory)) {
+            return;
+        }
+
+        BukkitMenuInstance menu = this.provider.findInstance(inventory);
+        if (menu == null) {
+            // where menu (???) the heck happened???
+            event.setCancelled(true);
+            whoClicked.closeInventory();
+            return;
+        }
+
+        // check for inputs
+        for (Map.Entry<Integer, ItemStack> newItem : event.getNewItems().entrySet()) {
+
+            int slot = newItem.getKey();
+            ItemStack item = newItem.getValue();
+
+            // do not allow input into gui elements
+            MenuItemMeta<HumanEntity, ItemStack> menuItem = menu.getItem(slot);
+            if (menuItem != null) {
+                event.setCancelled(true);
+                return;
+            }
+
+            // no input for one of the items
+            MenuInputMeta<HumanEntity, ItemStack> menuInput = menu.getInput(slot);
+            if (menuInput == null) {
+                event.setCancelled(true);
+                return;
+            }
+
+            // allow input if no handler
+            InputHandler<HumanEntity, ItemStack> inputHandler = menuInput.getInputHandler();
+            if (inputHandler == null) {
+                continue;
+            }
+
+            // call handler and allow input
+            inputHandler.onInput(whoClicked, menuInput, item);
+        }
+    }
+
+    @EventHandler
     public void handleClick(InventoryClickEvent event) {
 
+        System.out.println("click");
         System.out.println(event.getAction());
         System.out.println(event.getClick());
 
