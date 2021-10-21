@@ -14,17 +14,17 @@ import java.util.Arrays;
 
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public class MenuItemDeclaration<V, I> {
+public class MenuItemMeta<V, I> {
 
     private static final MethodHandles.Lookup HANDLE_LOOKUP = MethodHandles.lookup();
 
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    public static <V, I> MenuItemDeclaration<V, I> of(@NonNull MenuHandler handler, @NonNull Method method) {
+    public static <V, I> MenuItemMeta<V, I> of(@NonNull MenuHandler handler, @NonNull Method method) {
 
         MenuItem menuItem = method.getAnnotation(MenuItem.class);
         if (menuItem == null) {
-            throw new IllegalArgumentException("cannot create MenuItemDeclaration from method without @MenuItem: " + method);
+            throw new IllegalArgumentException("cannot create MenuItemMeta from method without @MenuItem: " + method);
         }
 
         DisplayProvider<V, I> displayProvider = (menuItem.displayProvider() == MenuItem.DEFAULT_DISPLAY_PROVIDER.class)
@@ -44,7 +44,7 @@ public class MenuItemDeclaration<V, I> {
 
             @Override
             @SneakyThrows
-            public void onClick(V viewer, MenuItemDeclaration menuItem, I item) {
+            public void onClick(@NonNull V viewer, @NonNull MenuItemMeta<V, I> menuItem, @NonNull I item) {
 
                 if (this.resolved) {
                     Object[] call = new Object[this.methodParameterCount];
@@ -76,7 +76,7 @@ public class MenuItemDeclaration<V, I> {
             }
         };
 
-        return new MenuItemDeclaration<>(menuItem.display(), menuItem.name(), menuItem.position(), menuItem.description(), clickHandler, displayProvider);
+        return new MenuItemMeta<>(menuItem.display(), menuItem.name(), menuItem.position(), menuItem.description(), clickHandler, displayProvider);
     }
 
     private final String display;

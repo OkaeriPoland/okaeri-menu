@@ -1,7 +1,10 @@
 package eu.okaeri.menu.bukkit;
 
 import eu.okaeri.menu.core.handler.ClickHandler;
-import eu.okaeri.menu.core.meta.MenuItemDeclaration;
+import eu.okaeri.menu.core.handler.CloseHandler;
+import eu.okaeri.menu.core.handler.FallbackClickHandler;
+import eu.okaeri.menu.core.handler.OutsideClickHandler;
+import eu.okaeri.menu.core.meta.MenuItemMeta;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
@@ -29,6 +32,44 @@ public class BukkitMenuListener implements Listener {
         Inventory clickedInventory = event.getClickedInventory();
         HumanEntity whoClicked = event.getWhoClicked();
 
+        // clicked outside of the inventory
+        if (clickedInventory == null) {
+
+            InventoryView openInventory = whoClicked.getOpenInventory();
+            if (openInventory == null) {
+                return;
+            }
+
+            Inventory topInventory = openInventory.getTopInventory();
+            if (topInventory == null) {
+                return;
+            }
+
+            // known gui
+            if (this.provider.knowsInstance(topInventory)) {
+
+                // resolve current menu
+                BukkitMenuInstance menu = this.provider.findInstance(topInventory);
+                if (menu == null) {
+                    // where menu (???) the heck happened???
+                    event.setCancelled(true);
+                    whoClicked.closeInventory();
+                    return;
+                }
+
+                // got it!
+                OutsideClickHandler<HumanEntity> clickHandler = menu.getMeta().getOutsideClickHandler();
+                if (clickHandler != null) {
+                    clickHandler.onClick(whoClicked);
+                    return;
+                }
+            }
+
+            // no applicable handler
+            return;
+        }
+
+        // inventory not known, check for input
         if (!this.provider.knowsInstance(clickedInventory)) {
 
             InventoryAction action = event.getAction();
@@ -54,11 +95,23 @@ public class BukkitMenuListener implements Listener {
             return;
         }
 
+        // standard click
         BukkitMenuInstance menu = this.provider.findInstance(clickedInventory);
-        MenuItemDeclaration<HumanEntity, ItemStack> menuItem = menu.getMenu().getItemMap().get(event.getSlot());
+        if (menu == null) {
+            // where menu (???) the heck happened???
+            event.setCancelled(true);
+            whoClicked.closeInventory();
+            return;
+        }
 
+        MenuItemMeta<HumanEntity, ItemStack> menuItem = menu.getItem(event.getSlot());
         if (menuItem == null) {
-            event.setCancelled(true); // FIXME: fallback click handler [?]
+            // meta not found, try fallback handler
+            FallbackClickHandler<HumanEntity, ItemStack> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
+            if (fallbackClickHandler != null) {
+                event.setCancelled(true);
+                fallbackClickHandler.onClick(whoClicked, null, event.getCurrentItem());
+            }
             return;
         }
 
@@ -66,6 +119,11 @@ public class BukkitMenuListener implements Listener {
         ClickHandler<HumanEntity, ItemStack> clickHandler = menuItem.getClickHandler();
 
         if (clickHandler == null) {
+            // meta does not have own click handler, try fallback handler
+            FallbackClickHandler<HumanEntity, ItemStack> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
+            if (fallbackClickHandler != null) {
+                fallbackClickHandler.onClick(whoClicked, menuItem, event.getCurrentItem());
+            }
             return;
         }
 
@@ -82,7 +140,11 @@ public class BukkitMenuListener implements Listener {
             return;
         }
 
-        // TODO: trigger event?
-        System.out.println("closed " + closedMenu);
+        CloseHandler<HumanEntity> closeHandler = closedMenu.getMeta().getCloseHandler();
+        if (closeHandler == null) {
+            return;
+        }
+
+        closeHandler.onClose(event.getPlayer());
     }
 }

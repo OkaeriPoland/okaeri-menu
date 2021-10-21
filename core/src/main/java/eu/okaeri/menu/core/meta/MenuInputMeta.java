@@ -1,4 +1,4 @@
 package eu.okaeri.menu.core.meta;
 
-public class MenuInputDeclaration {
+public class MenuInputMeta {
 }
