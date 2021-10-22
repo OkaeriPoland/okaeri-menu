@@ -44,6 +44,10 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
         return this.knownMenuMap.remove(inventory);
     }
 
+    public void render(@NonNull HumanEntity viewer) {
+        this.findInstance(viewer.getInventory()).ifPresent(instance -> instance.render(viewer));
+    }
+
     public static BukkitMenuProvider create(@NonNull Plugin plugin) {
         return create(plugin, new InventoryDisplayProvider());
     }
