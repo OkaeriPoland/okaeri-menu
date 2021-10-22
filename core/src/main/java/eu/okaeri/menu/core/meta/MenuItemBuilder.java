@@ -47,7 +47,10 @@ public class MenuItemBuilder<V, I> {
     }
 
     public MenuItemBuilder<V, I> clickHandler(@NonNull SimpleClickHandler<V, I> clickHandler) {
-        this.clickHandler = (viewer, menuItem, item) -> clickHandler.onClick(viewer, menuItem);
+        this.clickHandler = (viewer, menuItem, item, slot) -> {
+            clickHandler.onClick(viewer, menuItem);
+            return false;
+        };
         return this;
     }
 

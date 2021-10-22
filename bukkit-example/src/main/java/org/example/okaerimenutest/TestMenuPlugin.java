@@ -8,7 +8,9 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class TestMenuPlugin extends JavaPlugin implements Listener {
@@ -26,8 +28,11 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
         this.testMenu2 = BukkitMenu.builder()
                 .name("Color selector 2")
                 .closeHandler((viewer) -> viewer.sendMessage("Closed menu!"))
-                .outsideClickHandler((viewer) -> viewer.sendMessage("Clicked outside!"))
-                .fallbackClickHandler(((viewer, menuItem, item) -> viewer.sendMessage("clicked " + menuItem + " (" + item + ")")))
+                .outsideClickHandler((viewer, cursor) -> viewer.sendMessage("Clicked outside with " + cursor + "!"))
+                .fallbackClickHandler((viewer, item, slot) -> {
+                    viewer.sendMessage("clicked " + item + "");
+                    return true; // allow pickup from non-static elements (e.g the one from input on position 4)
+                })
                 .item(BukkitMenu.item()
                         .display("stone")
                         .name("Gray")
@@ -42,9 +47,32 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
                         .build())
                 .input(BukkitMenu.input()
                         .position(4)
-                        .inputHandler((viewer, menuInput, item) -> {
+                        .inputHandler((viewer, menuInput, cursor, item, slot) -> {
+
+                            // get inventory in this tick
+                            InventoryView inventory = viewer.getOpenInventory();
+
+                            // schedule modifications of placed item for the next tick
+                            //
+                            // item is not null in drag event but direct modification
+                            // does not effect resulting item that will be placed
+                            //
+                            this.getServer().getScheduler().runTask(this, () -> {
+
+                                // get item and just for safety check nullity
+                                ItemStack stack = inventory.getItem(slot);
+                                if (stack == null) {
+                                    return;
+                                }
+
+                                // apply modifications
+                                ItemMeta itemMeta = stack.getItemMeta();
+                                itemMeta.setDisplayName("GUI!");
+                                stack.setItemMeta(itemMeta);
+                            });
+
                             viewer.sendMessage("input into " + menuInput + ": " + item);
-                            return true;
+                            return true; // allow input
                         })
                         .build())
                 .item(BukkitMenu.item()

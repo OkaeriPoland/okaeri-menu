@@ -2,7 +2,8 @@ package eu.okaeri.menu.core.handler;
 
 import eu.okaeri.menu.core.meta.MenuItemMeta;
 import lombok.NonNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ClickHandler<V, I> {
-    void onClick(@NonNull V viewer, @NonNull MenuItemMeta<V, I> menuItem, @NonNull I item);
+    boolean onClick(@NonNull V viewer, @NonNull MenuItemMeta<V, I> menuItem, @Nullable I item, int slot);
 }
