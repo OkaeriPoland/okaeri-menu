@@ -21,7 +21,7 @@ public class MenuBuilder<V, I> {
     private List<MenuItemMeta<V, I>> items = new ArrayList<>();
     private List<MenuInputMeta<V, I>> inputs = new ArrayList<>();
 
-    private OutsideClickHandler<V> outsideClickHandler;
+    private OutsideClickHandler<V, I> outsideClickHandler;
     private FallbackClickHandler<V, I> fallbackClickHandler;
     private CloseHandler<V> closeHandler;
 
@@ -65,7 +65,7 @@ public class MenuBuilder<V, I> {
         return this;
     }
 
-    public MenuBuilder<V, I> outsideClickHandler(@NonNull OutsideClickHandler<V> outsideClickHandler) {
+    public MenuBuilder<V, I> outsideClickHandler(@NonNull OutsideClickHandler<V, I> outsideClickHandler) {
         this.outsideClickHandler = outsideClickHandler;
         return this;
     }

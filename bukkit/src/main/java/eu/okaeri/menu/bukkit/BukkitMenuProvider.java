@@ -51,7 +51,7 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
     private static BukkitMenuProvider create(@NonNull Plugin plugin, @NonNull DisplayProvider<HumanEntity, ItemStack> displayProvider) {
 
         BukkitMenuProvider provider = new BukkitMenuProvider(displayProvider);
-        BukkitMenuListener listener = new BukkitMenuListener(provider);
+        BukkitMenuListener listener = new BukkitMenuListener(plugin, provider);
 
         PluginManager pluginManager = plugin.getServer().getPluginManager();
         pluginManager.registerEvents(listener, plugin);

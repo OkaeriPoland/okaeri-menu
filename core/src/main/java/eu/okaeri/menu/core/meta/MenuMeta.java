@@ -9,7 +9,10 @@ import eu.okaeri.menu.core.handler.FallbackClickHandler;
 import eu.okaeri.menu.core.handler.OutsideClickHandler;
 import lombok.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
@@ -60,7 +63,7 @@ public class MenuMeta<V, I> {
     @Getter private final List<MenuItemMeta<V, I>> items;
     @Getter private final List<MenuInputMeta<V, I>> inputs;
 
-    @Getter private final OutsideClickHandler<V> outsideClickHandler;
+    @Getter private final OutsideClickHandler<V, I> outsideClickHandler;
     @Getter private final FallbackClickHandler<V, I> fallbackClickHandler;
     @Getter private final CloseHandler<V> closeHandler;
 

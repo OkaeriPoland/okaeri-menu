@@ -36,6 +36,7 @@ public class MenuItemMeta<V, I> {
             private int viewerIndex = -1;
             private int menuItemIndex = -1;
             private int itemIndex = -1;
+            private int slotIndex = -1;
 
             private Parameter[] methodParameters = method.getParameters();
             private int methodParameterCount = method.getParameterCount();
@@ -43,15 +44,16 @@ public class MenuItemMeta<V, I> {
 
             @Override
             @SneakyThrows
-            public void onClick(@NonNull V viewer, @NonNull MenuItemMeta<V, I> menuItem, @NonNull I item) {
+            public boolean onClick(@NonNull V viewer, @NonNull MenuItemMeta<V, I> menuItem, I item, int slot) {
 
                 if (this.resolved) {
                     Object[] call = new Object[this.methodParameterCount];
                     if (this.viewerIndex != -1) call[this.viewerIndex] = viewer;
-                    if (this.itemIndex != -1) call[this.itemIndex] = item;
                     if (this.menuItemIndex != -1) call[this.menuItemIndex] = menuItem;
-                    this.methodHandle.invokeWithArguments(call);
-                    return;
+                    if (this.itemIndex != -1) call[this.itemIndex] = item;
+                    if (this.slotIndex != -1) call[this.slotIndex] = slot;
+                    Object result = this.methodHandle.invokeWithArguments(call);
+                    return (result instanceof Boolean) && (boolean) result;
                 }
 
                 for (int index = 0; index < this.methodParameterCount; index++) {
@@ -65,13 +67,15 @@ public class MenuItemMeta<V, I> {
                         this.itemIndex = index;
                     } else if (parameterType.isAssignableFrom(menuItem.getClass()) && (this.menuItemIndex == -1)) {
                         this.menuItemIndex = index;
+                    } else if (parameterType.isAssignableFrom(int.class) && (this.slotIndex == -1)) {
+                        this.slotIndex = index;
                     } else {
                         throw new IllegalArgumentException("unknown or duplicate parameter: " + parameter + " of " + method);
                     }
                 }
 
                 this.resolved = true;
-                this.onClick(viewer, menuItem, item);
+                return this.onClick(viewer, menuItem, item, slot);
             }
         };
 
