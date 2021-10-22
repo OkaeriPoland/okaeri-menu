@@ -20,20 +20,20 @@ public class BukkitMenu {
     private final Map<Integer, DisplayProvider<HumanEntity, ItemStack>> providerMap;
     private final BukkitMenuProvider menuProvider;
 
-    public BukkitMenuInstance open(@NonNull HumanEntity viewer) {
+    public BukkitMenuInstance createInstance() {
 
         int size = this.meta.getMenuChestSize();
         Inventory inventory = Bukkit.createInventory(null, size, this.meta.getName());
 
-        this.itemMap.forEach((position, item) -> {
-            ItemStack itemStack = this.providerMap.get(position).displayFor(viewer, item);
-            inventory.setItem(position, itemStack);
-        });
-
-        viewer.openInventory(inventory);
         BukkitMenuInstance menuInstance = new BukkitMenuInstance(inventory, this);
         this.menuProvider.trackInstance(inventory, menuInstance);
 
+        return menuInstance;
+    }
+
+    public BukkitMenuInstance open(@NonNull HumanEntity viewer) {
+        BukkitMenuInstance menuInstance = this.createInstance().render(viewer);
+        viewer.openInventory(menuInstance.getInventory());
         return menuInstance;
     }
 
