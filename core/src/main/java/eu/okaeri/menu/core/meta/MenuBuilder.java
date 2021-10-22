@@ -9,7 +9,10 @@ import lombok.NonNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @NoArgsConstructor
 public class MenuBuilder<V, I> {
@@ -45,8 +48,31 @@ public class MenuBuilder<V, I> {
         return this;
     }
 
-    public MenuBuilder<V, I> items(@NonNull List<MenuItemMeta<V, I>> items) {
-        this.items = items;
+    public MenuBuilder<V, I> items(@NonNull Iterable<MenuItemMeta<V, I>> items) {
+        return this.items(items, false);
+    }
+
+    public MenuBuilder<V, I> items(@NonNull Stream<MenuItemMeta<V, I>> stream) {
+        return this.items(stream.collect(Collectors.toList()), false);
+    }
+
+    public MenuBuilder<V, I> items(@NonNull Iterable<MenuItemMeta<V, I>> items, boolean replace) {
+
+        List<MenuItemMeta<V, I>> list;
+        if (items instanceof List) {
+            list = (List<MenuItemMeta<V, I>>) items;
+        } else {
+            list = new ArrayList<>();
+            Iterator<MenuItemMeta<V, I>> iterator = items.iterator();
+            iterator.forEachRemaining(list::add);
+        }
+
+        if (replace) {
+            this.items = list;
+        } else {
+            this.items.addAll(list);
+        }
+
         return this;
     }
 
@@ -55,8 +81,31 @@ public class MenuBuilder<V, I> {
         return this;
     }
 
-    public MenuBuilder<V, I> inputs(@NonNull List<MenuInputMeta<V, I>> inputs) {
-        this.inputs = inputs;
+    public MenuBuilder<V, I> inputs(@NonNull Iterable<MenuInputMeta<V, I>> inputs) {
+        return this.inputs(inputs, false);
+    }
+
+    public MenuBuilder<V, I> inputs(@NonNull Stream<MenuInputMeta<V, I>> stream) {
+        return this.inputs(stream.collect(Collectors.toList()), false);
+    }
+
+    public MenuBuilder<V, I> inputs(@NonNull Iterable<MenuInputMeta<V, I>> inputs, boolean replace) {
+
+        List<MenuInputMeta<V, I>> list;
+        if (inputs instanceof List) {
+            list = (List<MenuInputMeta<V, I>>) inputs;
+        } else {
+            list = new ArrayList<>();
+            Iterator<MenuInputMeta<V, I>> iterator = inputs.iterator();
+            iterator.forEachRemaining(list::add);
+        }
+
+        if (replace) {
+            this.inputs = list;
+        } else {
+            this.inputs.addAll(list);
+        }
+
         return this;
     }
 
