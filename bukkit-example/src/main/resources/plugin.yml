@@ -1,5 +1,5 @@
 name: OkaeriMenuExample
-version: 0.0.2
+version: 1.0-SNAPSHOT
 main: org.example.okaerimenutest.TestMenuPlugin
 description: 'Example Okaeri Menu Plugin'
 author: 'Dawid Sawicki <dawid@okaeri.eu>'
