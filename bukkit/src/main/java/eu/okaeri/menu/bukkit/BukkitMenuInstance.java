@@ -30,4 +30,12 @@ public class BukkitMenuInstance {
     public MenuInputMeta<HumanEntity, ItemStack> getInput(int slot) {
         return this.getMenu().getInputMap().get(slot);
     }
+
+    public BukkitMenuInstance render(HumanEntity viewer) {
+        this.getMenu().getItemMap().forEach((position, item) -> {
+            ItemStack itemStack = this.getMenu().getProviderMap().get(position).displayFor(viewer, item);
+            this.getInventory().setItem(position, itemStack);
+        });
+        return this;
+    }
 }

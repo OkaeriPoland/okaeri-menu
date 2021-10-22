@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, BukkitMenu> {
@@ -34,9 +35,8 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
         return this.knownMenuMap.containsKey(inventory);
     }
 
-    @Nullable
-    public BukkitMenuInstance findInstance(@NonNull Inventory inventory) {
-        return this.knownMenuMap.get(inventory);
+    public Optional<BukkitMenuInstance> findInstance(@NonNull Inventory inventory) {
+        return Optional.ofNullable(this.knownMenuMap.get(inventory));
     }
 
     @Nullable

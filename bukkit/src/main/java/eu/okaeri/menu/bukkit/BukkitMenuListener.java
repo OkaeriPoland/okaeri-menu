@@ -35,7 +35,7 @@ public class BukkitMenuListener implements Listener {
             return;
         }
 
-        BukkitMenuInstance menu = this.provider.findInstance(inventory);
+        BukkitMenuInstance menu = this.provider.findInstance(inventory).orElse(null);
         if (menu == null) {
             // where menu (???) the heck happened???
             this.cancelAndClose(event, whoClicked);
@@ -116,7 +116,7 @@ public class BukkitMenuListener implements Listener {
             if (this.provider.knowsInstance(topInventory)) {
 
                 // resolve current menu
-                BukkitMenuInstance menu = this.provider.findInstance(topInventory);
+                BukkitMenuInstance menu = this.provider.findInstance(topInventory).orElse(null);
                 if (menu == null) {
                     // where menu (???) the heck happened???
                     this.cancelAndClose(event, whoClicked);
@@ -162,7 +162,7 @@ public class BukkitMenuListener implements Listener {
         }
 
         // standard click/input
-        BukkitMenuInstance menu = this.provider.findInstance(clickedInventory);
+        BukkitMenuInstance menu = this.provider.findInstance(clickedInventory).orElse(null);
         if (menu == null) {
             // where menu (???) the heck happened???
             this.cancelAndClose(event, whoClicked);
