@@ -199,14 +199,23 @@ public class BukkitMenuListener implements Listener {
         // click
         MenuItemMeta<HumanEntity, ItemStack> menuItem = menu.getItem(slot);
         if (menuItem == null) {
+
             // meta not found, try fallback handler
             FallbackClickHandler<HumanEntity, ItemStack> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
-            if (fallbackClickHandler != null) {
-                // true - allow pickup, false - deny pickup
-                if (!fallbackClickHandler.onClick(whoClicked, currentItem, slot)) {
-                    event.setCancelled(true);
-                }
+
+            // no handler, just cancel
+            if (fallbackClickHandler == null) {
+                event.setCancelled(true);
+                return;
             }
+
+            // true - allow pickup
+            if (fallbackClickHandler.onClick(whoClicked, currentItem, slot)) {
+                return;
+            }
+
+            // false - deny pickup
+            event.setCancelled(true);
             return;
         }
 
