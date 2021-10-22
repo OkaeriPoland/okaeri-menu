@@ -11,8 +11,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @NoArgsConstructor
 public class MenuBuilder<V, I> {
@@ -76,6 +78,14 @@ public class MenuBuilder<V, I> {
         return this;
     }
 
+    public <A> MenuBuilder<V, I> items(@NonNull Iterable<A> iterable, @NonNull Function<A, MenuItemBuilder<V, I>> function) {
+        return this.items(StreamSupport.stream(iterable.spliterator(), false), function);
+    }
+
+    public <A> MenuBuilder<V, I> items(@NonNull Stream<A> stream, @NonNull Function<A, MenuItemBuilder<V, I>> function) {
+        return this.items(stream.map(function).map(MenuItemBuilder::build).collect(Collectors.toList()), false);
+    }
+
     public MenuBuilder<V, I> item(@NonNull MenuItemMeta<V, I> item) {
         this.items.add(item);
         return this;
@@ -107,6 +117,14 @@ public class MenuBuilder<V, I> {
         }
 
         return this;
+    }
+
+    public <A> MenuBuilder<V, I> inputs(@NonNull Iterable<A> iterable, Function<A, MenuInputBuilder<V, I>> function) {
+        return this.inputs(StreamSupport.stream(iterable.spliterator(), false), function);
+    }
+
+    public <A> MenuBuilder<V, I> inputs(@NonNull Stream<A> stream, Function<A, MenuInputBuilder<V, I>> function) {
+        return this.inputs(stream.map(function).map(MenuInputBuilder::build).collect(Collectors.toList()), false);
     }
 
     public MenuBuilder<V, I> input(@NonNull MenuInputMeta<V, I> input) {
