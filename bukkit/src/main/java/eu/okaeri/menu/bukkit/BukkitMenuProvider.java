@@ -24,6 +24,7 @@ import java.util.Optional;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, BukkitMenu> {
 
+    private final Plugin plugin;
     private final Map<Inventory, BukkitMenuInstance> knownMenuMap = new HashMap<>();
     private final DisplayProvider<HumanEntity, ItemStack> defaultDisplayProvider;
 
@@ -48,13 +49,17 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
         this.findInstance(viewer.getInventory()).ifPresent(instance -> instance.render(viewer));
     }
 
+    public void close(@NonNull HumanEntity viewer) {
+        this.plugin.getServer().getScheduler().runTask(this.plugin, viewer::closeInventory);
+    }
+
     public static BukkitMenuProvider create(@NonNull Plugin plugin) {
         return create(plugin, new InventoryDisplayProvider());
     }
 
     private static BukkitMenuProvider create(@NonNull Plugin plugin, @NonNull DisplayProvider<HumanEntity, ItemStack> displayProvider) {
 
-        BukkitMenuProvider provider = new BukkitMenuProvider(displayProvider);
+        BukkitMenuProvider provider = new BukkitMenuProvider(plugin, displayProvider);
         BukkitMenuListener listener = new BukkitMenuListener(plugin, provider);
 
         PluginManager pluginManager = plugin.getServer().getPluginManager();
