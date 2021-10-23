@@ -46,7 +46,7 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
     }
 
     public void render(@NonNull HumanEntity viewer) {
-        this.findInstance(viewer.getInventory()).ifPresent(instance -> instance.render(viewer));
+        this.findInstance(viewer.getOpenInventory().getTopInventory()).ifPresent(instance -> instance.render(viewer));
     }
 
     public void close(@NonNull HumanEntity viewer) {
