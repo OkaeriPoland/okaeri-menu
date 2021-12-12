@@ -8,7 +8,10 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.*;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
@@ -45,8 +48,8 @@ public class BukkitMenuListener implements Listener {
         // check how many of items were placed into non-custom gui
         int size = event.getInventory().getSize();
         long ownInventoryItems = event.getNewItems().keySet().stream()
-                .filter(position -> position >= size)
-                .count();
+            .filter(position -> position >= size)
+            .count();
 
         // drag inside own inventory
         if (ownInventoryItems == event.getNewItems().size()) {

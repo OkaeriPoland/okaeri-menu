@@ -18,6 +18,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class MenuMeta<V, I> {
 
+    @Getter private final String name;
+    @Getter private final String rows;
+    @Getter private final DisplayProvider<V, I> displayProvider;
+    @Getter private final List<MenuItemMeta<V, I>> items;
+    @Getter private final List<MenuInputMeta<V, I>> inputs;
+    @Getter private final OutsideClickHandler<V, I> outsideClickHandler;
+    @Getter private final FallbackClickHandler<V, I> fallbackClickHandler;
+    @Getter private final CloseHandler<V> closeHandler;
+    private Integer menuChestSizeCache = null;
+
     @SneakyThrows
     public static <V, I, H extends MenuHandler> MenuMeta<V, I> of(@NonNull Class<H> clazz) {
         return of(clazz, clazz.newInstance());
@@ -32,42 +42,29 @@ public class MenuMeta<V, I> {
         }
 
         @SuppressWarnings("unchecked") DisplayProvider<V, I> displayProvider = (menu.displayProvider() == Menu.DEFAULT_DISPLAY_PROVIDER.class)
-                ? null :
-                menu.displayProvider().newInstance();
+            ? null :
+            menu.displayProvider().newInstance();
 
         List<MenuItemMeta<V, I>> items = Arrays.stream(clazz.getDeclaredMethods())
-                .filter(method -> method.getAnnotation(MenuItem.class) != null)
-                .map(method -> MenuItemMeta.<V, I>of(handler, method))
-                .collect(Collectors.toList());
+            .filter(method -> method.getAnnotation(MenuItem.class) != null)
+            .map(method -> MenuItemMeta.<V, I>of(handler, method))
+            .collect(Collectors.toList());
 
         // TODO: find inputs
         List<MenuInputMeta<V, I>> inputs = new ArrayList<>();
 
         // TODO: find methods for handling outsideClickHandler/fallbackClickHandler/...
         return new MenuMeta<V, I>(
-                menu.name(),
-                menu.rows(),
-                displayProvider,
-                Collections.unmodifiableList(items),
-                Collections.unmodifiableList(inputs),
-                null,
-                null,
-                null
+            menu.name(),
+            menu.rows(),
+            displayProvider,
+            Collections.unmodifiableList(items),
+            Collections.unmodifiableList(inputs),
+            null,
+            null,
+            null
         );
     }
-
-    @Getter private final String name;
-    @Getter private final String rows;
-
-    @Getter private final DisplayProvider<V, I> displayProvider;
-    @Getter private final List<MenuItemMeta<V, I>> items;
-    @Getter private final List<MenuInputMeta<V, I>> inputs;
-
-    @Getter private final OutsideClickHandler<V, I> outsideClickHandler;
-    @Getter private final FallbackClickHandler<V, I> fallbackClickHandler;
-    @Getter private final CloseHandler<V> closeHandler;
-
-    private Integer menuChestSizeCache = null;
 
     public int getRowsAsInt() {
         try {
@@ -86,9 +83,9 @@ public class MenuMeta<V, I> {
         int size = this.getRowsAsInt() * 9;
         if (size < 0) {
             int maxPosition = this.items.stream()
-                    .flatMapToInt(meta -> Arrays.stream(meta.getPositionAsIntArr()))
-                    .max()
-                    .orElse(9);
+                .flatMapToInt(meta -> Arrays.stream(meta.getPositionAsIntArr()))
+                .max()
+                .orElse(9);
             size = (int) (9d * (Math.ceil(Math.abs((double) maxPosition / 9d))));
         }
 

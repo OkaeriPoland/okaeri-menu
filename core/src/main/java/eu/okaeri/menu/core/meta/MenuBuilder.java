@@ -149,14 +149,14 @@ public class MenuBuilder<V, I> {
 
     public MenuMeta<V, I> build() {
         return new MenuMeta<>(
-                this.name,
-                this.rows,
-                this.displayProvider,
-                Collections.unmodifiableList(this.items),
-                Collections.unmodifiableList(this.inputs),
-                this.outsideClickHandler,
-                this.fallbackClickHandler,
-                this.closeHandler
+            this.name,
+            this.rows,
+            this.displayProvider,
+            Collections.unmodifiableList(this.items),
+            Collections.unmodifiableList(this.inputs),
+            this.outsideClickHandler,
+            this.fallbackClickHandler,
+            this.closeHandler
         );
     }
 }
