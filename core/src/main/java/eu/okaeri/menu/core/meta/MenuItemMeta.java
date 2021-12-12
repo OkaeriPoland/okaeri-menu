@@ -17,6 +17,12 @@ import java.util.Arrays;
 public class MenuItemMeta<V, I> {
 
     private static final MethodHandles.Lookup HANDLE_LOOKUP = MethodHandles.lookup();
+    private final String display;
+    private final String name;
+    private final String position;
+    private final String description;
+    private final ClickHandler<V, I> clickHandler;
+    private final DisplayProvider<V, I> displayProvider;
 
     @SneakyThrows
     public static <V, I> MenuItemMeta<V, I> of(@NonNull MenuHandler handler, @NonNull Method method) {
@@ -27,8 +33,8 @@ public class MenuItemMeta<V, I> {
         }
 
         @SuppressWarnings("unchecked") DisplayProvider<V, I> displayProvider = (menuItem.displayProvider() == MenuItem.DEFAULT_DISPLAY_PROVIDER.class)
-                ? null
-                : menuItem.displayProvider().newInstance();
+            ? null
+            : menuItem.displayProvider().newInstance();
 
         ClickHandler<V, I> clickHandler = new ClickHandler<V, I>() {
 
@@ -82,13 +88,6 @@ public class MenuItemMeta<V, I> {
         return new MenuItemMeta<>(menuItem.display(), menuItem.name(), menuItem.position(), menuItem.description(), clickHandler, displayProvider);
     }
 
-    private final String display;
-    private final String name;
-    private final String position;
-    private final String description;
-    private final ClickHandler<V, I> clickHandler;
-    private final DisplayProvider<V, I> displayProvider;
-
     public int getPositionAsInt() {
         try {
             return Integer.parseInt(this.position);
@@ -100,8 +99,8 @@ public class MenuItemMeta<V, I> {
     public int[] getPositionAsIntArr() {
         try {
             return Arrays.stream(this.position.split(","))
-                    .mapToInt(Integer::parseInt)
-                    .toArray();
+                .mapToInt(Integer::parseInt)
+                .toArray();
         } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("cannot parse position: " + this.position);
         }

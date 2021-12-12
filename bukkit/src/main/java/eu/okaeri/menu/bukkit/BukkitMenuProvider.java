@@ -4,8 +4,8 @@ import eu.okaeri.menu.bukkit.display.InventoryDisplayProvider;
 import eu.okaeri.menu.core.MenuProvider;
 import eu.okaeri.menu.core.display.DisplayProvider;
 import eu.okaeri.menu.core.meta.MenuInputMeta;
-import eu.okaeri.menu.core.meta.MenuMeta;
 import eu.okaeri.menu.core.meta.MenuItemMeta;
+import eu.okaeri.menu.core.meta.MenuMeta;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +27,21 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
     private final Plugin plugin;
     private final Map<Inventory, BukkitMenuInstance> knownMenuMap = new HashMap<>();
     private final DisplayProvider<HumanEntity, ItemStack> defaultDisplayProvider;
+
+    public static BukkitMenuProvider create(@NonNull Plugin plugin) {
+        return create(plugin, new InventoryDisplayProvider());
+    }
+
+    private static BukkitMenuProvider create(@NonNull Plugin plugin, @NonNull DisplayProvider<HumanEntity, ItemStack> displayProvider) {
+
+        BukkitMenuProvider provider = new BukkitMenuProvider(plugin, displayProvider);
+        BukkitMenuListener listener = new BukkitMenuListener(plugin, provider);
+
+        PluginManager pluginManager = plugin.getServer().getPluginManager();
+        pluginManager.registerEvents(listener, plugin);
+
+        return provider;
+    }
 
     public void trackInstance(@NonNull Inventory inventory, @NonNull BukkitMenuInstance menuInstance) {
         this.knownMenuMap.put(inventory, menuInstance);
@@ -51,21 +66,6 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
 
     public void close(@NonNull HumanEntity viewer) {
         this.plugin.getServer().getScheduler().runTask(this.plugin, viewer::closeInventory);
-    }
-
-    public static BukkitMenuProvider create(@NonNull Plugin plugin) {
-        return create(plugin, new InventoryDisplayProvider());
-    }
-
-    private static BukkitMenuProvider create(@NonNull Plugin plugin, @NonNull DisplayProvider<HumanEntity, ItemStack> displayProvider) {
-
-        BukkitMenuProvider provider = new BukkitMenuProvider(plugin, displayProvider);
-        BukkitMenuListener listener = new BukkitMenuListener(plugin, provider);
-
-        PluginManager pluginManager = plugin.getServer().getPluginManager();
-        pluginManager.registerEvents(listener, plugin);
-
-        return provider;
     }
 
     @Override
@@ -95,10 +95,10 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
 
                 DisplayProvider<HumanEntity, ItemStack> itemDisplayProvider = item.getDisplayProvider();
                 DisplayProvider<HumanEntity, ItemStack> currentDisplayProvider = (itemDisplayProvider != null)
-                        ? itemDisplayProvider
-                        : ((menuDisplayProvider != null)
-                        ? menuDisplayProvider
-                        : this.defaultDisplayProvider);
+                    ? itemDisplayProvider
+                    : ((menuDisplayProvider != null)
+                    ? menuDisplayProvider
+                    : this.defaultDisplayProvider);
 
                 if (providerMap.put(position, currentDisplayProvider) != null) {
                     throw new IllegalArgumentException("item position cannot be overridden: " + position);

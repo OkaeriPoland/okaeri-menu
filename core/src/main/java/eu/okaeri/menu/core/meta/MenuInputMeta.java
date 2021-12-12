@@ -25,8 +25,8 @@ public class MenuInputMeta<V, I> {
     public int[] getPositionAsIntArr() {
         try {
             return Arrays.stream(this.position.split(","))
-                    .mapToInt(Integer::parseInt)
-                    .toArray();
+                .mapToInt(Integer::parseInt)
+                .toArray();
         } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("cannot parse position: " + this.position);
         }

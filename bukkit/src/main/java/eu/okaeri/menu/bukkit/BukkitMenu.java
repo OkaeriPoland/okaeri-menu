@@ -20,6 +20,18 @@ public class BukkitMenu {
     private final Map<Integer, DisplayProvider<HumanEntity, ItemStack>> providerMap;
     private final BukkitMenuProvider menuProvider;
 
+    public static MenuBuilder<HumanEntity, ItemStack> builder() {
+        return new MenuBuilder<>();
+    }
+
+    public static MenuItemBuilder<HumanEntity, ItemStack> item() {
+        return new MenuItemBuilder<>();
+    }
+
+    public static MenuInputBuilder<HumanEntity, ItemStack> input() {
+        return new MenuInputBuilder<>();
+    }
+
     public BukkitMenuInstance createInstance() {
 
         int size = this.meta.getMenuChestSize();
@@ -35,17 +47,5 @@ public class BukkitMenu {
         BukkitMenuInstance menuInstance = this.createInstance().render(viewer);
         viewer.openInventory(menuInstance.getInventory());
         return menuInstance;
-    }
-
-    public static MenuBuilder<HumanEntity, ItemStack> builder() {
-        return new MenuBuilder<>();
-    }
-
-    public static MenuItemBuilder<HumanEntity, ItemStack> item() {
-        return new MenuItemBuilder<>();
-    }
-
-    public static MenuInputBuilder<HumanEntity, ItemStack> input() {
-        return new MenuInputBuilder<>();
     }
 }
