@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -22,17 +23,17 @@ import java.util.Map;
 import java.util.Optional;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, BukkitMenu> {
+public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, ClickType, BukkitMenu> {
 
     private final Plugin plugin;
     private final Map<Inventory, BukkitMenuInstance> knownMenuMap = new HashMap<>();
-    private final DisplayProvider<HumanEntity, ItemStack> defaultDisplayProvider;
+    private final DisplayProvider<HumanEntity, ItemStack, ClickType> defaultDisplayProvider;
 
     public static BukkitMenuProvider create(@NonNull Plugin plugin) {
         return create(plugin, new InventoryDisplayProvider());
     }
 
-    private static BukkitMenuProvider create(@NonNull Plugin plugin, @NonNull DisplayProvider<HumanEntity, ItemStack> displayProvider) {
+    private static BukkitMenuProvider create(@NonNull Plugin plugin, @NonNull DisplayProvider<HumanEntity, ItemStack, ClickType> displayProvider) {
 
         BukkitMenuProvider provider = new BukkitMenuProvider(plugin, displayProvider);
         BukkitMenuListener listener = new BukkitMenuListener(plugin, provider);
@@ -69,17 +70,17 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
     }
 
     @Override
-    public BukkitMenu create(@NonNull MenuMeta<HumanEntity, ItemStack> menu) {
+    public BukkitMenu create(@NonNull MenuMeta<HumanEntity, ItemStack, ClickType> menu) {
 
-        Map<Integer, MenuItemMeta<HumanEntity, ItemStack>> itemMap = new LinkedHashMap<>();
-        Map<Integer, MenuInputMeta<HumanEntity, ItemStack>> inputMap = new LinkedHashMap<>();
-        Map<Integer, DisplayProvider<HumanEntity, ItemStack>> providerMap = new LinkedHashMap<>();
-        DisplayProvider<HumanEntity, ItemStack> menuDisplayProvider = menu.getDisplayProvider();
+        Map<Integer, MenuItemMeta<HumanEntity, ItemStack, ClickType>> itemMap = new LinkedHashMap<>();
+        Map<Integer, MenuInputMeta<HumanEntity, ItemStack, ClickType>> inputMap = new LinkedHashMap<>();
+        Map<Integer, DisplayProvider<HumanEntity, ItemStack, ClickType>> providerMap = new LinkedHashMap<>();
+        DisplayProvider<HumanEntity, ItemStack, ClickType> menuDisplayProvider = menu.getDisplayProvider();
 
         int size = menu.getMenuChestSize();
         int lastPosition = -1;
 
-        for (MenuItemMeta<HumanEntity, ItemStack> item : menu.getItems()) {
+        for (MenuItemMeta<HumanEntity, ItemStack, ClickType> item : menu.getItems()) {
 
             int[] positions = item.getPositionAsIntArr();
 
@@ -93,8 +94,8 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
                     throw new IllegalArgumentException("position cannot be greater than menu size (" + position + " > " + size + ")");
                 }
 
-                DisplayProvider<HumanEntity, ItemStack> itemDisplayProvider = item.getDisplayProvider();
-                DisplayProvider<HumanEntity, ItemStack> currentDisplayProvider = (itemDisplayProvider != null)
+                DisplayProvider<HumanEntity, ItemStack, ClickType> itemDisplayProvider = item.getDisplayProvider();
+                DisplayProvider<HumanEntity, ItemStack, ClickType> currentDisplayProvider = (itemDisplayProvider != null)
                     ? itemDisplayProvider
                     : ((menuDisplayProvider != null)
                     ? menuDisplayProvider
@@ -109,7 +110,7 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
             }
         }
 
-        for (MenuInputMeta<HumanEntity, ItemStack> input : menu.getInputs()) {
+        for (MenuInputMeta<HumanEntity, ItemStack, ClickType> input : menu.getInputs()) {
 
             int[] positions = input.getPositionAsIntArr();
 

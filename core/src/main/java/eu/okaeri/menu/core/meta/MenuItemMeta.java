@@ -14,29 +14,29 @@ import java.util.Arrays;
 
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public class MenuItemMeta<V, I> {
+public class MenuItemMeta<V, I, C> {
 
     private static final MethodHandles.Lookup HANDLE_LOOKUP = MethodHandles.lookup();
     private final String display;
     private final String name;
     private final String position;
     private final String description;
-    private final ClickHandler<V, I> clickHandler;
-    private final DisplayProvider<V, I> displayProvider;
+    private final ClickHandler<V, I, C> clickHandler;
+    private final DisplayProvider<V, I, C> displayProvider;
 
     @SneakyThrows
-    public static <V, I> MenuItemMeta<V, I> of(@NonNull MenuHandler handler, @NonNull Method method) {
+    public static <V, I, C> MenuItemMeta<V, I, C> of(@NonNull MenuHandler handler, @NonNull Method method) {
 
         MenuItem menuItem = method.getAnnotation(MenuItem.class);
         if (menuItem == null) {
             throw new IllegalArgumentException("cannot create MenuItemMeta from method without @MenuItem: " + method);
         }
 
-        @SuppressWarnings("unchecked") DisplayProvider<V, I> displayProvider = (menuItem.displayProvider() == MenuItem.DEFAULT_DISPLAY_PROVIDER.class)
+        @SuppressWarnings("unchecked") DisplayProvider<V, I, C> displayProvider = (menuItem.displayProvider() == MenuItem.DEFAULT_DISPLAY_PROVIDER.class)
             ? null
             : menuItem.displayProvider().newInstance();
 
-        ClickHandler<V, I> clickHandler = new ClickHandler<V, I>() {
+        ClickHandler<V, I, C> clickHandler = new ClickHandler<V, I, C>() {
 
             private boolean resolved = false;
             private int viewerIndex = -1;
@@ -50,7 +50,7 @@ public class MenuItemMeta<V, I> {
 
             @Override
             @SneakyThrows
-            public boolean onClick(@NonNull V viewer, @NonNull MenuItemMeta<V, I> menuItem, I item, int slot) {
+            public boolean onClick(@NonNull V viewer, @NonNull MenuItemMeta<V, I, C> menuItem, I item, int slot, @NonNull C clickType) {
 
                 if (this.resolved) {
                     Object[] call = new Object[this.methodParameterCount];
@@ -81,7 +81,7 @@ public class MenuItemMeta<V, I> {
                 }
 
                 this.resolved = true;
-                return this.onClick(viewer, menuItem, item, slot);
+                return this.onClick(viewer, menuItem, item, slot, clickType);
             }
         };
 

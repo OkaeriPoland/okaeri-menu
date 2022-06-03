@@ -8,10 +8,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
@@ -69,14 +66,14 @@ public class BukkitMenuListener implements Listener {
             ItemStack item = newItem.getValue();
 
             // no input for one of the items
-            MenuInputMeta<HumanEntity, ItemStack> menuInput = menu.getInput(slot);
+            MenuInputMeta<HumanEntity, ItemStack, ClickType> menuInput = menu.getInput(slot);
             if (menuInput == null) {
                 event.setCancelled(true);
                 return;
             }
 
             // allow input if no handler
-            InputHandler<HumanEntity, ItemStack> inputHandler = menuInput.getInputHandler();
+            InputHandler<HumanEntity, ItemStack, ClickType> inputHandler = menuInput.getInputHandler();
             if (inputHandler == null) {
                 continue;
             }
@@ -97,6 +94,7 @@ public class BukkitMenuListener implements Listener {
     public void handleClick(InventoryClickEvent event) {
 
         int slot = event.getSlot();
+        ClickType clickType = event.getClick();
         InventoryAction action = event.getAction();
         Inventory clickedInventory = event.getClickedInventory();
         HumanEntity whoClicked = event.getWhoClicked();
@@ -127,9 +125,9 @@ public class BukkitMenuListener implements Listener {
                 }
 
                 // got it!
-                OutsideClickHandler<HumanEntity, ItemStack> clickHandler = menu.getMeta().getOutsideClickHandler();
+                OutsideClickHandler<HumanEntity, ItemStack, ClickType> clickHandler = menu.getMeta().getOutsideClickHandler();
                 if (clickHandler != null) {
-                    clickHandler.onClick(whoClicked, event.getCursor());
+                    clickHandler.onClick(whoClicked, event.getCursor(), clickType);
                     return;
                 }
             }
@@ -176,14 +174,14 @@ public class BukkitMenuListener implements Listener {
         if ((action == PLACE_ALL) || (action == PLACE_ONE) || (action == PLACE_SOME) || (action == SWAP_WITH_CURSOR)) {
 
             // no input in this slot
-            MenuInputMeta<HumanEntity, ItemStack> menuInput = menu.getInput(slot);
+            MenuInputMeta<HumanEntity, ItemStack, ClickType> menuInput = menu.getInput(slot);
             if (menuInput == null) {
                 event.setCancelled(true);
                 return;
             }
 
             // allow input if no handler
-            InputHandler<HumanEntity, ItemStack> inputHandler = menuInput.getInputHandler();
+            InputHandler<HumanEntity, ItemStack, ClickType> inputHandler = menuInput.getInputHandler();
             if (inputHandler == null) {
                 return;
             }
@@ -200,11 +198,11 @@ public class BukkitMenuListener implements Listener {
         }
 
         // click
-        MenuItemMeta<HumanEntity, ItemStack> menuItem = menu.getItem(slot);
+        MenuItemMeta<HumanEntity, ItemStack, ClickType> menuItem = menu.getItem(slot);
         if (menuItem == null) {
 
             // meta not found, try fallback handler
-            FallbackClickHandler<HumanEntity, ItemStack> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
+            FallbackClickHandler<HumanEntity, ItemStack, ClickType> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
 
             // no handler, just cancel
             if (fallbackClickHandler == null) {
@@ -213,7 +211,7 @@ public class BukkitMenuListener implements Listener {
             }
 
             // true - allow pickup
-            if (fallbackClickHandler.onClick(whoClicked, currentItem, slot)) {
+            if (fallbackClickHandler.onClick(whoClicked, currentItem, slot, clickType)) {
                 return;
             }
 
@@ -222,14 +220,14 @@ public class BukkitMenuListener implements Listener {
             return;
         }
 
-        ClickHandler<HumanEntity, ItemStack> clickHandler = menuItem.getClickHandler();
+        ClickHandler<HumanEntity, ItemStack, ClickType> clickHandler = menuItem.getClickHandler();
         if (clickHandler == null) {
             // meta does not have own click handler, just cancel
             event.setCancelled(true);
             return;
         }
 
-        if (clickHandler.onClick(whoClicked, menuItem, currentItem, slot)) {
+        if (clickHandler.onClick(whoClicked, menuItem, currentItem, slot, clickType)) {
             // true - allow pickup
             return;
         }

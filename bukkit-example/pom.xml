@@ -6,7 +6,7 @@
 
     <groupId>org.example</groupId>
     <artifactId>okaeri-menu-bukkit-example</artifactId>
-    <version>0.0.9</version>
+    <version>0.0.10</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>eu.okaeri</groupId>
             <artifactId>okaeri-menu-bukkit</artifactId>
-            <version>0.0.9</version>
+            <version>0.0.10</version>
         </dependency>
 
         <dependency>

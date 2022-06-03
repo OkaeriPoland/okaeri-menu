@@ -7,59 +7,59 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @NoArgsConstructor
-public class MenuItemBuilder<V, I> {
+public class MenuItemBuilder<V, I, C> {
 
     private String display;
     private String name;
     private String position = "-1";
     private String description;
-    private ClickHandler<V, I> clickHandler;
-    private DisplayProvider<V, I> displayProvider;
+    private ClickHandler<V, I, C> clickHandler;
+    private DisplayProvider<V, I, C> displayProvider;
 
-    public MenuItemBuilder<V, I> display(@NonNull String display) {
+    public MenuItemBuilder<V, I, C> display(@NonNull String display) {
         this.display = display;
         return this;
     }
 
-    public MenuItemBuilder<V, I> name(@NonNull String name) {
+    public MenuItemBuilder<V, I, C> name(@NonNull String name) {
         this.name = name;
         return this;
     }
 
-    public MenuItemBuilder<V, I> position(@NonNull String position) {
+    public MenuItemBuilder<V, I, C> position(@NonNull String position) {
         this.position = position;
         return this;
     }
 
-    public MenuItemBuilder<V, I> position(int position) {
+    public MenuItemBuilder<V, I, C> position(int position) {
         this.position = String.valueOf(position);
         return this;
     }
 
-    public MenuItemBuilder<V, I> description(@NonNull String description) {
+    public MenuItemBuilder<V, I, C> description(@NonNull String description) {
         this.description = description;
         return this;
     }
 
-    public MenuItemBuilder<V, I> clickHandler(@NonNull ClickHandler<V, I> clickHandler) {
+    public MenuItemBuilder<V, I, C> clickHandler(@NonNull ClickHandler<V, I, C> clickHandler) {
         this.clickHandler = clickHandler;
         return this;
     }
 
-    public MenuItemBuilder<V, I> clickHandler(@NonNull SimpleClickHandler<V, I> clickHandler) {
-        this.clickHandler = (viewer, menuItem, item, slot) -> {
-            clickHandler.onClick(viewer, menuItem);
+    public MenuItemBuilder<V, I, C> clickHandler(@NonNull SimpleClickHandler<V, I, C> clickHandler) {
+        this.clickHandler = (viewer, menuItem, item, slot, clickType) -> {
+            clickHandler.onClick(viewer, menuItem, clickType);
             return false;
         };
         return this;
     }
 
-    public MenuItemBuilder<V, I> displayProvider(@NonNull DisplayProvider<V, I> displayProvider) {
+    public MenuItemBuilder<V, I, C> displayProvider(@NonNull DisplayProvider<V, I, C> displayProvider) {
         this.displayProvider = displayProvider;
         return this;
     }
 
-    public MenuItemMeta<V, I> build() {
+    public MenuItemMeta<V, I, C> build() {
         return new MenuItemMeta<>(this.display, this.name, this.position, this.description, this.clickHandler, this.displayProvider);
     }
 }

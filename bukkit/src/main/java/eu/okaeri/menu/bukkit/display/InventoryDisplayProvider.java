@@ -5,6 +5,7 @@ import eu.okaeri.menu.core.meta.MenuItemMeta;
 import lombok.NonNull;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * stone:1 10
  */
-public class InventoryDisplayProvider implements DisplayProvider<HumanEntity, ItemStack> {
+public class InventoryDisplayProvider implements DisplayProvider<HumanEntity, ItemStack, ClickType> {
 
     private static final Map<MenuItemMeta, ItemStack> ITEM_CACHE = new ConcurrentHashMap<>();
 
