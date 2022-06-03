@@ -29,8 +29,8 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
         this.testMenu2 = BukkitMenu.builder()
             .name("Color selector 2")
             .closeHandler((viewer) -> viewer.sendMessage("Closed menu!"))
-            .outsideClickHandler((viewer, cursor) -> viewer.sendMessage("Clicked outside with " + cursor + "!"))
-            .fallbackClickHandler((viewer, item, slot) -> {
+            .outsideClickHandler((viewer, cursor, clickType) -> viewer.sendMessage("Clicked outside with " + cursor + "!"))
+            .fallbackClickHandler((viewer, item, slot, clickType) -> {
                 viewer.sendMessage("clicked " + item + "");
                 return true; // allow pickup from non-static elements (e.g the one from input on position 4)
             })
@@ -38,13 +38,13 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
                 .display("stone")
                 .name("Gray")
                 .position(0)
-                .clickHandler((viewer, item) -> viewer.sendMessage("gray smokes"))
+                .clickHandler((viewer, item, clickType) -> viewer.sendMessage("gray smokes"))
                 .build())
             .item(BukkitMenu.item()
                 .displayProvider(new TestItemProvider())
                 .name("Rainbow")
                 .position(3)
-                .clickHandler((viewer, item) -> viewer.sendMessage("rainbow smokes"))
+                .clickHandler((viewer, item, clickType) -> viewer.sendMessage("rainbow smokes"))
                 .build())
             .input(BukkitMenu.input()
                 .position(4)
@@ -81,13 +81,13 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
                 .displayProvider(new TestItemProvider())
                 .name("Rainbow 2")
                 .position(5)
-                .clickHandler((viewer, item) -> viewer.sendMessage("rainbow 2 smokes"))
+                .clickHandler((viewer, item, clickType) -> viewer.sendMessage("rainbow 2 smokes"))
                 .build())
             .item(BukkitMenu.item()
                 .display("redstone_block")
                 .name("Red")
                 .position(8)
-                .clickHandler((viewer, item) -> viewer.sendMessage("red smokes"))
+                .clickHandler((viewer, item, clickType) -> viewer.sendMessage("red smokes"))
                 .build())
             .build();
 
