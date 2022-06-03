@@ -20,7 +20,7 @@ public class MenuInputBuilder<V, I, C> {
         return this;
     }
 
-    public MenuInputBuilder<V, I, C> inputHandler(@NonNull InputHandler<V, I, C> inputHandler) {
+    public MenuInputBuilder<V, I, C> handle(@NonNull InputHandler<V, I, C> inputHandler) {
         this.inputHandler = inputHandler;
         return this;
     }

@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -15,21 +14,21 @@ import java.util.Map;
 @Data
 public class BukkitMenu {
 
-    private final MenuMeta<HumanEntity, ItemStack, ClickType> meta;
-    private final Map<Integer, MenuItemMeta<HumanEntity, ItemStack, ClickType>> itemMap;
-    private final Map<Integer, MenuInputMeta<HumanEntity, ItemStack, ClickType>> inputMap;
-    private final Map<Integer, DisplayProvider<HumanEntity, ItemStack, ClickType>> providerMap;
+    private final MenuMeta<HumanEntity, ItemStack, BukkitMenuClickContext> meta;
+    private final Map<Integer, MenuItemMeta<HumanEntity, ItemStack, BukkitMenuClickContext>> itemMap;
+    private final Map<Integer, MenuInputMeta<HumanEntity, ItemStack, BukkitMenuClickContext>> inputMap;
+    private final Map<Integer, DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext>> providerMap;
     private final BukkitMenuProvider menuProvider;
 
-    public static MenuBuilder<HumanEntity, ItemStack, ClickType> builder() {
+    public static MenuBuilder<HumanEntity, ItemStack, BukkitMenuClickContext> builder() {
         return new MenuBuilder<>();
     }
 
-    public static MenuItemBuilder<HumanEntity, ItemStack, ClickType> item() {
+    public static MenuItemBuilder<HumanEntity, ItemStack, BukkitMenuClickContext> item() {
         return new MenuItemBuilder<>();
     }
 
-    public static MenuInputBuilder<HumanEntity, ItemStack, ClickType> input() {
+    public static MenuInputBuilder<HumanEntity, ItemStack, BukkitMenuClickContext> input() {
         return new MenuInputBuilder<>();
     }
 

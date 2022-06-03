@@ -1,6 +1,5 @@
 package eu.okaeri.menu.bukkit;
 
-import eu.okaeri.menu.bukkit.display.InventoryDisplayProvider;
 import eu.okaeri.menu.core.MenuProvider;
 import eu.okaeri.menu.core.display.DisplayProvider;
 import eu.okaeri.menu.core.meta.MenuInputMeta;
@@ -10,7 +9,6 @@ import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -23,19 +21,14 @@ import java.util.Map;
 import java.util.Optional;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, ClickType, BukkitMenu> {
+public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, BukkitMenuClickContext, BukkitMenu> {
 
     private final Plugin plugin;
     private final Map<Inventory, BukkitMenuInstance> knownMenuMap = new HashMap<>();
-    private final DisplayProvider<HumanEntity, ItemStack, ClickType> defaultDisplayProvider;
 
     public static BukkitMenuProvider create(@NonNull Plugin plugin) {
-        return create(plugin, new InventoryDisplayProvider());
-    }
 
-    private static BukkitMenuProvider create(@NonNull Plugin plugin, @NonNull DisplayProvider<HumanEntity, ItemStack, ClickType> displayProvider) {
-
-        BukkitMenuProvider provider = new BukkitMenuProvider(plugin, displayProvider);
+        BukkitMenuProvider provider = new BukkitMenuProvider(plugin);
         BukkitMenuListener listener = new BukkitMenuListener(plugin, provider);
 
         PluginManager pluginManager = plugin.getServer().getPluginManager();
@@ -70,17 +63,17 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
     }
 
     @Override
-    public BukkitMenu create(@NonNull MenuMeta<HumanEntity, ItemStack, ClickType> menu) {
+    public BukkitMenu create(@NonNull MenuMeta<HumanEntity, ItemStack, BukkitMenuClickContext> menu) {
 
-        Map<Integer, MenuItemMeta<HumanEntity, ItemStack, ClickType>> itemMap = new LinkedHashMap<>();
-        Map<Integer, MenuInputMeta<HumanEntity, ItemStack, ClickType>> inputMap = new LinkedHashMap<>();
-        Map<Integer, DisplayProvider<HumanEntity, ItemStack, ClickType>> providerMap = new LinkedHashMap<>();
-        DisplayProvider<HumanEntity, ItemStack, ClickType> menuDisplayProvider = menu.getDisplayProvider();
+        Map<Integer, MenuItemMeta<HumanEntity, ItemStack, BukkitMenuClickContext>> itemMap = new LinkedHashMap<>();
+        Map<Integer, MenuInputMeta<HumanEntity, ItemStack, BukkitMenuClickContext>> inputMap = new LinkedHashMap<>();
+        Map<Integer, DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext>> providerMap = new LinkedHashMap<>();
+        DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext> menuDisplayProvider = menu.getDisplayProvider();
 
         int size = menu.getMenuChestSize();
         int lastPosition = -1;
 
-        for (MenuItemMeta<HumanEntity, ItemStack, ClickType> item : menu.getItems()) {
+        for (MenuItemMeta<HumanEntity, ItemStack, BukkitMenuClickContext> item : menu.getItems()) {
 
             int[] positions = item.getPositionAsIntArr();
 
@@ -94,12 +87,14 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
                     throw new IllegalArgumentException("position cannot be greater than menu size (" + position + " > " + size + ")");
                 }
 
-                DisplayProvider<HumanEntity, ItemStack, ClickType> itemDisplayProvider = item.getDisplayProvider();
-                DisplayProvider<HumanEntity, ItemStack, ClickType> currentDisplayProvider = (itemDisplayProvider != null)
+                DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext> itemDisplayProvider = item.getDisplayProvider();
+                DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext> currentDisplayProvider = (itemDisplayProvider != null)
                     ? itemDisplayProvider
-                    : ((menuDisplayProvider != null)
-                    ? menuDisplayProvider
-                    : this.defaultDisplayProvider);
+                    : menuDisplayProvider;
+
+                if (currentDisplayProvider == null) {
+                    throw new IllegalArgumentException("item position does not have a displayProvider: " + position);
+                }
 
                 if (providerMap.put(position, currentDisplayProvider) != null) {
                     throw new IllegalArgumentException("item position cannot be overridden: " + position);
@@ -110,7 +105,7 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
             }
         }
 
-        for (MenuInputMeta<HumanEntity, ItemStack, ClickType> input : menu.getInputs()) {
+        for (MenuInputMeta<HumanEntity, ItemStack, BukkitMenuClickContext> input : menu.getInputs()) {
 
             int[] positions = input.getPositionAsIntArr();
 

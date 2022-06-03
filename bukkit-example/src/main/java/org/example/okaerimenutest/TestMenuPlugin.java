@@ -1,13 +1,14 @@
 package org.example.okaerimenutest;
 
 import eu.okaeri.menu.bukkit.BukkitMenu;
+import eu.okaeri.menu.bukkit.BukkitMenuClickContext;
 import eu.okaeri.menu.bukkit.BukkitMenuInstance;
 import eu.okaeri.menu.bukkit.BukkitMenuProvider;
 import eu.okaeri.menu.core.meta.MenuMeta;
+import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
@@ -17,38 +18,33 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class TestMenuPlugin extends JavaPlugin implements Listener {
 
     private BukkitMenuProvider bukkitMenuProvider;
-    private MenuMeta<HumanEntity, ItemStack, ClickType> testMenu;
-    private MenuMeta<HumanEntity, ItemStack, ClickType> testMenu2;
+    private MenuMeta<HumanEntity, ItemStack, BukkitMenuClickContext> testMenu;
 
     @Override
     public void onEnable() {
 
         this.bukkitMenuProvider = BukkitMenuProvider.create(this);
-        this.testMenu = MenuMeta.of(TestMenu.class);
-
-        this.testMenu2 = BukkitMenu.builder()
+        this.testMenu = BukkitMenu.builder()
             .name("Color selector 2")
-            .closeHandler((viewer) -> viewer.sendMessage("Closed menu!"))
-            .outsideClickHandler((viewer, cursor, clickType) -> viewer.sendMessage("Clicked outside with " + cursor + "!"))
-            .fallbackClickHandler((viewer, item, slot, clickType) -> {
-                viewer.sendMessage("clicked " + item + "");
-                return true; // allow pickup from non-static elements (e.g the one from input on position 4)
+            .close(viewer -> viewer.sendMessage("Closed menu!"))
+            .outsideClick(ctx -> ctx.sendMessage("Clicked outside with " + ctx.getItem() + "!"))
+            .fallbackClick(ctx -> {
+                ctx.sendMessage("clicked " + ctx.getItem() + "");
+                ctx.setAllowPickup(true); // allow pickup from non-static elements (e.g the one from input on position 4)
             })
             .item(BukkitMenu.item()
-                .display("stone")
-                .name("Gray")
+                .display(() -> new ItemStack(Material.STONE))
                 .position(0)
-                .clickHandler((viewer, item, clickType) -> viewer.sendMessage("gray smokes"))
+                .click(ctx -> ctx.sendMessage("gray smokes"))
                 .build())
             .item(BukkitMenu.item()
-                .displayProvider(new TestItemProvider())
-                .name("Rainbow")
+                .display(() -> new ItemStack(Material.WOOD))
                 .position(3)
-                .clickHandler((viewer, item, clickType) -> viewer.sendMessage("rainbow smokes"))
+                .click(ctx -> ctx.sendMessage("rainbow smokes"))
                 .build())
             .input(BukkitMenu.input()
                 .position(4)
-                .inputHandler((viewer, menuInput, cursor, item, slot) -> {
+                .handle((viewer, menuInput, cursor, item, slot) -> {
 
                     // get inventory in this tick
                     InventoryView inventory = viewer.getOpenInventory();
@@ -77,17 +73,14 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
                 })
                 .build())
             .item(BukkitMenu.item()
-                .display("rainbow2")
-                .displayProvider(new TestItemProvider())
-                .name("Rainbow 2")
+                .display(() -> new ItemStack(Material.YELLOW_FLOWER))
                 .position(5)
-                .clickHandler((viewer, item, clickType) -> viewer.sendMessage("rainbow 2 smokes"))
+                .click(ctx -> ctx.sendMessage("rainbow 2 smokes"))
                 .build())
             .item(BukkitMenu.item()
-                .display("redstone_block")
-                .name("Red")
+                .display(() -> new ItemStack(Material.REDSTONE))
                 .position(8)
-                .clickHandler((viewer, item, clickType) -> viewer.sendMessage("red smokes"))
+                .click(ctx -> ctx.sendMessage("red smokes"))
                 .build())
             .build();
 
@@ -102,16 +95,12 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
             return;
         }
 
-        MenuMeta<HumanEntity, ItemStack, ClickType> menu = message.contains("gui2")
-            ? this.testMenu2
-            : this.testMenu;
-
         // compute async (normally not required in async events
-        // but we want to free chat thread pool for non-chat work)
+        // but we want to free chat thread pool from non-chat work)
         this.getServer().getScheduler().runTask(this, () -> {
 
             // compute
-            BukkitMenu createdInstance = this.bukkitMenuProvider.create(menu);
+            BukkitMenu createdInstance = this.bukkitMenuProvider.create(this.testMenu);
 
             // open sync
             this.getServer().getScheduler().runTask(this, () -> {

@@ -66,14 +66,14 @@ public class BukkitMenuListener implements Listener {
             ItemStack item = newItem.getValue();
 
             // no input for one of the items
-            MenuInputMeta<HumanEntity, ItemStack, ClickType> menuInput = menu.getInput(slot);
+            MenuInputMeta<HumanEntity, ItemStack, BukkitMenuClickContext> menuInput = menu.getInput(slot);
             if (menuInput == null) {
                 event.setCancelled(true);
                 return;
             }
 
             // allow input if no handler
-            InputHandler<HumanEntity, ItemStack, ClickType> inputHandler = menuInput.getInputHandler();
+            InputHandler<HumanEntity, ItemStack, BukkitMenuClickContext> inputHandler = menuInput.getInputHandler();
             if (inputHandler == null) {
                 continue;
             }
@@ -125,9 +125,9 @@ public class BukkitMenuListener implements Listener {
                 }
 
                 // got it!
-                OutsideClickHandler<HumanEntity, ItemStack, ClickType> clickHandler = menu.getMeta().getOutsideClickHandler();
+                ClickHandler<HumanEntity, ItemStack, BukkitMenuClickContext> clickHandler = menu.getMeta().getOutsideClickHandler();
                 if (clickHandler != null) {
-                    clickHandler.onClick(whoClicked, event.getCursor(), clickType);
+                    clickHandler.onClick(BukkitMenuClickContext.of(whoClicked, event.getCursor(), clickType));
                     return;
                 }
             }
@@ -174,14 +174,14 @@ public class BukkitMenuListener implements Listener {
         if ((action == PLACE_ALL) || (action == PLACE_ONE) || (action == PLACE_SOME) || (action == SWAP_WITH_CURSOR)) {
 
             // no input in this slot
-            MenuInputMeta<HumanEntity, ItemStack, ClickType> menuInput = menu.getInput(slot);
+            MenuInputMeta<HumanEntity, ItemStack, BukkitMenuClickContext> menuInput = menu.getInput(slot);
             if (menuInput == null) {
                 event.setCancelled(true);
                 return;
             }
 
             // allow input if no handler
-            InputHandler<HumanEntity, ItemStack, ClickType> inputHandler = menuInput.getInputHandler();
+            InputHandler<HumanEntity, ItemStack, BukkitMenuClickContext> inputHandler = menuInput.getInputHandler();
             if (inputHandler == null) {
                 return;
             }
@@ -198,11 +198,11 @@ public class BukkitMenuListener implements Listener {
         }
 
         // click
-        MenuItemMeta<HumanEntity, ItemStack, ClickType> menuItem = menu.getItem(slot);
+        MenuItemMeta<HumanEntity, ItemStack, BukkitMenuClickContext> menuItem = menu.getItem(slot);
         if (menuItem == null) {
 
             // meta not found, try fallback handler
-            FallbackClickHandler<HumanEntity, ItemStack, ClickType> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
+            ClickHandler<HumanEntity, ItemStack, BukkitMenuClickContext> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
 
             // no handler, just cancel
             if (fallbackClickHandler == null) {
@@ -211,7 +211,9 @@ public class BukkitMenuListener implements Listener {
             }
 
             // true - allow pickup
-            if (fallbackClickHandler.onClick(whoClicked, currentItem, slot, clickType)) {
+            BukkitMenuClickContext context = BukkitMenuClickContext.of(whoClicked, null, currentItem, slot, clickType);
+            fallbackClickHandler.onClick(context);
+            if (context.isAllowPickup()) {
                 return;
             }
 
@@ -220,14 +222,16 @@ public class BukkitMenuListener implements Listener {
             return;
         }
 
-        ClickHandler<HumanEntity, ItemStack, ClickType> clickHandler = menuItem.getClickHandler();
+        ClickHandler<HumanEntity, ItemStack, BukkitMenuClickContext> clickHandler = menuItem.getClickHandler();
         if (clickHandler == null) {
             // meta does not have own click handler, just cancel
             event.setCancelled(true);
             return;
         }
 
-        if (clickHandler.onClick(whoClicked, menuItem, currentItem, slot, clickType)) {
+        BukkitMenuClickContext context = BukkitMenuClickContext.of(whoClicked, menuItem, currentItem, slot, clickType);
+        clickHandler.onClick(context);
+        if (context.isAllowPickup()) {
             // true - allow pickup
             return;
         }
