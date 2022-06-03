@@ -17,55 +17,55 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @NoArgsConstructor
-public class MenuBuilder<V, I> {
+public class MenuBuilder<V, I, C> {
 
     private String name;
     private String rows = "-1";
 
-    private DisplayProvider<V, I> displayProvider;
-    private List<MenuItemMeta<V, I>> items = new ArrayList<>();
-    private List<MenuInputMeta<V, I>> inputs = new ArrayList<>();
+    private DisplayProvider<V, I, C> displayProvider;
+    private List<MenuItemMeta<V, I, C>> items = new ArrayList<>();
+    private List<MenuInputMeta<V, I, C>> inputs = new ArrayList<>();
 
-    private OutsideClickHandler<V, I> outsideClickHandler;
-    private FallbackClickHandler<V, I> fallbackClickHandler;
+    private OutsideClickHandler<V, I, C> outsideClickHandler;
+    private FallbackClickHandler<V, I, C> fallbackClickHandler;
     private CloseHandler<V> closeHandler;
 
-    public MenuBuilder<V, I> name(@NonNull String name) {
+    public MenuBuilder<V, I, C> name(@NonNull String name) {
         this.name = name;
         return this;
     }
 
-    public MenuBuilder<V, I> rows(@NonNull String rows) {
+    public MenuBuilder<V, I, C> rows(@NonNull String rows) {
         this.rows = rows;
         return this;
     }
 
-    public MenuBuilder<V, I> rows(int rows) {
+    public MenuBuilder<V, I, C> rows(int rows) {
         this.rows = String.valueOf(rows);
         return this;
     }
 
-    public MenuBuilder<V, I> displayProvider(@NonNull DisplayProvider<V, I> displayProvider) {
+    public MenuBuilder<V, I, C> displayProvider(@NonNull DisplayProvider<V, I, C> displayProvider) {
         this.displayProvider = displayProvider;
         return this;
     }
 
-    public MenuBuilder<V, I> items(@NonNull Iterable<MenuItemMeta<V, I>> items) {
+    public MenuBuilder<V, I, C> items(@NonNull Iterable<MenuItemMeta<V, I, C>> items) {
         return this.items(items, false);
     }
 
-    public MenuBuilder<V, I> items(@NonNull Stream<MenuItemMeta<V, I>> stream) {
+    public MenuBuilder<V, I, C> items(@NonNull Stream<MenuItemMeta<V, I, C>> stream) {
         return this.items(stream.collect(Collectors.toList()), false);
     }
 
-    public MenuBuilder<V, I> items(@NonNull Iterable<MenuItemMeta<V, I>> items, boolean replace) {
+    public MenuBuilder<V, I, C> items(@NonNull Iterable<MenuItemMeta<V, I, C>> items, boolean replace) {
 
-        List<MenuItemMeta<V, I>> list;
+        List<MenuItemMeta<V, I, C>> list;
         if (items instanceof List) {
-            list = (List<MenuItemMeta<V, I>>) items;
+            list = (List<MenuItemMeta<V, I, C>>) items;
         } else {
             list = new ArrayList<>();
-            Iterator<MenuItemMeta<V, I>> iterator = items.iterator();
+            Iterator<MenuItemMeta<V, I, C>> iterator = items.iterator();
             iterator.forEachRemaining(list::add);
         }
 
@@ -78,35 +78,35 @@ public class MenuBuilder<V, I> {
         return this;
     }
 
-    public <A> MenuBuilder<V, I> items(@NonNull Iterable<A> iterable, @NonNull Function<A, MenuItemBuilder<V, I>> function) {
+    public <A> MenuBuilder<V, I, C> items(@NonNull Iterable<A> iterable, @NonNull Function<A, MenuItemBuilder<V, I, C>> function) {
         return this.items(StreamSupport.stream(iterable.spliterator(), false), function);
     }
 
-    public <A> MenuBuilder<V, I> items(@NonNull Stream<A> stream, @NonNull Function<A, MenuItemBuilder<V, I>> function) {
+    public <A> MenuBuilder<V, I, C> items(@NonNull Stream<A> stream, @NonNull Function<A, MenuItemBuilder<V, I, C>> function) {
         return this.items(stream.map(function).map(MenuItemBuilder::build).collect(Collectors.toList()), false);
     }
 
-    public MenuBuilder<V, I> item(@NonNull MenuItemMeta<V, I> item) {
+    public MenuBuilder<V, I, C> item(@NonNull MenuItemMeta<V, I, C> item) {
         this.items.add(item);
         return this;
     }
 
-    public MenuBuilder<V, I> inputs(@NonNull Iterable<MenuInputMeta<V, I>> inputs) {
+    public MenuBuilder<V, I, C> inputs(@NonNull Iterable<MenuInputMeta<V, I, C>> inputs) {
         return this.inputs(inputs, false);
     }
 
-    public MenuBuilder<V, I> inputs(@NonNull Stream<MenuInputMeta<V, I>> stream) {
+    public MenuBuilder<V, I, C> inputs(@NonNull Stream<MenuInputMeta<V, I, C>> stream) {
         return this.inputs(stream.collect(Collectors.toList()), false);
     }
 
-    public MenuBuilder<V, I> inputs(@NonNull Iterable<MenuInputMeta<V, I>> inputs, boolean replace) {
+    public MenuBuilder<V, I, C> inputs(@NonNull Iterable<MenuInputMeta<V, I, C>> inputs, boolean replace) {
 
-        List<MenuInputMeta<V, I>> list;
+        List<MenuInputMeta<V, I, C>> list;
         if (inputs instanceof List) {
-            list = (List<MenuInputMeta<V, I>>) inputs;
+            list = (List<MenuInputMeta<V, I, C>>) inputs;
         } else {
             list = new ArrayList<>();
-            Iterator<MenuInputMeta<V, I>> iterator = inputs.iterator();
+            Iterator<MenuInputMeta<V, I, C>> iterator = inputs.iterator();
             iterator.forEachRemaining(list::add);
         }
 
@@ -119,35 +119,35 @@ public class MenuBuilder<V, I> {
         return this;
     }
 
-    public <A> MenuBuilder<V, I> inputs(@NonNull Iterable<A> iterable, Function<A, MenuInputBuilder<V, I>> function) {
+    public <A> MenuBuilder<V, I, C> inputs(@NonNull Iterable<A> iterable, Function<A, MenuInputBuilder<V, I, C>> function) {
         return this.inputs(StreamSupport.stream(iterable.spliterator(), false), function);
     }
 
-    public <A> MenuBuilder<V, I> inputs(@NonNull Stream<A> stream, Function<A, MenuInputBuilder<V, I>> function) {
+    public <A> MenuBuilder<V, I, C> inputs(@NonNull Stream<A> stream, Function<A, MenuInputBuilder<V, I, C>> function) {
         return this.inputs(stream.map(function).map(MenuInputBuilder::build).collect(Collectors.toList()), false);
     }
 
-    public MenuBuilder<V, I> input(@NonNull MenuInputMeta<V, I> input) {
+    public MenuBuilder<V, I, C> input(@NonNull MenuInputMeta<V, I, C> input) {
         this.inputs.add(input);
         return this;
     }
 
-    public MenuBuilder<V, I> outsideClickHandler(@NonNull OutsideClickHandler<V, I> outsideClickHandler) {
+    public MenuBuilder<V, I, C> outsideClickHandler(@NonNull OutsideClickHandler<V, I, C> outsideClickHandler) {
         this.outsideClickHandler = outsideClickHandler;
         return this;
     }
 
-    public MenuBuilder<V, I> fallbackClickHandler(@NonNull FallbackClickHandler<V, I> fallbackClickHandler) {
+    public MenuBuilder<V, I, C> fallbackClickHandler(@NonNull FallbackClickHandler<V, I, C> fallbackClickHandler) {
         this.fallbackClickHandler = fallbackClickHandler;
         return this;
     }
 
-    public MenuBuilder<V, I> closeHandler(@NonNull CloseHandler<V> closeHandler) {
+    public MenuBuilder<V, I, C> closeHandler(@NonNull CloseHandler<V> closeHandler) {
         this.closeHandler = closeHandler;
         return this;
     }
 
-    public MenuMeta<V, I> build() {
+    public MenuMeta<V, I, C> build() {
         return new MenuMeta<>(
             this.name,
             this.rows,

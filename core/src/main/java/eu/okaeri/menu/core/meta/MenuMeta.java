@@ -16,45 +16,45 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public class MenuMeta<V, I> {
+public class MenuMeta<V, I, C> {
 
     @Getter private final String name;
     @Getter private final String rows;
-    @Getter private final DisplayProvider<V, I> displayProvider;
-    @Getter private final List<MenuItemMeta<V, I>> items;
-    @Getter private final List<MenuInputMeta<V, I>> inputs;
-    @Getter private final OutsideClickHandler<V, I> outsideClickHandler;
-    @Getter private final FallbackClickHandler<V, I> fallbackClickHandler;
+    @Getter private final DisplayProvider<V, I, C> displayProvider;
+    @Getter private final List<MenuItemMeta<V, I, C>> items;
+    @Getter private final List<MenuInputMeta<V, I, C>> inputs;
+    @Getter private final OutsideClickHandler<V, I, C> outsideClickHandler;
+    @Getter private final FallbackClickHandler<V, I, C> fallbackClickHandler;
     @Getter private final CloseHandler<V> closeHandler;
     private Integer menuChestSizeCache = null;
 
     @SneakyThrows
-    public static <V, I, H extends MenuHandler> MenuMeta<V, I> of(@NonNull Class<H> clazz) {
+    public static <V, I, C, H extends MenuHandler> MenuMeta<V, I, C> of(@NonNull Class<H> clazz) {
         return of(clazz, clazz.newInstance());
     }
 
     @SneakyThrows
-    public static <V, I, H extends MenuHandler> MenuMeta<V, I> of(@NonNull Class<H> clazz, @NonNull H handler) {
+    public static <V, I, C, H extends MenuHandler> MenuMeta<V, I, C> of(@NonNull Class<H> clazz, @NonNull H handler) {
 
         Menu menu = clazz.getAnnotation(Menu.class);
         if (menu == null) {
             throw new IllegalArgumentException("cannot create MenuMeta from class without @Menu: " + clazz);
         }
 
-        @SuppressWarnings("unchecked") DisplayProvider<V, I> displayProvider = (menu.displayProvider() == Menu.DEFAULT_DISPLAY_PROVIDER.class)
+        @SuppressWarnings("unchecked") DisplayProvider<V, I, C> displayProvider = (menu.displayProvider() == Menu.DEFAULT_DISPLAY_PROVIDER.class)
             ? null :
             menu.displayProvider().newInstance();
 
-        List<MenuItemMeta<V, I>> items = Arrays.stream(clazz.getDeclaredMethods())
+        List<MenuItemMeta<V, I, C>> items = Arrays.stream(clazz.getDeclaredMethods())
             .filter(method -> method.getAnnotation(MenuItem.class) != null)
-            .map(method -> MenuItemMeta.<V, I>of(handler, method))
+            .map(method -> MenuItemMeta.<V, I, C>of(handler, method))
             .collect(Collectors.toList());
 
         // TODO: find inputs
-        List<MenuInputMeta<V, I>> inputs = new ArrayList<>();
+        List<MenuInputMeta<V, I, C>> inputs = new ArrayList<>();
 
         // TODO: find methods for handling outsideClickHandler/fallbackClickHandler/...
-        return new MenuMeta<V, I>(
+        return new MenuMeta<V, I, C>(
             menu.name(),
             menu.rows(),
             displayProvider,

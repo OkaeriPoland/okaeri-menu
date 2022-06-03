@@ -8,7 +8,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-public class TestItemProvider implements DisplayProvider<HumanEntity, ItemStack> {
+public class TestItemProvider implements DisplayProvider<HumanEntity, ItemStack, ClickType> {
 
     @Override
     public ItemStack displayFor(HumanEntity viewer, MenuItemMeta menuItem) {

@@ -9,10 +9,10 @@ import java.util.Arrays;
 
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public class MenuInputMeta<V, I> {
+public class MenuInputMeta<V, I, C> {
 
     private final String position;
-    private final InputHandler<V, I> inputHandler;
+    private final InputHandler<V, I, C> inputHandler;
 
     public int getPositionAsInt() {
         try {

@@ -6,6 +6,7 @@ import eu.okaeri.menu.core.meta.MenuItemMeta;
 import eu.okaeri.menu.core.meta.MenuMeta;
 import lombok.Data;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -15,19 +16,19 @@ public class BukkitMenuInstance {
     private final Inventory inventory;
     private final BukkitMenu menu;
 
-    public MenuMeta<HumanEntity, ItemStack> getMeta() {
+    public MenuMeta<HumanEntity, ItemStack, ClickType> getMeta() {
         return this.getMenu().getMeta();
     }
 
-    public MenuItemMeta<HumanEntity, ItemStack> getItem(int slot) {
+    public MenuItemMeta<HumanEntity, ItemStack, ClickType> getItem(int slot) {
         return this.getMenu().getItemMap().get(slot);
     }
 
-    public DisplayProvider<HumanEntity, ItemStack> getProvider(int slot) {
+    public DisplayProvider<HumanEntity, ItemStack, ClickType> getProvider(int slot) {
         return this.getMenu().getProviderMap().get(slot);
     }
 
-    public MenuInputMeta<HumanEntity, ItemStack> getInput(int slot) {
+    public MenuInputMeta<HumanEntity, ItemStack, ClickType> getInput(int slot) {
         return this.getMenu().getInputMap().get(slot);
     }
 

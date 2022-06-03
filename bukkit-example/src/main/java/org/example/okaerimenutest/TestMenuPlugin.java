@@ -7,6 +7,7 @@ import eu.okaeri.menu.core.meta.MenuMeta;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
@@ -16,8 +17,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class TestMenuPlugin extends JavaPlugin implements Listener {
 
     private BukkitMenuProvider bukkitMenuProvider;
-    private MenuMeta<HumanEntity, ItemStack> testMenu;
-    private MenuMeta<HumanEntity, ItemStack> testMenu2;
+    private MenuMeta<HumanEntity, ItemStack, ClickType> testMenu;
+    private MenuMeta<HumanEntity, ItemStack, ClickType> testMenu2;
 
     @Override
     public void onEnable() {
@@ -101,7 +102,7 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
             return;
         }
 
-        MenuMeta<HumanEntity, ItemStack> menu = message.contains("gui2")
+        MenuMeta<HumanEntity, ItemStack, ClickType> menu = message.contains("gui2")
             ? this.testMenu2
             : this.testMenu;
 
