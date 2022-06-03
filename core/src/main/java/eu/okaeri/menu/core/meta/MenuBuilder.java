@@ -1,9 +1,8 @@
 package eu.okaeri.menu.core.meta;
 
 import eu.okaeri.menu.core.display.DisplayProvider;
+import eu.okaeri.menu.core.handler.ClickHandler;
 import eu.okaeri.menu.core.handler.CloseHandler;
-import eu.okaeri.menu.core.handler.FallbackClickHandler;
-import eu.okaeri.menu.core.handler.OutsideClickHandler;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
@@ -26,8 +25,8 @@ public class MenuBuilder<V, I, C> {
     private List<MenuItemMeta<V, I, C>> items = new ArrayList<>();
     private List<MenuInputMeta<V, I, C>> inputs = new ArrayList<>();
 
-    private OutsideClickHandler<V, I, C> outsideClickHandler;
-    private FallbackClickHandler<V, I, C> fallbackClickHandler;
+    private ClickHandler<V, I, C> outsideClickHandler;
+    private ClickHandler<V, I, C> fallbackClickHandler;
     private CloseHandler<V> closeHandler;
 
     public MenuBuilder<V, I, C> name(@NonNull String name) {
@@ -132,17 +131,17 @@ public class MenuBuilder<V, I, C> {
         return this;
     }
 
-    public MenuBuilder<V, I, C> outsideClickHandler(@NonNull OutsideClickHandler<V, I, C> outsideClickHandler) {
+    public MenuBuilder<V, I, C> outsideClick(@NonNull ClickHandler<V, I, C> outsideClickHandler) {
         this.outsideClickHandler = outsideClickHandler;
         return this;
     }
 
-    public MenuBuilder<V, I, C> fallbackClickHandler(@NonNull FallbackClickHandler<V, I, C> fallbackClickHandler) {
+    public MenuBuilder<V, I, C> fallbackClick(@NonNull ClickHandler<V, I, C> fallbackClickHandler) {
         this.fallbackClickHandler = fallbackClickHandler;
         return this;
     }
 
-    public MenuBuilder<V, I, C> closeHandler(@NonNull CloseHandler<V> closeHandler) {
+    public MenuBuilder<V, I, C> close(@NonNull CloseHandler<V> closeHandler) {
         this.closeHandler = closeHandler;
         return this;
     }
