@@ -15,19 +15,19 @@ public class BukkitMenuInstance {
     private final Inventory inventory;
     private final BukkitMenu menu;
 
-    public MenuMeta<HumanEntity, ItemStack, BukkitMenuClickContext> getMeta() {
+    public MenuMeta<HumanEntity, ItemStack, BukkitMenuContext> getMeta() {
         return this.getMenu().getMeta();
     }
 
-    public MenuItemMeta<HumanEntity, ItemStack, BukkitMenuClickContext> getItem(int slot) {
+    public MenuItemMeta<HumanEntity, ItemStack, BukkitMenuContext> getItem(int slot) {
         return this.getMenu().getItemMap().get(slot);
     }
 
-    public DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext> getProvider(int slot) {
+    public DisplayProvider<HumanEntity, ItemStack, BukkitMenuContext> getProvider(int slot) {
         return this.getMenu().getProviderMap().get(slot);
     }
 
-    public MenuInputMeta<HumanEntity, ItemStack, BukkitMenuClickContext> getInput(int slot) {
+    public MenuInputMeta<HumanEntity, ItemStack, BukkitMenuContext> getInput(int slot) {
         return this.getMenu().getInputMap().get(slot);
     }
 

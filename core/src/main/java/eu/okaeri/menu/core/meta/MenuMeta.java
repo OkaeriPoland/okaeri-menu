@@ -43,6 +43,9 @@ public class MenuMeta<V, I, C> {
                 .flatMapToInt(meta -> Arrays.stream(meta.getPositionAsIntArr()))
                 .max()
                 .orElse(9);
+            if (maxPosition == -1) {
+                maxPosition = this.items.size();
+            }
             size = (int) (9d * (Math.ceil(Math.abs((double) maxPosition / 9d))));
         }
 
