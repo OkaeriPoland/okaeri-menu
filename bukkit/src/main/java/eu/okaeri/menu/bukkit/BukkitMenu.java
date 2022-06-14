@@ -9,27 +9,57 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Data
 public class BukkitMenu {
 
-    private final MenuMeta<HumanEntity, ItemStack, BukkitMenuClickContext> meta;
-    private final Map<Integer, MenuItemMeta<HumanEntity, ItemStack, BukkitMenuClickContext>> itemMap;
-    private final Map<Integer, MenuInputMeta<HumanEntity, ItemStack, BukkitMenuClickContext>> inputMap;
-    private final Map<Integer, DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext>> providerMap;
+    private final MenuMeta<HumanEntity, ItemStack, BukkitMenuContext> meta;
+    private final Map<Integer, MenuItemMeta<HumanEntity, ItemStack, BukkitMenuContext>> itemMap;
+    private final Map<Integer, MenuInputMeta<HumanEntity, ItemStack, BukkitMenuContext>> inputMap;
+    private final Map<Integer, DisplayProvider<HumanEntity, ItemStack, BukkitMenuContext>> providerMap;
     private final BukkitMenuProvider menuProvider;
 
-    public static MenuBuilder<HumanEntity, ItemStack, BukkitMenuClickContext> builder() {
+    public static MenuBuilder<HumanEntity, ItemStack, BukkitMenuContext> builder() {
         return new MenuBuilder<>();
     }
 
-    public static MenuItemBuilder<HumanEntity, ItemStack, BukkitMenuClickContext> item() {
+    public static MenuItemBuilder<HumanEntity, ItemStack, BukkitMenuContext> item() {
         return new MenuItemBuilder<>();
     }
 
-    public static MenuInputBuilder<HumanEntity, ItemStack, BukkitMenuClickContext> input() {
+    public static MenuInputBuilder<HumanEntity, ItemStack, BukkitMenuContext> input() {
         return new MenuInputBuilder<>();
+    }
+
+    public static MenuMeta<HumanEntity, ItemStack, BukkitMenuContext> editor(@NonNull List<ItemStack> stacks, String name, @NonNull Consumer<List<ItemStack>> callback) {
+
+        if (stacks.size() > (6 * 9)) {
+            throw new IllegalArgumentException("Stacks is too large for the 6 row editor (size: " + stacks + ")");
+        }
+
+        return BukkitMenu.builder()
+            .rows(6)
+            .name(name)
+            .items(stacks.stream()
+                .map(item -> BukkitMenu.item()
+                    .display(() -> item)
+                    .click(ctx -> ctx.setAllowPickup(true))
+                    .build()))
+            .close(humanEntity -> {
+                ItemStack[] contents = humanEntity.getOpenInventory().getTopInventory().getContents();
+                callback.accept(Arrays.stream(contents).filter(Objects::nonNull).collect(Collectors.toList()));
+            })
+            .fallbackClick(ctx -> {
+                ctx.setAllowInput(true);
+                ctx.setAllowPickup(true);
+            })
+            .build();
     }
 
     public BukkitMenuInstance createInstance() {

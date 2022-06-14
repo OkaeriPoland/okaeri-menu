@@ -1,7 +1,7 @@
 package org.example.okaerimenutest;
 
 import eu.okaeri.menu.bukkit.BukkitMenu;
-import eu.okaeri.menu.bukkit.BukkitMenuClickContext;
+import eu.okaeri.menu.bukkit.BukkitMenuContext;
 import eu.okaeri.menu.bukkit.BukkitMenuInstance;
 import eu.okaeri.menu.bukkit.BukkitMenuProvider;
 import eu.okaeri.menu.core.meta.MenuMeta;
@@ -18,7 +18,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class TestMenuPlugin extends JavaPlugin implements Listener {
 
     private BukkitMenuProvider bukkitMenuProvider;
-    private MenuMeta<HumanEntity, ItemStack, BukkitMenuClickContext> testMenu;
+    private MenuMeta<HumanEntity, ItemStack, BukkitMenuContext> testMenu;
 
     @Override
     public void onEnable() {

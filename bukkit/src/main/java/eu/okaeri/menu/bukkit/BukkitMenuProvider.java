@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, BukkitMenuClickContext, BukkitMenu> {
+public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, BukkitMenuContext, BukkitMenu> {
 
     private final Plugin plugin;
     private final Map<Inventory, BukkitMenuInstance> knownMenuMap = new HashMap<>();
@@ -63,17 +63,17 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
     }
 
     @Override
-    public BukkitMenu create(@NonNull MenuMeta<HumanEntity, ItemStack, BukkitMenuClickContext> menu) {
+    public BukkitMenu create(@NonNull MenuMeta<HumanEntity, ItemStack, BukkitMenuContext> menu) {
 
-        Map<Integer, MenuItemMeta<HumanEntity, ItemStack, BukkitMenuClickContext>> itemMap = new LinkedHashMap<>();
-        Map<Integer, MenuInputMeta<HumanEntity, ItemStack, BukkitMenuClickContext>> inputMap = new LinkedHashMap<>();
-        Map<Integer, DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext>> providerMap = new LinkedHashMap<>();
-        DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext> menuDisplayProvider = menu.getDisplayProvider();
+        Map<Integer, MenuItemMeta<HumanEntity, ItemStack, BukkitMenuContext>> itemMap = new LinkedHashMap<>();
+        Map<Integer, MenuInputMeta<HumanEntity, ItemStack, BukkitMenuContext>> inputMap = new LinkedHashMap<>();
+        Map<Integer, DisplayProvider<HumanEntity, ItemStack, BukkitMenuContext>> providerMap = new LinkedHashMap<>();
+        DisplayProvider<HumanEntity, ItemStack, BukkitMenuContext> menuDisplayProvider = menu.getDisplayProvider();
 
         int size = menu.getMenuChestSize();
         int lastPosition = -1;
 
-        for (MenuItemMeta<HumanEntity, ItemStack, BukkitMenuClickContext> item : menu.getItems()) {
+        for (MenuItemMeta<HumanEntity, ItemStack, BukkitMenuContext> item : menu.getItems()) {
 
             int[] positions = item.getPositionAsIntArr();
 
@@ -87,8 +87,8 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
                     throw new IllegalArgumentException("position cannot be greater than menu size (" + position + " > " + size + ")");
                 }
 
-                DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext> itemDisplayProvider = item.getDisplayProvider();
-                DisplayProvider<HumanEntity, ItemStack, BukkitMenuClickContext> currentDisplayProvider = (itemDisplayProvider != null)
+                DisplayProvider<HumanEntity, ItemStack, BukkitMenuContext> itemDisplayProvider = item.getDisplayProvider();
+                DisplayProvider<HumanEntity, ItemStack, BukkitMenuContext> currentDisplayProvider = (itemDisplayProvider != null)
                     ? itemDisplayProvider
                     : menuDisplayProvider;
 
@@ -105,7 +105,7 @@ public class BukkitMenuProvider implements MenuProvider<HumanEntity, ItemStack, 
             }
         }
 
-        for (MenuInputMeta<HumanEntity, ItemStack, BukkitMenuClickContext> input : menu.getInputs()) {
+        for (MenuInputMeta<HumanEntity, ItemStack, BukkitMenuContext> input : menu.getInputs()) {
 
             int[] positions = input.getPositionAsIntArr();
 
