@@ -20,7 +20,7 @@ public class MenuMeta<V, I, C> {
     @Getter private final List<MenuInputMeta<V, I, C>> inputs;
     @Getter private final ClickHandler<V, I, C> outsideClickHandler;
     @Getter private final ClickHandler<V, I, C> fallbackClickHandler;
-    @Getter private final CloseHandler<V> closeHandler;
+    @Getter private final CloseHandler<V, C> closeHandler;
     private Integer menuChestSizeCache = null;
 
     public int getRowsAsInt() {

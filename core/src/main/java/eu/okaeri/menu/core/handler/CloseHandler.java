@@ -2,6 +2,6 @@ package eu.okaeri.menu.core.handler;
 
 import lombok.NonNull;
 
-public interface CloseHandler<V> {
-    void onClose(@NonNull V viewer);
+public interface CloseHandler<V, C> {
+    void onClose(@NonNull C ctx);
 }

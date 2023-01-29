@@ -5,6 +5,7 @@ import eu.okaeri.menu.core.meta.*;
 import lombok.Data;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -51,10 +52,10 @@ public class BukkitMenu {
                     .display(() -> item)
                     .click(ctx -> ctx.setAllowPickup(true))
                     .build()))
-            .close(humanEntity -> {
-                ItemStack[] contents = humanEntity.getOpenInventory().getTopInventory().getContents();
-                callback.accept(Arrays.stream(contents).filter(Objects::nonNull).collect(Collectors.toList()));
-            })
+            .close(ctx -> callback.accept(Arrays.stream(ctx.getInventory().getContents())
+                .filter(Objects::nonNull)
+                .filter(item -> (item.getType() != Material.AIR) && !item.getType().name().contains("_AIR"))
+                .collect(Collectors.toList())))
             .fallbackClick(ctx -> {
                 ctx.setAllowInput(true);
                 ctx.setAllowPickup(true);
