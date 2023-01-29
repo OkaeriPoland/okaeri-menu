@@ -27,7 +27,7 @@ public class MenuBuilder<V, I, C> {
 
     private ClickHandler<V, I, C> outsideClickHandler;
     private ClickHandler<V, I, C> fallbackClickHandler;
-    private CloseHandler<V> closeHandler;
+    private CloseHandler<V, C> closeHandler;
 
     public MenuBuilder<V, I, C> name(@NonNull String name) {
         this.name = name;
@@ -141,7 +141,7 @@ public class MenuBuilder<V, I, C> {
         return this;
     }
 
-    public MenuBuilder<V, I, C> close(@NonNull CloseHandler<V> closeHandler) {
+    public MenuBuilder<V, I, C> close(@NonNull CloseHandler<V, C> closeHandler) {
         this.closeHandler = closeHandler;
         return this;
     }

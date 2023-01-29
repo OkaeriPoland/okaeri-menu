@@ -81,7 +81,8 @@ public class BukkitMenuListener implements Listener {
                 // build context
                 BukkitMenuContext context = BukkitMenuContext.builder()
                     .action(BukkitMenuContext.Action.INPUT)
-                    .whoClicked(whoClicked)
+                    .inventory(inventory)
+                    .doer(whoClicked)
                     .cursor(cursor)
                     .item(item)
                     .slot(slot)
@@ -155,7 +156,8 @@ public class BukkitMenuListener implements Listener {
                 if (clickHandler != null) {
                     BukkitMenuContext context = BukkitMenuContext.builder()
                         .action(BukkitMenuContext.Action.PICKUP)
-                        .whoClicked(whoClicked)
+                        .inventory(topInventory)
+                        .doer(whoClicked)
                         .item(event.getCursor())
                         .slot(slot)
                         .clickType(clickType)
@@ -222,7 +224,8 @@ public class BukkitMenuListener implements Listener {
                 // build context
                 BukkitMenuContext context = BukkitMenuContext.builder()
                     .action(BukkitMenuContext.Action.INPUT)
-                    .whoClicked(whoClicked)
+                    .inventory(clickedInventory)
+                    .doer(whoClicked)
                     .item(currentItem)
                     .slot(slot)
                     .clickType(clickType)
@@ -272,7 +275,8 @@ public class BukkitMenuListener implements Listener {
             // build context
             BukkitMenuContext context = BukkitMenuContext.builder()
                 .action(BukkitMenuContext.Action.PICKUP)
-                .whoClicked(whoClicked)
+                .inventory(clickedInventory)
+                .doer(whoClicked)
                 .item(currentItem)
                 .slot(slot)
                 .clickType(clickType)
@@ -299,7 +303,8 @@ public class BukkitMenuListener implements Listener {
         // build context
         BukkitMenuContext context = BukkitMenuContext.builder()
             .action(BukkitMenuContext.Action.PICKUP)
-            .whoClicked(whoClicked)
+            .inventory(clickedInventory)
+            .doer(whoClicked)
             .item(currentItem)
             .menuItem(menuItem)
             .slot(slot)
@@ -326,12 +331,18 @@ public class BukkitMenuListener implements Listener {
             return;
         }
 
-        CloseHandler<HumanEntity> closeHandler = closedMenu.getMeta().getCloseHandler();
+        CloseHandler<HumanEntity, BukkitMenuContext> closeHandler = closedMenu.getMeta().getCloseHandler();
         if (closeHandler == null) {
             return;
         }
 
-        closeHandler.onClose(event.getPlayer());
+        BukkitMenuContext context = BukkitMenuContext.builder()
+            .action(BukkitMenuContext.Action.CLOSE)
+            .inventory(inventory)
+            .doer(event.getPlayer())
+            .build();
+
+        closeHandler.onClose(context);
     }
 
     private void cancelAndClose(Cancellable event, HumanEntity entity) {
