@@ -7,10 +7,9 @@
     <groupId>eu.okaeri</groupId>
     <artifactId>okaeri-menu</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.12</version>
+    <version>0.0.13</version>
 
     <modules>
-        <module>core</module>
         <module>bukkit</module>
     </modules>
 

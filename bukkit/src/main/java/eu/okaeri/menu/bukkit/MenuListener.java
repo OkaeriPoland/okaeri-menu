@@ -1,8 +1,10 @@
 package eu.okaeri.menu.bukkit;
 
-import eu.okaeri.menu.core.handler.*;
-import eu.okaeri.menu.core.meta.MenuInputMeta;
-import eu.okaeri.menu.core.meta.MenuItemMeta;
+import eu.okaeri.menu.bukkit.handler.ClickHandler;
+import eu.okaeri.menu.bukkit.handler.CloseHandler;
+import eu.okaeri.menu.bukkit.handler.InputHandler;
+import eu.okaeri.menu.bukkit.meta.MenuInputMeta;
+import eu.okaeri.menu.bukkit.meta.MenuItemMeta;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Cancellable;
@@ -19,10 +21,10 @@ import java.util.Map;
 import static org.bukkit.event.inventory.InventoryAction.*;
 
 @RequiredArgsConstructor
-public class BukkitMenuListener implements Listener {
+public class MenuListener implements Listener {
 
     private final Plugin plugin;
-    private final BukkitMenuProvider provider;
+    private final MenuProvider provider;
 
     @EventHandler
     public void handleDrag(InventoryDragEvent event) {
@@ -35,7 +37,7 @@ public class BukkitMenuListener implements Listener {
             return;
         }
 
-        BukkitMenuInstance menu = this.provider.findInstance(inventory).orElse(null);
+        MenuInstance menu = this.provider.findInstance(inventory).orElse(null);
         if (menu == null) {
             // where menu (???) the heck happened???
             this.cancelAndClose(event, whoClicked);
@@ -66,11 +68,11 @@ public class BukkitMenuListener implements Listener {
             ItemStack item = newItem.getValue();
 
             // no input for one of the items
-            MenuInputMeta<HumanEntity, ItemStack, BukkitMenuContext> menuInput = menu.getInput(slot);
+            MenuInputMeta menuInput = menu.getInput(slot);
             if (menuInput == null) {
 
                 // try fallback handler
-                ClickHandler<HumanEntity, ItemStack, BukkitMenuContext> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
+                ClickHandler fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
 
                 // no handler, just cancel
                 if (fallbackClickHandler == null) {
@@ -79,8 +81,8 @@ public class BukkitMenuListener implements Listener {
                 }
 
                 // build context
-                BukkitMenuContext context = BukkitMenuContext.builder()
-                    .action(BukkitMenuContext.Action.INPUT)
+                MenuContext context = MenuContext.builder()
+                    .action(MenuContext.Action.INPUT)
                     .inventory(inventory)
                     .doer(whoClicked)
                     .cursor(cursor)
@@ -100,7 +102,7 @@ public class BukkitMenuListener implements Listener {
             }
 
             // allow input if no handler
-            InputHandler<HumanEntity, ItemStack, BukkitMenuContext> inputHandler = menuInput.getInputHandler();
+            InputHandler inputHandler = menuInput.getInputHandler();
             if (inputHandler == null) {
                 continue;
             }
@@ -144,7 +146,7 @@ public class BukkitMenuListener implements Listener {
             if (this.provider.knowsInstance(topInventory)) {
 
                 // resolve current menu
-                BukkitMenuInstance menu = this.provider.findInstance(topInventory).orElse(null);
+                MenuInstance menu = this.provider.findInstance(topInventory).orElse(null);
                 if (menu == null) {
                     // where menu (???) the heck happened???
                     this.cancelAndClose(event, whoClicked);
@@ -152,10 +154,10 @@ public class BukkitMenuListener implements Listener {
                 }
 
                 // got it!
-                ClickHandler<HumanEntity, ItemStack, BukkitMenuContext> clickHandler = menu.getMeta().getOutsideClickHandler();
+                ClickHandler clickHandler = menu.getMeta().getOutsideClickHandler();
                 if (clickHandler != null) {
-                    BukkitMenuContext context = BukkitMenuContext.builder()
-                        .action(BukkitMenuContext.Action.PICKUP)
+                    MenuContext context = MenuContext.builder()
+                        .action(MenuContext.Action.PICKUP)
                         .inventory(topInventory)
                         .doer(whoClicked)
                         .item(event.getCursor())
@@ -198,7 +200,7 @@ public class BukkitMenuListener implements Listener {
         }
 
         // standard click/input
-        BukkitMenuInstance menu = this.provider.findInstance(clickedInventory).orElse(null);
+        MenuInstance menu = this.provider.findInstance(clickedInventory).orElse(null);
         if (menu == null) {
             // where menu (???) the heck happened???
             this.cancelAndClose(event, whoClicked);
@@ -209,11 +211,11 @@ public class BukkitMenuListener implements Listener {
         if ((action == PLACE_ALL) || (action == PLACE_ONE) || (action == PLACE_SOME) || (action == SWAP_WITH_CURSOR)) {
 
             // no input in this slot
-            MenuInputMeta<HumanEntity, ItemStack, BukkitMenuContext> menuInput = menu.getInput(slot);
+            MenuInputMeta menuInput = menu.getInput(slot);
             if (menuInput == null) {
 
                 // try fallback handler
-                ClickHandler<HumanEntity, ItemStack, BukkitMenuContext> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
+                ClickHandler fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
 
                 // no handler, just cancel
                 if (fallbackClickHandler == null) {
@@ -222,8 +224,8 @@ public class BukkitMenuListener implements Listener {
                 }
 
                 // build context
-                BukkitMenuContext context = BukkitMenuContext.builder()
-                    .action(BukkitMenuContext.Action.INPUT)
+                MenuContext context = MenuContext.builder()
+                    .action(MenuContext.Action.INPUT)
                     .inventory(clickedInventory)
                     .doer(whoClicked)
                     .item(currentItem)
@@ -243,7 +245,7 @@ public class BukkitMenuListener implements Listener {
             }
 
             // allow input if no handler
-            InputHandler<HumanEntity, ItemStack, BukkitMenuContext> inputHandler = menuInput.getInputHandler();
+            InputHandler inputHandler = menuInput.getInputHandler();
             if (inputHandler == null) {
                 return;
             }
@@ -260,11 +262,11 @@ public class BukkitMenuListener implements Listener {
         }
 
         // click
-        MenuItemMeta<HumanEntity, ItemStack, BukkitMenuContext> menuItem = menu.getItem(slot);
+        MenuItemMeta menuItem = menu.getItem(slot);
         if (menuItem == null) {
 
             // meta not found, try fallback handler
-            ClickHandler<HumanEntity, ItemStack, BukkitMenuContext> fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
+            ClickHandler fallbackClickHandler = menu.getMeta().getFallbackClickHandler();
 
             // no handler, just cancel
             if (fallbackClickHandler == null) {
@@ -273,8 +275,8 @@ public class BukkitMenuListener implements Listener {
             }
 
             // build context
-            BukkitMenuContext context = BukkitMenuContext.builder()
-                .action(BukkitMenuContext.Action.PICKUP)
+            MenuContext context = MenuContext.builder()
+                .action(MenuContext.Action.PICKUP)
                 .inventory(clickedInventory)
                 .doer(whoClicked)
                 .item(currentItem)
@@ -293,7 +295,7 @@ public class BukkitMenuListener implements Listener {
             return;
         }
 
-        ClickHandler<HumanEntity, ItemStack, BukkitMenuContext> clickHandler = menuItem.getClickHandler();
+        ClickHandler clickHandler = menuItem.getClickHandler();
         if (clickHandler == null) {
             // meta does not have own click handler, just cancel
             event.setCancelled(true);
@@ -301,8 +303,8 @@ public class BukkitMenuListener implements Listener {
         }
 
         // build context
-        BukkitMenuContext context = BukkitMenuContext.builder()
-            .action(BukkitMenuContext.Action.PICKUP)
+        MenuContext context = MenuContext.builder()
+            .action(MenuContext.Action.PICKUP)
             .inventory(clickedInventory)
             .doer(whoClicked)
             .item(currentItem)
@@ -325,19 +327,19 @@ public class BukkitMenuListener implements Listener {
     public void handleClose(InventoryCloseEvent event) {
 
         Inventory inventory = event.getInventory();
-        BukkitMenuInstance closedMenu = this.provider.removeInstance(inventory);
+        MenuInstance closedMenu = this.provider.removeInstance(inventory);
 
         if (closedMenu == null) {
             return;
         }
 
-        CloseHandler<HumanEntity, BukkitMenuContext> closeHandler = closedMenu.getMeta().getCloseHandler();
+        CloseHandler closeHandler = closedMenu.getMeta().getCloseHandler();
         if (closeHandler == null) {
             return;
         }
 
-        BukkitMenuContext context = BukkitMenuContext.builder()
-            .action(BukkitMenuContext.Action.CLOSE)
+        MenuContext context = MenuContext.builder()
+            .action(MenuContext.Action.CLOSE)
             .inventory(inventory)
             .doer(event.getPlayer())
             .build();

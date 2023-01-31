@@ -13,12 +13,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>eu.okaeri</groupId>
-            <artifactId>okaeri-menu-core</artifactId>
-            <version>0.0.13</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
             <version>1.8.8-R0.1-SNAPSHOT</version>

@@ -1,26 +1,30 @@
-package eu.okaeri.menu.core.meta;
+package eu.okaeri.menu.bukkit.meta;
 
-import eu.okaeri.menu.core.display.DisplayProvider;
-import eu.okaeri.menu.core.handler.ClickHandler;
-import eu.okaeri.menu.core.handler.CloseHandler;
+import eu.okaeri.menu.bukkit.display.DisplayProvider;
+import eu.okaeri.menu.bukkit.handler.ClickHandler;
+import eu.okaeri.menu.bukkit.handler.CloseHandler;
+import eu.okaeri.menu.bukkit.handler.UpdateHandler;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public class MenuMeta<V, I, C> {
+public class MenuMeta {
 
     @Getter private final String name;
     @Getter private final String rows;
-    @Getter private final DisplayProvider<V, I, C> displayProvider;
-    @Getter private final List<MenuItemMeta<V, I, C>> items;
-    @Getter private final List<MenuInputMeta<V, I, C>> inputs;
-    @Getter private final ClickHandler<V, I, C> outsideClickHandler;
-    @Getter private final ClickHandler<V, I, C> fallbackClickHandler;
-    @Getter private final CloseHandler<V, C> closeHandler;
+    @Getter private final Duration update;
+    @Getter private final UpdateHandler updateHook;
+    @Getter private final DisplayProvider displayProvider;
+    @Getter private final List<MenuItemMeta> items;
+    @Getter private final List<MenuInputMeta> inputs;
+    @Getter private final ClickHandler outsideClickHandler;
+    @Getter private final ClickHandler fallbackClickHandler;
+    @Getter private final CloseHandler closeHandler;
     private Integer menuChestSizeCache = null;
 
     public int getRowsAsInt() {

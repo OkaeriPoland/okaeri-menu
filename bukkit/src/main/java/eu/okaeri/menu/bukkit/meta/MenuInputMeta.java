@@ -1,6 +1,6 @@
-package eu.okaeri.menu.core.meta;
+package eu.okaeri.menu.bukkit.meta;
 
-import eu.okaeri.menu.core.handler.InputHandler;
+import eu.okaeri.menu.bukkit.handler.InputHandler;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -9,10 +9,10 @@ import java.util.Arrays;
 
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public class MenuInputMeta<V, I, C> {
+public class MenuInputMeta {
 
     private final String position;
-    private final InputHandler<V, I, C> inputHandler;
+    private final InputHandler inputHandler;
 
     public int getPositionAsInt() {
         try {

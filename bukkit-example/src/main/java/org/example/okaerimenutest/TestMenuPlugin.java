@@ -1,12 +1,10 @@
 package org.example.okaerimenutest;
 
-import eu.okaeri.menu.bukkit.BukkitMenu;
-import eu.okaeri.menu.bukkit.BukkitMenuContext;
-import eu.okaeri.menu.bukkit.BukkitMenuInstance;
-import eu.okaeri.menu.bukkit.BukkitMenuProvider;
-import eu.okaeri.menu.core.meta.MenuMeta;
+import eu.okaeri.menu.bukkit.MenuInstance;
+import eu.okaeri.menu.bukkit.MenuProvider;
+import eu.okaeri.menu.bukkit.OkaeriMenu;
+import eu.okaeri.menu.bukkit.meta.MenuMeta;
 import org.bukkit.Material;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
@@ -17,14 +15,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class TestMenuPlugin extends JavaPlugin implements Listener {
 
-    private BukkitMenuProvider bukkitMenuProvider;
-    private MenuMeta<HumanEntity, ItemStack, BukkitMenuContext> testMenu;
+    private MenuProvider menuProvider;
+    private MenuMeta testMenu;
 
     @Override
     public void onEnable() {
 
-        this.bukkitMenuProvider = BukkitMenuProvider.create(this);
-        this.testMenu = BukkitMenu.builder()
+        this.menuProvider = MenuProvider.create(this);
+        this.testMenu = OkaeriMenu.builder()
             .name("Color selector 2")
             .close(viewer -> viewer.sendMessage("Closed menu!"))
             .outsideClick(ctx -> ctx.sendMessage("Clicked outside with " + ctx.getItem() + "!"))
@@ -32,17 +30,17 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
                 ctx.sendMessage("clicked " + ctx.getItem() + "");
                 ctx.setAllowPickup(true); // allow pickup from non-static elements (e.g the one from input on position 4)
             })
-            .item(BukkitMenu.item()
+            .item(OkaeriMenu.item()
                 .display(() -> new ItemStack(Material.STONE))
                 .position(0)
                 .click(ctx -> ctx.sendMessage("gray smokes"))
                 .build())
-            .item(BukkitMenu.item()
+            .item(OkaeriMenu.item()
                 .display(() -> new ItemStack(Material.WOOD))
                 .position(3)
                 .click(ctx -> ctx.sendMessage("rainbow smokes"))
                 .build())
-            .input(BukkitMenu.input()
+            .input(OkaeriMenu.input()
                 .position(4)
                 .handle((viewer, menuInput, cursor, item, slot) -> {
 
@@ -72,12 +70,12 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
                     return true; // allow input
                 })
                 .build())
-            .item(BukkitMenu.item()
+            .item(OkaeriMenu.item()
                 .display(() -> new ItemStack(Material.YELLOW_FLOWER))
                 .position(5)
                 .click(ctx -> ctx.sendMessage("rainbow 2 smokes"))
                 .build())
-            .item(BukkitMenu.item()
+            .item(OkaeriMenu.item()
                 .display(() -> new ItemStack(Material.REDSTONE))
                 .position(8)
                 .click(ctx -> ctx.sendMessage("red smokes"))
@@ -99,13 +97,14 @@ public class TestMenuPlugin extends JavaPlugin implements Listener {
         // but we want to free chat thread pool from non-chat work)
         this.getServer().getScheduler().runTask(this, () -> {
 
-            // compute
-            BukkitMenu createdInstance = this.bukkitMenuProvider.create(this.testMenu);
+            // compute & pre-render
+            OkaeriMenu createdInstance = this.menuProvider.create(this.testMenu);
+            MenuInstance renderedInstance = createdInstance.render(event.getPlayer());
 
             // open sync
             this.getServer().getScheduler().runTask(this, () -> {
-                BukkitMenuInstance menuInstance = createdInstance.open(event.getPlayer());
-                this.getLogger().info("Opened menu " + menuInstance.getMeta().getName() + " to the " + event.getPlayer().getName());
+                renderedInstance.open(event.getPlayer());
+                this.getLogger().info("Opened menu " + renderedInstance.getMeta().getName() + " to the " + event.getPlayer().getName());
             });
         });
     }
