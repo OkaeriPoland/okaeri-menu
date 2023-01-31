@@ -47,7 +47,7 @@ public class MenuInstance {
 
     public MenuInstance render(@NonNull HumanEntity viewer) {
 
-        if (this.getMenu().getMenuProvider().isWarnUnoptimizedRender() && Bukkit.isPrimaryThread()) {
+        if (this.getMenu().getProvider().isWarnUnoptimizedRender() && Bukkit.isPrimaryThread()) {
             LOGGER.log(Level.WARNING, "Unoptimized synchronous render detected", new Throwable());
         }
 
@@ -64,29 +64,20 @@ public class MenuInstance {
     }
 
     public MenuInstance open(@NonNull HumanEntity viewer) {
-        if (!this.getMenu().getMenuProvider().knowsInstance(this.getInventory())) {
-            // ignore due to untracked instance
-            return this;
-        }
-        viewer.openInventory(this.getInventory());
-        return this;
+        return this.open(null, viewer);
     }
 
     public MenuInstance open(MenuInstance parent, @NonNull HumanEntity viewer) {
-        if ((parent != null) && !parent.getMenu().getMenuProvider().knowsInstance(parent.getInventory())) {
-            // ignore due to untracked parent instance
-            return this;
-        }
-        return this.open(viewer);
-    }
-
-    public MenuInstance openSafely(@NonNull HumanEntity viewer) {
-        this.getMenu().getMenuProvider().openSafely(null, this, viewer);
+        this.getMenu().getProvider().open(parent, this, viewer);
         return this;
     }
 
+    public MenuInstance openSafely(@NonNull HumanEntity viewer) {
+       return this.openSafely(null, viewer);
+    }
+
     public MenuInstance openSafely(MenuInstance parent, @NonNull HumanEntity viewer) {
-        this.getMenu().getMenuProvider().openSafely(parent, this, viewer);
+        this.getMenu().getProvider().openSafely(parent, this, viewer);
         return this;
     }
 
