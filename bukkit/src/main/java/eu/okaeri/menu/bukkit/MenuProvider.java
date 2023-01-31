@@ -57,6 +57,11 @@ public class MenuProvider {
         return Optional.ofNullable(this.knownMenuMap.get(inventory));
     }
 
+    public void removeInstance(@NonNull MenuInstance instance) {
+        this.close(instance);
+        this.removeInstance(instance.getInventory());
+    }
+
     @Nullable
     public MenuInstance removeInstance(@NonNull Inventory inventory) {
         return this.knownMenuMap.remove(inventory);
@@ -97,16 +102,22 @@ public class MenuProvider {
         this.plugin.getServer().getScheduler().runTask(this.plugin, viewer::closeInventory);
     }
 
+    public void close(@NonNull MenuInstance instance) {
+        instance.getInventory().getViewers().forEach(HumanEntity::closeInventory);
+    }
+
     public void open(MenuInstance parent, @NonNull MenuInstance instance, @NonNull HumanEntity viewer) {
 
         if ((parent != null) && !parent.getMenu().getProvider().knowsInstance(parent.getInventory())) {
             // ignore due to untracked parent instance & make sure to untrack this instance too
-            this.removeInstance(instance.getInventory());
+            this.removeInstance(instance);
+            this.close(parent);
             return;
         }
 
         if (!this.knowsInstance(instance.getInventory())) {
             // ignore due to untracked instance
+            this.close(instance);
             return;
         }
 
