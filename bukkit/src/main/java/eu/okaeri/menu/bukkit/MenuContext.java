@@ -1,9 +1,10 @@
 package eu.okaeri.menu.bukkit;
 
-import eu.okaeri.menu.core.meta.MenuItemMeta;
+import eu.okaeri.menu.bukkit.meta.MenuItemMeta;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -12,13 +13,13 @@ import org.bukkit.inventory.ItemStack;
 
 @Builder
 @Data(staticConstructor = "of")
-public class BukkitMenuContext {
+public class MenuContext {
 
     private final Action action;
     private final HumanEntity doer;
     private final Inventory inventory;
 
-    private final MenuItemMeta<HumanEntity, ItemStack, BukkitMenuContext> menuItem;
+    private final MenuItemMeta menuItem;
     private final ItemStack item;
 
     private final ItemStack cursor;
@@ -39,6 +40,16 @@ public class BukkitMenuContext {
 
     public void sendMessage(@NonNull String text) {
         this.doer.sendMessage(text);
+    }
+
+    public void runCommand(@NonNull String... command) {
+        for (String cmd : command) {
+            Bukkit.dispatchCommand(this.doer, cmd);
+        }
+    }
+
+    public void closeInventory() {
+        this.doer.closeInventory();
     }
 
     enum Action {
