@@ -24,7 +24,7 @@ public class OkaeriMenu {
     private final Map<Integer, MenuItemMeta> itemMap;
     private final Map<Integer, MenuInputMeta> inputMap;
     private final Map<Integer, DisplayProvider> providerMap;
-    private final MenuProvider menuProvider;
+    private final MenuProvider provider;
 
     public static MenuBuilder builder() {
         return new MenuBuilder();
@@ -69,7 +69,7 @@ public class OkaeriMenu {
         Inventory inventory = Bukkit.createInventory(null, size, this.meta.getName());
 
         MenuInstance menuInstance = new MenuInstance(inventory, this);
-        this.menuProvider.trackInstance(inventory, menuInstance);
+        this.provider.trackInstance(inventory, menuInstance);
 
         return menuInstance;
     }

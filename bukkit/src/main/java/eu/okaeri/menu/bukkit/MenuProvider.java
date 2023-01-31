@@ -97,12 +97,30 @@ public class MenuProvider {
         this.plugin.getServer().getScheduler().runTask(this.plugin, viewer::closeInventory);
     }
 
-    public void openSafely(MenuInstance parent, @NonNull MenuInstance instance, @NonNull HumanEntity viewer) {
-        if (Bukkit.isPrimaryThread()) {
-            instance.open(parent, viewer);
+    public void open(MenuInstance parent, @NonNull MenuInstance instance, @NonNull HumanEntity viewer) {
+
+        if ((parent != null) && !parent.getMenu().getProvider().knowsInstance(parent.getInventory())) {
+            // ignore due to untracked parent instance & make sure to untrack this instance too
+            this.removeInstance(instance.getInventory());
             return;
         }
-        this.plugin.getServer().getScheduler().runTask(this.plugin, () -> instance.open(parent, viewer));
+
+        if (!this.knowsInstance(instance.getInventory())) {
+            // ignore due to untracked instance
+            return;
+        }
+
+        viewer.openInventory(instance.getInventory());
+    }
+
+    public void openSafely(MenuInstance parent, @NonNull MenuInstance instance, @NonNull HumanEntity viewer) {
+
+        if (Bukkit.isPrimaryThread()) {
+            this.open(parent, instance, viewer);
+            return;
+        }
+
+        this.plugin.getServer().getScheduler().runTask(this.plugin, () -> this.open(parent, instance, viewer));
     }
 
     public OkaeriMenu create(@NonNull MenuMeta menu) {
