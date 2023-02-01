@@ -13,6 +13,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -80,12 +81,16 @@ public class MenuProvider {
             }
 
             MenuMeta menuMeta = instance.getMeta();
-            Instant nextRender = instance.getLastRenderTime().plus(menuMeta.getUpdate());
+            Duration updateRate = menuMeta.getUpdate();
+            if (updateRate == null) {
+                return;
+            }
 
             if (instance.isLastRenderAsync() != lastRenderAsync) {
                 return;
             }
 
+            Instant nextRender = instance.getLastRenderTime().plus(updateRate);
             if (nextRender.isAfter(Instant.now())) {
                 continue;
             }
