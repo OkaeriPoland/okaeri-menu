@@ -48,13 +48,13 @@ public class MenuBuilder {
         return this;
     }
 
-    public MenuBuilder update(@NonNull Duration refresh) {
-        this.update = refresh;
+    public MenuBuilder update(@NonNull Duration update) {
+        this.update = update;
         return this;
     }
 
-    public MenuBuilder update(@NonNull Duration refresh, @NonNull UpdateHandler refreshHook) {
-        this.update = refresh;
+    public MenuBuilder update(@NonNull Duration update, @NonNull UpdateHandler refreshHook) {
+        this.update = update;
         this.updateHook = refreshHook;
         return this;
     }
