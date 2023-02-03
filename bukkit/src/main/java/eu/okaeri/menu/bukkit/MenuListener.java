@@ -90,8 +90,14 @@ public class MenuListener implements Listener {
                     .slot(slot)
                     .build();
 
+                try {
+                    fallbackClickHandler.onClick(context);
+                } catch (Exception exception) {
+                    event.setCancelled(true);
+                    throw new RuntimeException("failed fallbackClickHandler for drag input", exception);
+                }
+
                 // true - allow input
-                fallbackClickHandler.onClick(context);
                 if (context.isAllowInput()) {
                     return;
                 }
@@ -107,7 +113,7 @@ public class MenuListener implements Listener {
                 continue;
             }
 
-            // call handler
+            // call handler // FIXME: error handling
             if (inputHandler.onInput(whoClicked, menuInput, cursor, item, slot)) {
                 // item in gui
                 continue;
@@ -233,8 +239,14 @@ public class MenuListener implements Listener {
                     .clickType(clickType)
                     .build();
 
+                try {
+                    fallbackClickHandler.onClick(context);
+                } catch (Exception exception) {
+                    event.setCancelled(true);
+                    throw new RuntimeException("failed fallbackClickHandler for input", exception);
+                }
+
                 // true - allow input
-                fallbackClickHandler.onClick(context);
                 if (context.isAllowInput()) {
                     return;
                 }
@@ -250,7 +262,7 @@ public class MenuListener implements Listener {
                 return;
             }
 
-            // call handler
+            // call handler // FIXME: error handling
             if (inputHandler.onInput(whoClicked, menuInput, event.getCursor(), null, slot)) {
                 // item in gui
                 return;
@@ -284,8 +296,14 @@ public class MenuListener implements Listener {
                 .clickType(clickType)
                 .build();
 
+            try {
+                fallbackClickHandler.onClick(context);
+            } catch (Exception exception) {
+                event.setCancelled(true);
+                throw new RuntimeException("failed fallbackClickHandler for pickup", exception);
+            }
+
             // true - allow pickup
-            fallbackClickHandler.onClick(context);
             if (context.isAllowPickup()) {
                 return;
             }
@@ -313,9 +331,15 @@ public class MenuListener implements Listener {
             .clickType(clickType)
             .build();
 
-        clickHandler.onClick(context);
+        try {
+            clickHandler.onClick(context);
+        } catch (Exception exception) {
+            event.setCancelled(true);
+            throw new RuntimeException("failed clickHandler for pickup", exception);
+        }
+
+        // true - allow pickup
         if (context.isAllowPickup()) {
-            // true - allow pickup
             return;
         }
 
