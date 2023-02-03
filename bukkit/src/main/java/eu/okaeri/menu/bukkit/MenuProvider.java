@@ -15,16 +15,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class MenuProvider {
 
     private final Plugin plugin;
-    private final Map<Inventory, MenuInstance> knownMenuMap = new HashMap<>();
+    private final Map<Inventory, MenuInstance> knownMenuMap = new ConcurrentHashMap<>();
     private @Getter @Setter boolean warnUnoptimizedRender = false;
 
     public static MenuProvider create(@NonNull Plugin plugin) {
