@@ -4,7 +4,6 @@ import eu.okaeri.menu.bukkit.display.DisplayProvider;
 import eu.okaeri.menu.bukkit.meta.*;
 import lombok.Data;
 import lombok.NonNull;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
@@ -64,13 +63,9 @@ public class OkaeriMenu {
     }
 
     public MenuInstance createInstance() {
-
-        int size = this.meta.getMenuChestSize();
-        Inventory inventory = Bukkit.createInventory(null, size, this.meta.getName());
-
+        Inventory inventory = this.getMeta().getFactory().apply(this.getMeta());
         MenuInstance menuInstance = new MenuInstance(inventory, this);
-        this.provider.trackInstance(inventory, menuInstance);
-
+        this.getProvider().trackInstance(inventory, menuInstance);
         return menuInstance;
     }
 

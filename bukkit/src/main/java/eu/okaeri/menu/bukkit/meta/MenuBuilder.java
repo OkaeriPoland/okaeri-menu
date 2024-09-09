@@ -6,6 +6,9 @@ import eu.okaeri.menu.bukkit.handler.CloseHandler;
 import eu.okaeri.menu.bukkit.handler.UpdateHandler;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import org.bukkit.Bukkit;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.Inventory;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -20,6 +23,7 @@ import java.util.stream.StreamSupport;
 @NoArgsConstructor
 public class MenuBuilder {
 
+    private Function<MenuMeta, Inventory> factory = meta -> Bukkit.createInventory(null, meta.getMenuChestSize(), meta.getName());
     private String name;
     private String rows = "-1";
     private Duration update;
@@ -32,6 +36,16 @@ public class MenuBuilder {
     private ClickHandler outsideClickHandler;
     private ClickHandler fallbackClickHandler;
     private CloseHandler closeHandler;
+
+    public MenuBuilder factory(@NonNull Function<MenuMeta, Inventory> factory) {
+        this.factory = factory;
+        return this;
+    }
+
+    public MenuBuilder type(@NonNull InventoryType type) {
+        this.factory = meta -> Bukkit.createInventory(null, type, meta.getName());
+        return this;
+    }
 
     public MenuBuilder name(@NonNull String name) {
         this.name = name;
@@ -171,6 +185,7 @@ public class MenuBuilder {
 
     public MenuMeta build() {
         return new MenuMeta(
+            this.factory,
             this.name,
             this.rows,
             this.update,
