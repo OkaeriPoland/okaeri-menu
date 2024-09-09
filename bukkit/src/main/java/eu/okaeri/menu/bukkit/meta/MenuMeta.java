@@ -7,14 +7,17 @@ import eu.okaeri.menu.bukkit.handler.UpdateHandler;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.inventory.Inventory;
 
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class MenuMeta {
 
+    @Getter private final Function<MenuMeta, Inventory> factory;
     @Getter private final String name;
     @Getter private final String rows;
     @Getter private final Duration update;
