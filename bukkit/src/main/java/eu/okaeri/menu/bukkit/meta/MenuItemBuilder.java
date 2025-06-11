@@ -31,6 +31,11 @@ public class MenuItemBuilder {
         return this;
     }
 
+    public MenuItemBuilder display(@NonNull MenuDisplayStack displayStack) {
+        this.displayProvider = (viewer, menuItem) -> displayStack.apply(viewer);
+        return this;
+    }
+
     public MenuItemBuilder display(@NonNull Supplier<ItemStack> displaySupplier) {
         this.displayProvider = (viewer, menuItem) -> displaySupplier.get();
         return this;

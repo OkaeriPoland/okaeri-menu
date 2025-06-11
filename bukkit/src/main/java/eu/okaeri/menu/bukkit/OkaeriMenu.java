@@ -33,6 +33,10 @@ public class OkaeriMenu {
         return new MenuItemBuilder();
     }
 
+    public static MenuDisplayStack stack() {
+        return new MenuDisplayStack();
+    }
+
     public static MenuInputBuilder input() {
         return new MenuInputBuilder();
     }
