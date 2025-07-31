@@ -1,11 +1,13 @@
 package eu.okaeri.menu.bukkit.meta;
 
+import eu.okaeri.menu.bukkit.OkaeriMenu;
 import eu.okaeri.menu.bukkit.display.DisplayProvider;
 import eu.okaeri.menu.bukkit.handler.ClickHandler;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -33,6 +35,15 @@ public class MenuItemBuilder {
 
     public MenuItemBuilder display(@NonNull MenuDisplayStack displayStack) {
         this.displayProvider = (viewer, menuItem) -> displayStack.apply(viewer);
+        return this;
+    }
+
+    public MenuItemBuilder stack(@NonNull Consumer<MenuDisplayStack> consumer) {
+        this.displayProvider = (viewer, menuItem) -> {
+            MenuDisplayStack stack = OkaeriMenu.stack();
+            consumer.accept(stack);
+            return stack.apply(viewer);
+        };
         return this;
     }
 
