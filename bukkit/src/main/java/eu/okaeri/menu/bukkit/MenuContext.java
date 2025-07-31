@@ -11,9 +11,13 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.logging.Logger;
+
 @Builder
 @Data(staticConstructor = "of")
 public class MenuContext {
+
+    private static final Logger LOGGER = Logger.getLogger(MenuContext.class.getSimpleName());
 
     private final Action action;
     private final HumanEntity doer;
@@ -42,10 +46,21 @@ public class MenuContext {
         this.doer.sendMessage(text);
     }
 
-    public void runCommand(@NonNull String... command) {
+    public void runCommand(boolean log, @NonNull String... command) {
         for (String cmd : command) {
+            if (log) {
+                LOGGER.info(this.doer.getName() + " issued server command (via GUI): /" + cmd);
+            }
             Bukkit.dispatchCommand(this.doer, cmd);
         }
+    }
+
+    public void runCommand(@NonNull String... command) {
+        this.runCommand(true, command);
+    }
+
+    public void runCommandSilently(@NonNull String... command) {
+        this.runCommand(false, command);
     }
 
     public void closeInventory() {
