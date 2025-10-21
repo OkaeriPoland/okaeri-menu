@@ -12,18 +12,19 @@
     <artifactId>okaeri-menu-bukkit</artifactId>
 
     <dependencies>
+        <!-- Paper API - version must match MockBukkit compatibility -->
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.8.8-R0.1-SNAPSHOT</version>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>${paperapi.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
 
     <repositories>
         <repository>
-            <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
     </repositories>
 

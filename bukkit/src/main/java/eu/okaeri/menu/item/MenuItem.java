@@ -1,0 +1,759 @@
+package eu.okaeri.menu.item;
+
+import eu.okaeri.menu.MenuContext;
+import eu.okaeri.menu.pagination.ItemFilter;
+import eu.okaeri.menu.reactive.ReactiveProperty;
+import lombok.Getter;
+import lombok.NonNull;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+/**
+ * Represents a menu item with reactive properties.
+ * All properties can be static or dynamic (supplier-based).
+ */
+@Getter
+public class MenuItem {
+
+    private final ReactiveProperty<Material> material;
+    private final ReactiveProperty<String> name;
+    private final ReactiveProperty<List<String>> lore;
+    private final ReactiveProperty<Integer> amount;
+    private final ReactiveProperty<Boolean> visible;
+    private final ReactiveProperty<Boolean> glint;
+    private final Map<Enchantment, Integer> enchantments = new HashMap<>();
+    private final List<ItemFlag> itemFlags = new ArrayList<>();
+
+    // Handlers
+    private Consumer<MenuItemClickContext> clickHandler;
+    private Consumer<MenuItemClickContext> rightClickHandler;
+    private Consumer<MenuItemClickContext> leftClickHandler;
+
+    // Interactive slot properties
+    private final boolean allowPickup;
+    private final boolean allowPlacement;
+    private Consumer<MenuItemChangeContext> itemChangeHandler;
+
+    // Declarative filters for pagination
+    private final List<ItemFilter<?>> filters = new ArrayList<>();
+
+    private MenuItem(Builder builder) {
+        this.material = builder.material;
+        this.name = builder.name;
+        this.lore = builder.lore;
+        this.amount = builder.amount;
+        this.visible = builder.visible;
+        this.glint = builder.glint;
+        this.enchantments.putAll(builder.enchantments);
+        this.itemFlags.addAll(builder.itemFlags);
+        this.clickHandler = builder.clickHandler;
+        this.rightClickHandler = builder.rightClickHandler;
+        this.leftClickHandler = builder.leftClickHandler;
+        this.allowPickup = builder.allowPickup;
+        this.allowPlacement = builder.allowPlacement;
+        this.itemChangeHandler = builder.itemChangeHandler;
+        this.filters.addAll(builder.filters);
+    }
+
+    /**
+     * Renders this menu item to an ItemStack.
+     *
+     * @param context The reactive context
+     * @return The rendered ItemStack, or null if not visible
+     */
+    public ItemStack render(@NonNull MenuContext context) {
+        if (!this.visible.get(context)) {
+            return null;
+        }
+
+        Material mat = this.material.get(context);
+        if ((mat == null) || (mat == Material.AIR)) {
+            return null;
+        }
+
+        ItemStack stack = new ItemStack(mat);
+        stack.setAmount(Math.max(1, Math.min(64, this.amount.get(context))));
+
+        ItemMeta meta = stack.getItemMeta();
+        if (meta != null) {
+            String displayName = this.name.get(context);
+            if ((displayName != null) && !displayName.isEmpty()) {
+                meta.setDisplayName(displayName);
+            }
+
+            List<String> loreLines = this.lore.get(context);
+            if ((loreLines != null) && !loreLines.isEmpty()) {
+                meta.setLore(loreLines);
+            }
+
+            // Apply enchantments
+            for (Map.Entry<Enchantment, Integer> entry : this.enchantments.entrySet()) {
+                meta.addEnchant(entry.getKey(), entry.getValue(), true);
+            }
+
+            // Apply item flags
+            if (!this.itemFlags.isEmpty()) {
+                meta.addItemFlags(this.itemFlags.toArray(new ItemFlag[0]));
+            }
+
+            // Glowing effect
+            if (this.glint.get(context) && this.enchantments.isEmpty()) {
+                meta.setEnchantmentGlintOverride(true);
+            }
+
+            stack.setItemMeta(meta);
+        }
+
+        return stack;
+    }
+
+    /**
+     * Invalidates all reactive properties, forcing re-evaluation on next render.
+     */
+    public void invalidate() {
+        this.material.invalidate();
+        this.name.invalidate();
+        this.lore.invalidate();
+        this.amount.invalidate();
+        this.visible.invalidate();
+        this.glint.invalidate();
+    }
+
+    /**
+     * Handles a click event on this item.
+     *
+     * @param context The click context
+     */
+    public void handleClick(@NonNull MenuItemClickContext context) {
+        if (this.clickHandler != null) {
+            this.clickHandler.accept(context);
+        }
+
+        if (context.isRightClick() && (this.rightClickHandler != null)) {
+            this.rightClickHandler.accept(context);
+        } else if (context.isLeftClick() && (this.leftClickHandler != null)) {
+            this.leftClickHandler.accept(context);
+        }
+    }
+
+    /**
+     * Checks if this item is interactive (allows item placement/pickup).
+     *
+     * @return true if the item allows any interaction
+     */
+    public boolean isInteractive() {
+        return this.allowPickup || this.allowPlacement;
+    }
+
+    /**
+     * Checks if this item should be re-rendered on refresh.
+     * Interactive items should not be re-rendered as they manage their own state.
+     *
+     * @return true if the item should be re-rendered
+     */
+    public boolean shouldRender() {
+        return !this.isInteractive();
+    }
+
+    /**
+     * Handles an item change event on this interactive slot.
+     *
+     * @param context The change context
+     */
+    public void handleItemChange(@NonNull MenuItemChangeContext context) {
+        if (this.itemChangeHandler != null) {
+            this.itemChangeHandler.accept(context);
+        }
+    }
+
+    @NonNull
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacySection();
+
+        private ReactiveProperty<Material> material = ReactiveProperty.of(Material.AIR);
+        private ReactiveProperty<String> name = ReactiveProperty.of("");
+        private ReactiveProperty<List<String>> lore = ReactiveProperty.of(new ArrayList<>());
+        private ReactiveProperty<Integer> amount = ReactiveProperty.of(1);
+        private ReactiveProperty<Boolean> visible = ReactiveProperty.of(true);
+        private ReactiveProperty<Boolean> glint = ReactiveProperty.of(false);
+        private Map<Enchantment, Integer> enchantments = new HashMap<>();
+        private List<ItemFlag> itemFlags = new ArrayList<>();
+        private Consumer<MenuItemClickContext> clickHandler;
+        private Consumer<MenuItemClickContext> rightClickHandler;
+        private Consumer<MenuItemClickContext> leftClickHandler;
+
+        // Interactive slot properties
+        private boolean allowPickup = false;
+        private boolean allowPlacement = false;
+        private Consumer<MenuItemChangeContext> itemChangeHandler;
+
+        // Item-level variables shared across name, lore, etc.
+        private Map<String, Object> itemLevelVars = new HashMap<>();
+
+        // Declarative filters
+        private List<ItemFilter<?>> filters = new ArrayList<>();
+
+        /**
+         * Sets item-level variables that are shared across name, lore, and other properties.
+         * These variables are merged with method-level variables (method-level overrides item-level).
+         *
+         * @param vars Variables map
+         * @return This builder
+         */
+        @NonNull
+        public Builder vars(@NonNull Map<String, Object> vars) {
+            this.itemLevelVars.putAll(vars);
+            return this;
+        }
+
+        /**
+         * Merges item-level variables with method-level variables.
+         * Method-level variables override item-level variables if keys conflict.
+         *
+         * @param methodVars Method-level variables (can be null or empty)
+         * @return Merged variables map
+         */
+        @NonNull
+        private Map<String, Object> mergeVars(Map<String, Object> methodVars) {
+            if (this.itemLevelVars.isEmpty()) {
+                return (methodVars != null) ? methodVars : Map.of();
+            }
+            if ((methodVars == null) || methodVars.isEmpty()) {
+                return this.itemLevelVars;
+            }
+            Map<String, Object> merged = new HashMap<>(this.itemLevelVars);
+            merged.putAll(methodVars);  // Method-level overrides
+            return merged;
+        }
+
+        /**
+         * Helper method to resolve a name template using the menu's MessageProvider.
+         */
+        @NonNull
+        private String resolveName(@NonNull MenuContext ctx, @NonNull String template, Map<String, Object> methodVars) {
+            Map<String, Object> vars = this.mergeVars(methodVars);
+            Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), template, vars);
+            return SERIALIZER.serialize(component);
+        }
+
+        /**
+         * Helper method to resolve a multiline lore template using the menu's MessageProvider.
+         */
+        @NonNull
+        private List<String> resolveLore(@NonNull MenuContext ctx, @NonNull String template, Map<String, Object> methodVars) {
+            Map<String, Object> vars = this.mergeVars(methodVars);
+            List<String> lines = List.of(template.split("\n"));
+            List<Component> components = ctx.getMenu().getMessageProvider().resolveList(ctx.getEntity(), lines, vars);
+            return components.stream()
+                .map(SERIALIZER::serialize)
+                .collect(Collectors.toList());
+        }
+
+        /**
+         * Helper method to resolve a name from a locale map using the menu's MessageProvider.
+         */
+        @NonNull
+        private String resolveNameFromLocaleMap(@NonNull MenuContext ctx, @NonNull Map<Locale, String> localeMap, Map<String, Object> methodVars) {
+            Map<String, Object> vars = this.mergeVars(methodVars);
+            Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), localeMap, vars);
+            return SERIALIZER.serialize(component);
+        }
+
+        /**
+         * Helper method to resolve lore from a locale map using the menu's MessageProvider.
+         * The locale-specific template is split into lines on {@code \n} character.
+         */
+        @NonNull
+        private List<String> resolveLoreFromLocaleMap(@NonNull MenuContext ctx, @NonNull Map<Locale, String> localeMap, Map<String, Object> methodVars) {
+            Map<String, Object> vars = this.mergeVars(methodVars);
+            Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), localeMap, vars);
+            String fullText = SERIALIZER.serialize(component);
+            return List.of(fullText.split("\n"));
+        }
+
+        @NonNull
+        public Builder material(@NonNull Material material) {
+            this.material = ReactiveProperty.of(material);
+            return this;
+        }
+
+        @NonNull
+        public Builder material(@NonNull Supplier<Material> supplier) {
+            this.material = ReactiveProperty.of(supplier);
+            return this;
+        }
+
+        /**
+         * Sets the item name from a template string.
+         * Template is processed by menu's MessageProvider (supports §, &, MiniMessage).
+         * Uses item-level variables set via {@link #vars(Map)}.
+         *
+         * @param template The template string
+         * @return This builder
+         */
+        @NonNull
+        public Builder name(@NonNull String template) {
+            this.name = ReactiveProperty.ofContext(ctx -> this.resolveName(ctx, template, null));
+            return this;
+        }
+
+        /**
+         * Sets the item name from a template with additional variables.
+         * These variables are merged with item-level variables (method-level overrides item-level).
+         *
+         * @param template The template string
+         * @param vars     Additional variables for placeholder replacement
+         * @return This builder
+         */
+        @NonNull
+        public Builder name(@NonNull String template, Map<String, Object> vars) {
+            this.name = ReactiveProperty.ofContext(ctx -> this.resolveName(ctx, template, vars));
+            return this;
+        }
+
+        /**
+         * Sets the item name from a template with dynamic context-aware variables.
+         * These variables are merged with item-level variables (method-level overrides item-level).
+         *
+         * @param template     The template string
+         * @param varsSupplier Function to provide variables based on context
+         * @return This builder
+         */
+        @NonNull
+        public Builder name(@NonNull String template, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
+            this.name = ReactiveProperty.ofContext(ctx -> {
+                Map<String, Object> vars = varsSupplier.apply(ctx);
+                return this.resolveName(ctx, template, vars);
+            });
+            return this;
+        }
+
+        /**
+         * Sets the item name from a dynamic supplier.
+         * The supplier's result is processed through MessageProvider (supports §, &, MiniMessage).
+         *
+         * @param supplier Supplier that provides the name template
+         * @return This builder
+         */
+        @NonNull
+        public Builder name(@NonNull Supplier<String> supplier) {
+            this.name = ReactiveProperty.ofContext(ctx -> {
+                String template = supplier.get();
+                if ((template == null) || template.isEmpty()) {
+                    return "";
+                }
+                return this.resolveName(ctx, template, null);
+            });
+            return this;
+        }
+
+        /**
+         * Sets the item name from a locale-specific map.
+         * The menu's MessageProvider selects the appropriate locale for each viewer.
+         * Uses item-level variables set via {@link #vars(Map)}.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .name(Map.of(
+         *     Locale.ENGLISH, "Diamond Sword",
+         *     new Locale("pl"), "Diamentowy miecz"
+         * ))
+         * }</pre>
+         *
+         * @param localeMap Map of locale to template string
+         * @return This builder
+         */
+        @NonNull
+        public Builder name(@NonNull Map<Locale, String> localeMap) {
+            this.name = ReactiveProperty.ofContext(ctx -> this.resolveNameFromLocaleMap(ctx, localeMap, null));
+            return this;
+        }
+
+        /**
+         * Sets the item name from a locale-specific map with additional variables.
+         * These variables are merged with item-level variables (method-level overrides item-level).
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .name(Map.of(
+         *     Locale.ENGLISH, "Price: {price} coins",
+         *     new Locale("pl"), "Cena: {price} monet"
+         * ), Map.of("price", 100))
+         * }</pre>
+         *
+         * @param localeMap Map of locale to template string
+         * @param vars      Additional variables for placeholder replacement
+         * @return This builder
+         */
+        @NonNull
+        public Builder name(@NonNull Map<Locale, String> localeMap, Map<String, Object> vars) {
+            this.name = ReactiveProperty.ofContext(ctx -> this.resolveNameFromLocaleMap(ctx, localeMap, vars));
+            return this;
+        }
+
+        /**
+         * Sets the item name from a locale-specific map with dynamic context-aware variables.
+         * These variables are merged with item-level variables (method-level overrides item-level).
+         *
+         * @param localeMap    Map of locale to template string
+         * @param varsSupplier Function to provide variables based on context
+         * @return This builder
+         */
+        @NonNull
+        public Builder name(@NonNull Map<Locale, String> localeMap, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
+            this.name = ReactiveProperty.ofContext(ctx -> {
+                Map<String, Object> vars = varsSupplier.apply(ctx);
+                return this.resolveNameFromLocaleMap(ctx, localeMap, vars);
+            });
+            return this;
+        }
+
+        /**
+         * Sets the item lore from a multiline template string.
+         * Template is processed by menu's MessageProvider (supports §, &, MiniMessage).
+         * Lines are split on {@code \n} character.
+         * Uses item-level variables set via {@link #vars(Map)}.
+         *
+         * @param template The multiline template string
+         * @return This builder
+         */
+        @NonNull
+        public Builder lore(@NonNull String template) {
+            this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLore(ctx, template, null));
+            return this;
+        }
+
+        /**
+         * Sets the item lore from a multiline template with additional variables.
+         * These variables are merged with item-level variables (method-level overrides item-level).
+         *
+         * @param template The multiline template string
+         * @param vars     Additional variables for placeholder replacement
+         * @return This builder
+         */
+        @NonNull
+        public Builder lore(@NonNull String template, Map<String, Object> vars) {
+            this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLore(ctx, template, vars));
+            return this;
+        }
+
+        /**
+         * Sets the item lore from a multiline template with dynamic context-aware variables.
+         * These variables are merged with item-level variables (method-level overrides item-level).
+         *
+         * @param template     The multiline template string
+         * @param varsSupplier Function to provide variables based on context
+         * @return This builder
+         */
+        @NonNull
+        public Builder lore(@NonNull String template, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
+            this.lore = ReactiveProperty.ofContext(ctx -> {
+                Map<String, Object> vars = varsSupplier.apply(ctx);
+                return this.resolveLore(ctx, template, vars);
+            });
+            return this;
+        }
+
+        /**
+         * Sets the item lore from a locale-specific map.
+         * The menu's MessageProvider selects the appropriate locale for each viewer.
+         * The locale-specific template is split into lines on {@code \n} character.
+         * Uses item-level variables set via {@link #vars(Map)}.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .lore(Map.of(
+         *     Locale.ENGLISH, """
+         *         Price: 100 coins
+         *         Stock: 50 items
+         *
+         *         Click to purchase!""",
+         *     new Locale("pl"), """
+         *         Cena: 100 monet
+         *         Zapas: 50 przedmiotów
+         *
+         *         Kliknij aby kupić!"""
+         * ))
+         * }</pre>
+         *
+         * @param localeMap Map of locale to multiline template string
+         * @return This builder
+         */
+        @NonNull
+        public Builder lore(@NonNull Map<Locale, String> localeMap) {
+            this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLoreFromLocaleMap(ctx, localeMap, null));
+            return this;
+        }
+
+        /**
+         * Sets the item lore from a locale-specific map with additional variables.
+         * These variables are merged with item-level variables (method-level overrides item-level).
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .lore(Map.of(
+         *     Locale.ENGLISH, """
+         *         Price: {price} coins
+         *         Stock: {stock} items
+         *
+         *         Click to purchase!""",
+         *     new Locale("pl"), """
+         *         Cena: {price} monet
+         *         Zapas: {stock} przedmiotów
+         *
+         *         Kliknij aby kupić!"""
+         * ), Map.of("price", 100, "stock", 50))
+         * }</pre>
+         *
+         * @param localeMap Map of locale to multiline template string
+         * @param vars      Additional variables for placeholder replacement
+         * @return This builder
+         */
+        @NonNull
+        public Builder lore(@NonNull Map<Locale, String> localeMap, Map<String, Object> vars) {
+            this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLoreFromLocaleMap(ctx, localeMap, vars));
+            return this;
+        }
+
+        /**
+         * Sets the item lore from a locale-specific map with dynamic context-aware variables.
+         * These variables are merged with item-level variables (method-level overrides item-level).
+         *
+         * @param localeMap    Map of locale to multiline template string
+         * @param varsSupplier Function to provide variables based on context
+         * @return This builder
+         */
+        @NonNull
+        public Builder lore(@NonNull Map<Locale, String> localeMap, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
+            this.lore = ReactiveProperty.ofContext(ctx -> {
+                Map<String, Object> vars = varsSupplier.apply(ctx);
+                return this.resolveLoreFromLocaleMap(ctx, localeMap, vars);
+            });
+            return this;
+        }
+
+        @NonNull
+        public Builder amount(int amount) {
+            this.amount = ReactiveProperty.of(amount);
+            return this;
+        }
+
+        @NonNull
+        public Builder amount(@NonNull Supplier<Integer> supplier) {
+            this.amount = ReactiveProperty.of(supplier);
+            return this;
+        }
+
+        @NonNull
+        public Builder visible(boolean visible) {
+            this.visible = ReactiveProperty.of(visible);
+            return this;
+        }
+
+        @NonNull
+        public Builder visible(@NonNull Supplier<Boolean> supplier) {
+            this.visible = ReactiveProperty.of(supplier);
+            return this;
+        }
+
+        @NonNull
+        public Builder glint(boolean glint) {
+            this.glint = ReactiveProperty.of(glint);
+            return this;
+        }
+
+        @NonNull
+        public Builder glint(@NonNull Supplier<Boolean> supplier) {
+            this.glint = ReactiveProperty.of(supplier);
+            return this;
+        }
+
+        @NonNull
+        public Builder enchant(@NonNull Enchantment enchantment, int level) {
+            this.enchantments.put(enchantment, level);
+            return this;
+        }
+
+        @NonNull
+        public Builder itemFlag(@NonNull ItemFlag... flags) {
+            this.itemFlags.addAll(Arrays.asList(flags));
+            return this;
+        }
+
+        @NonNull
+        public Builder onClick(@NonNull Consumer<MenuItemClickContext> handler) {
+            this.clickHandler = handler;
+            return this;
+        }
+
+        @NonNull
+        public Builder onRightClick(@NonNull Consumer<MenuItemClickContext> handler) {
+            this.rightClickHandler = handler;
+            return this;
+        }
+
+        @NonNull
+        public Builder onLeftClick(@NonNull Consumer<MenuItemClickContext> handler) {
+            this.leftClickHandler = handler;
+            return this;
+        }
+
+        /**
+         * Allows players to pick up the item from this slot.
+         * By default, all menu items are locked and cannot be picked up.
+         *
+         * @param allowPickup true to allow picking up
+         * @return This builder
+         */
+        @NonNull
+        public Builder allowPickup(boolean allowPickup) {
+            this.allowPickup = allowPickup;
+            return this;
+        }
+
+        /**
+         * Allows players to place items into this slot.
+         * By default, all menu slots block item placement.
+         *
+         * @param allowPlacement true to allow placing items
+         * @return This builder
+         */
+        @NonNull
+        public Builder allowPlacement(boolean allowPlacement) {
+            this.allowPlacement = allowPlacement;
+            return this;
+        }
+
+        /**
+         * Makes this slot fully interactive (allows both pickup and placement).
+         * Shorthand for {@code .allowPickup(true).allowPlacement(true)}.
+         *
+         * @return This builder
+         */
+        @NonNull
+        public Builder interactive() {
+            this.allowPickup = true;
+            this.allowPlacement = true;
+            return this;
+        }
+
+        /**
+         * Sets a handler for when the item in this slot changes.
+         * Called after items are placed, removed, or swapped.
+         *
+         * <p>Use {@link MenuItemChangeContext} methods to check what changed:
+         * <ul>
+         *   <li>{@code wasItemPlaced()} - Item was placed into empty slot</li>
+         *   <li>{@code wasItemRemoved()} - Item was removed from slot</li>
+         *   <li>{@code wasItemSwapped()} - Item was swapped with another</li>
+         * </ul>
+         *
+         * @param handler The change handler
+         * @return This builder
+         */
+        @NonNull
+        public Builder onItemChange(@NonNull Consumer<MenuItemChangeContext> handler) {
+            this.itemChangeHandler = handler;
+            return this;
+        }
+
+        // Context-aware builder methods (accept MenuContext parameter)
+        // Note: Requires ReactiveContext to include menu reference during rendering
+
+        @NonNull
+        public Builder material(@NonNull Function<MenuContext, Material> function) {
+            // Wrap the function to use when reactive context has a menu
+            this.material = ReactiveProperty.ofContext(ctx -> function.apply(ctx));
+            return this;
+        }
+
+        @NonNull
+        public Builder name(@NonNull Function<MenuContext, String> function) {
+            this.name = ReactiveProperty.ofContext(ctx -> function.apply(ctx));
+            return this;
+        }
+
+        @NonNull
+        public Builder visible(@NonNull Function<MenuContext, Boolean> function) {
+            this.visible = ReactiveProperty.ofContext(ctx -> function.apply(ctx));
+            return this;
+        }
+
+        /**
+         * Adds a declarative filter to this item.
+         * The filter will be applied to the target pane when active.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .filter(ItemFilter.builder()
+         *     .target("items")
+         *     .when(() -> filterActive)
+         *     .predicate(item -> item.getRarity() == Rarity.EPIC)
+         *     .build())
+         * }</pre>
+         *
+         * @param filter The item filter
+         * @return This builder
+         */
+        @NonNull
+        public Builder filter(@NonNull ItemFilter<?> filter) {
+            this.filters.add(filter);
+            return this;
+        }
+
+        @NonNull
+        public MenuItem build() {
+            // Validate: interactive items should not have display properties
+            boolean isInteractive = this.allowPickup || this.allowPlacement;
+
+            if (isInteractive) {
+                // Check if material was explicitly set (not default AIR)
+                Material mat = this.material.get(null);
+                if ((mat != null) && (mat != Material.AIR)) {
+                    throw new IllegalStateException(
+                        "Interactive items (allowPickup/allowPlacement) should not have a material() set. " +
+                            "Interactive items display whatever is in the inventory slot. " +
+                            "Remove material() from this interactive item."
+                    );
+                }
+
+                // Check if name was explicitly set (not default empty)
+                String n = this.name.get(null);
+                if ((n != null) && !n.isEmpty()) {
+                    throw new IllegalStateException(
+                        "Interactive items (allowPickup/allowPlacement) should not have a name() set. " +
+                            "Interactive items display whatever is in the inventory slot. " +
+                            "Remove name() from this interactive item."
+                    );
+                }
+
+                // Check if lore was explicitly set (not default empty)
+                List<String> l = this.lore.get(null);
+                if ((l != null) && !l.isEmpty()) {
+                    throw new IllegalStateException(
+                        "Interactive items (allowPickup/allowPlacement) should not have lore() set. " +
+                            "Interactive items display whatever is in the inventory slot. " +
+                            "Remove lore() from this interactive item."
+                    );
+                }
+            }
+
+            return new MenuItem(this);
+        }
+    }
+}

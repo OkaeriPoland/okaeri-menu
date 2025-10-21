@@ -1,0 +1,95 @@
+package eu.okaeri.menu.test.example;
+
+import eu.okaeri.menu.Menu;
+import eu.okaeri.menu.item.MenuItem;
+import eu.okaeri.menu.navigation.NavigationUtils;
+import eu.okaeri.menu.pane.StaticPane;
+import org.bukkit.Material;
+
+import java.util.Map;
+
+/**
+ * Examples demonstrating item-level variables (.vars()).
+ * Variables defined once at item level are shared across name(), lore(), etc.
+ */
+public class ItemVarsExample {
+
+    /**
+     * Item-level variables shared across name and lore.
+     * Variables defined once with .vars() are automatically available in name(), lore(), etc.
+     */
+    public static Menu createItemVarsMenu() {
+        int[] counter = {0};
+
+        return Menu.builder()
+            .title("&6Item-Level Variables")
+            .rows(3)
+            .pane("main", StaticPane.builder()
+                .name("main")
+                .bounds(0, 0, 9, 3)
+                // Example 1: Simple vars shared between name and lore
+                .item(1, 1, MenuItem.builder()
+                    .material(Material.DIAMOND)
+                    .vars(Map.of(
+                        "price", 100,
+                        "currency", "coins"
+                    ))
+                    .name("&bDiamond - <price> <currency>")
+                    .lore("""
+                        &7Price: &f<price> <currency>
+                        &7Click to purchase!""")
+                    .onClick(ctx -> ctx.sendMessage("&aPurchased for " + 100 + " coins!"))
+                    .build())
+                // Example 2: Reactive vars with Suppliers
+                .item(3, 1, MenuItem.builder()
+                    .material(Material.CLOCK)
+                    .vars(Map.of(
+                        "count", (java.util.function.Supplier<Integer>) () -> counter[0]
+                    ))
+                    .name("&eCounter: <count>")
+                    .lore("""
+                        &7Current count: &f<count>
+
+                        &eClick to increment!""")
+                    .onClick(ctx -> {
+                        counter[0]++;
+                        ctx.refresh();
+                    })
+                    .build())
+                // Example 3: Method-level vars override item-level vars
+                .item(5, 1, MenuItem.builder()
+                    .material(Material.EMERALD)
+                    .vars(Map.of(
+                        "item", "Emerald",
+                        "price", 50
+                    ))
+                    .name("&a<item>")
+                    .lore("""
+                        &7Default price: &f<price> coins
+                        &7Sale price: &f<price> coins
+
+                        &eSale is active!""",
+                        Map.of("price", 25))  // Override item-level price for lore
+                    .build())
+                // Example 4: Multiple placeholders from item-level vars
+                .item(7, 1, MenuItem.builder()
+                    .material(Material.ENCHANTED_BOOK)
+                    .vars(Map.of(
+                        "name", "Sharpness V",
+                        "type", "Enchantment",
+                        "rarity", "Epic",
+                        "price", 250
+                    ))
+                    .name("&d<name>")
+                    .lore("""
+                        &7Type: &f<type>
+                        &7Rarity: &d<rarity>
+                        &7Price: &6<price> coins
+
+                        &eClick to purchase!""")
+                    .build())
+                .item(8, 2, NavigationUtils.closeButton().build())
+                .build())
+            .build();
+    }
+}
