@@ -39,6 +39,7 @@ public class MenuItem {
     private Consumer<MenuItemClickContext> clickHandler;
     private Consumer<MenuItemClickContext> rightClickHandler;
     private Consumer<MenuItemClickContext> leftClickHandler;
+    private Consumer<MenuItemClickContext> middleClickHandler;
 
     // Interactive slot properties
     private final boolean allowPickup;
@@ -48,7 +49,7 @@ public class MenuItem {
     // Declarative filters for pagination
     private final List<ItemFilter<?>> filters = new ArrayList<>();
 
-    private MenuItem(Builder builder) {
+    protected MenuItem(Builder builder) {
         this.material = builder.material;
         this.name = builder.name;
         this.lore = builder.lore;
@@ -60,6 +61,7 @@ public class MenuItem {
         this.clickHandler = builder.clickHandler;
         this.rightClickHandler = builder.rightClickHandler;
         this.leftClickHandler = builder.leftClickHandler;
+        this.middleClickHandler = builder.middleClickHandler;
         this.allowPickup = builder.allowPickup;
         this.allowPlacement = builder.allowPlacement;
         this.itemChangeHandler = builder.itemChangeHandler;
@@ -140,10 +142,12 @@ public class MenuItem {
             this.clickHandler.accept(context);
         }
 
-        if (context.isRightClick() && (this.rightClickHandler != null)) {
-            this.rightClickHandler.accept(context);
-        } else if (context.isLeftClick() && (this.leftClickHandler != null)) {
+        if (context.isLeftClick() && (this.leftClickHandler != null)) {
             this.leftClickHandler.accept(context);
+        } else if (context.isRightClick() && (this.rightClickHandler != null)) {
+            this.rightClickHandler.accept(context);
+        } else if (context.isMiddleClick() && (this.middleClickHandler != null)) {
+            this.middleClickHandler.accept(context);
         }
     }
 
@@ -178,8 +182,19 @@ public class MenuItem {
     }
 
     @NonNull
-    public static Builder builder() {
+    public static Builder item() {
         return new Builder();
+    }
+
+    /**
+     * Creates a builder for AsyncMenuItem with async data loading and suspense states.
+     * Convenient shorthand for AsyncMenuItem.async().
+     *
+     * @return AsyncMenuItem builder
+     */
+    @NonNull
+    public static AsyncMenuItem.Builder itemAsync() {
+        return AsyncMenuItem.itemAsync();
     }
 
     public static class Builder {
@@ -196,6 +211,7 @@ public class MenuItem {
         private Consumer<MenuItemClickContext> clickHandler;
         private Consumer<MenuItemClickContext> rightClickHandler;
         private Consumer<MenuItemClickContext> leftClickHandler;
+        private Consumer<MenuItemClickContext> middleClickHandler;
 
         // Interactive slot properties
         private boolean allowPickup = false;
@@ -207,6 +223,14 @@ public class MenuItem {
 
         // Declarative filters
         private List<ItemFilter<?>> filters = new ArrayList<>();
+
+        // Track if display properties were explicitly set (for interactive item validation)
+        private boolean materialExplicitlySet = false;
+        private boolean nameExplicitlySet = false;
+        private boolean loreExplicitlySet = false;
+
+        // Reactive data sources for async loading
+        private Map<String, ReactiveDataSource> reactiveSources = new java.util.LinkedHashMap<>();
 
         /**
          * Sets item-level variables that are shared across name, lore, and other properties.
@@ -289,12 +313,17 @@ public class MenuItem {
         @NonNull
         public Builder material(@NonNull Material material) {
             this.material = ReactiveProperty.of(material);
+            // Only mark as explicitly set if it's not AIR (AIR is the default "no material")
+            if (material != Material.AIR) {
+                this.materialExplicitlySet = true;
+            }
             return this;
         }
 
         @NonNull
         public Builder material(@NonNull Supplier<Material> supplier) {
             this.material = ReactiveProperty.of(supplier);
+            this.materialExplicitlySet = true;
             return this;
         }
 
@@ -309,6 +338,7 @@ public class MenuItem {
         @NonNull
         public Builder name(@NonNull String template) {
             this.name = ReactiveProperty.ofContext(ctx -> this.resolveName(ctx, template, null));
+            this.nameExplicitlySet = true;
             return this;
         }
 
@@ -323,6 +353,7 @@ public class MenuItem {
         @NonNull
         public Builder name(@NonNull String template, Map<String, Object> vars) {
             this.name = ReactiveProperty.ofContext(ctx -> this.resolveName(ctx, template, vars));
+            this.nameExplicitlySet = true;
             return this;
         }
 
@@ -340,6 +371,7 @@ public class MenuItem {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
                 return this.resolveName(ctx, template, vars);
             });
+            this.nameExplicitlySet = true;
             return this;
         }
 
@@ -359,6 +391,7 @@ public class MenuItem {
                 }
                 return this.resolveName(ctx, template, null);
             });
+            this.nameExplicitlySet = true;
             return this;
         }
 
@@ -381,6 +414,7 @@ public class MenuItem {
         @NonNull
         public Builder name(@NonNull Map<Locale, String> localeMap) {
             this.name = ReactiveProperty.ofContext(ctx -> this.resolveNameFromLocaleMap(ctx, localeMap, null));
+            this.nameExplicitlySet = true;
             return this;
         }
 
@@ -403,6 +437,7 @@ public class MenuItem {
         @NonNull
         public Builder name(@NonNull Map<Locale, String> localeMap, Map<String, Object> vars) {
             this.name = ReactiveProperty.ofContext(ctx -> this.resolveNameFromLocaleMap(ctx, localeMap, vars));
+            this.nameExplicitlySet = true;
             return this;
         }
 
@@ -420,6 +455,7 @@ public class MenuItem {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
                 return this.resolveNameFromLocaleMap(ctx, localeMap, vars);
             });
+            this.nameExplicitlySet = true;
             return this;
         }
 
@@ -435,6 +471,7 @@ public class MenuItem {
         @NonNull
         public Builder lore(@NonNull String template) {
             this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLore(ctx, template, null));
+            this.loreExplicitlySet = true;
             return this;
         }
 
@@ -449,6 +486,7 @@ public class MenuItem {
         @NonNull
         public Builder lore(@NonNull String template, Map<String, Object> vars) {
             this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLore(ctx, template, vars));
+            this.loreExplicitlySet = true;
             return this;
         }
 
@@ -466,6 +504,7 @@ public class MenuItem {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
                 return this.resolveLore(ctx, template, vars);
             });
+            this.loreExplicitlySet = true;
             return this;
         }
 
@@ -497,6 +536,7 @@ public class MenuItem {
         @NonNull
         public Builder lore(@NonNull Map<Locale, String> localeMap) {
             this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLoreFromLocaleMap(ctx, localeMap, null));
+            this.loreExplicitlySet = true;
             return this;
         }
 
@@ -527,6 +567,7 @@ public class MenuItem {
         @NonNull
         public Builder lore(@NonNull Map<Locale, String> localeMap, Map<String, Object> vars) {
             this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLoreFromLocaleMap(ctx, localeMap, vars));
+            this.loreExplicitlySet = true;
             return this;
         }
 
@@ -544,6 +585,7 @@ public class MenuItem {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
                 return this.resolveLoreFromLocaleMap(ctx, localeMap, vars);
             });
+            this.loreExplicitlySet = true;
             return this;
         }
 
@@ -613,6 +655,12 @@ public class MenuItem {
             return this;
         }
 
+        @NonNull
+        public Builder onMiddleClick(@NonNull Consumer<MenuItemClickContext> handler) {
+            this.middleClickHandler = handler;
+            return this;
+        }
+
         /**
          * Allows players to pick up the item from this slot.
          * By default, all menu items are locked and cannot be picked up.
@@ -679,12 +727,14 @@ public class MenuItem {
         public Builder material(@NonNull Function<MenuContext, Material> function) {
             // Wrap the function to use when reactive context has a menu
             this.material = ReactiveProperty.ofContext(ctx -> function.apply(ctx));
+            this.materialExplicitlySet = true;
             return this;
         }
 
         @NonNull
         public Builder name(@NonNull Function<MenuContext, String> function) {
             this.name = ReactiveProperty.ofContext(ctx -> function.apply(ctx));
+            this.nameExplicitlySet = true;
             return this;
         }
 
@@ -716,15 +766,78 @@ public class MenuItem {
             return this;
         }
 
+        /**
+         * Declares an async data dependency for this item.
+         * Data will be loaded asynchronously and cached per-viewer.
+         * Access the loaded data using {@code ctx.computed(key)} in property functions.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * MenuItem.builder()
+         *     .reactive("stats", () -> database.getPlayerStats(player), Duration.ofSeconds(30))
+         *     .reactive("guild", () -> guildService.getGuild(player), Duration.ofMinutes(5))
+         *     .name(ctx -> ctx.computed("stats")
+         *         .map(PlayerStats::getTitle)
+         *         .loading("&7Loading...")
+         *         .orElse("&7Unknown"))
+         *     .lore(ctx -> {
+         *         String statsLine = ctx.computed("stats")
+         *             .map(s -> "&7Level: " + s.getLevel())
+         *             .loading("&7Level: Loading...")
+         *             .orElse("&7Level: Unknown");
+         *         String guildLine = ctx.computed("guild")
+         *             .map(g -> "&7Guild: " + g.getName())
+         *             .loading("&7Guild: Loading...")
+         *             .orElse("&7Guild: None");
+         *         return statsLine + "\n" + guildLine;
+         *     })
+         *     .build()
+         * }</pre>
+         *
+         * @param key    Unique key for this data source
+         * @param loader Async data loader
+         * @param ttl    Time-to-live for cached data
+         * @return This builder
+         */
+        @NonNull
+        public Builder reactive(@NonNull String key, @NonNull Supplier<?> loader, @NonNull java.time.Duration ttl) {
+            this.reactiveSources.put(key, new ReactiveDataSource(key, loader, ttl));
+            return this;
+        }
+
+        /**
+         * Attaches reactive data source with default TTL of 1 second.
+         *
+         * @param key    The data key
+         * @param loader The data loader
+         * @return This builder
+         */
+        @NonNull
+        public Builder reactive(@NonNull String key, @NonNull Supplier<?> loader) {
+            return this.reactive(key, loader, java.time.Duration.ofSeconds(1));
+        }
+
         @NonNull
         public MenuItem build() {
+            // Start async loads for all reactive sources on first render
+            if (!this.reactiveSources.isEmpty()) {
+                // Wrap material property to trigger async loads on first access
+                ReactiveProperty<Material> originalMaterial = this.material;
+                this.material = ReactiveProperty.ofContext(ctx -> {
+                    // Ensure all reactive data sources are loaded
+                    for (ReactiveDataSource source : this.reactiveSources.values()) {
+                        ctx.loadAsync(source.key, source.loader, source.ttl);
+                    }
+                    return originalMaterial.get(ctx);
+                });
+            }
+
             // Validate: interactive items should not have display properties
             boolean isInteractive = this.allowPickup || this.allowPlacement;
 
             if (isInteractive) {
-                // Check if material was explicitly set (not default AIR)
-                Material mat = this.material.get(null);
-                if ((mat != null) && (mat != Material.AIR)) {
+                // Check if material was explicitly set
+                if (this.materialExplicitlySet) {
                     throw new IllegalStateException(
                         "Interactive items (allowPickup/allowPlacement) should not have a material() set. " +
                             "Interactive items display whatever is in the inventory slot. " +
@@ -732,9 +845,8 @@ public class MenuItem {
                     );
                 }
 
-                // Check if name was explicitly set (not default empty)
-                String n = this.name.get(null);
-                if ((n != null) && !n.isEmpty()) {
+                // Check if name was explicitly set
+                if (this.nameExplicitlySet) {
                     throw new IllegalStateException(
                         "Interactive items (allowPickup/allowPlacement) should not have a name() set. " +
                             "Interactive items display whatever is in the inventory slot. " +
@@ -742,9 +854,8 @@ public class MenuItem {
                     );
                 }
 
-                // Check if lore was explicitly set (not default empty)
-                List<String> l = this.lore.get(null);
-                if ((l != null) && !l.isEmpty()) {
+                // Check if lore was explicitly set
+                if (this.loreExplicitlySet) {
                     throw new IllegalStateException(
                         "Interactive items (allowPickup/allowPlacement) should not have lore() set. " +
                             "Interactive items display whatever is in the inventory slot. " +
@@ -754,6 +865,21 @@ public class MenuItem {
             }
 
             return new MenuItem(this);
+        }
+
+        /**
+         * Helper class to store reactive data source information.
+         */
+        private static class ReactiveDataSource {
+            final String key;
+            final Supplier<?> loader;
+            final java.time.Duration ttl;
+
+            ReactiveDataSource(String key, Supplier<?> loader, java.time.Duration ttl) {
+                this.key = key;
+                this.loader = loader;
+                this.ttl = ttl;
+            }
         }
     }
 }

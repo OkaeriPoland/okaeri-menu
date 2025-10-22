@@ -2,18 +2,39 @@ package eu.okaeri.menu.navigation;
 
 import eu.okaeri.menu.Menu;
 import lombok.NonNull;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 
 /**
  * Manages navigation history for menu systems.
  * Tracks which menus a player has visited in order to enable back navigation.
+ * <p>
+ * MEMORY LEAK PREVENTION:
+ * - Depth limited to 10 entries per player
+ * - Periodic cleanup task removes orphaned entries (every 60s)
+ * - PlayerQuitEvent cleanup (via MenuListener)
  */
-public class NavigationHistory {
+public final class NavigationHistory {
+
+    /**
+     * Maximum depth of navigation history per player
+     */
+    private static final int MAX_DEPTH = 10;
+
+    /**
+     * Cleanup interval in ticks (60 seconds = 1200 ticks)
+     */
+    private static final long CLEANUP_INTERVAL = 60 * 20;
 
     // Per-player navigation stacks
     private static final Map<UUID, Deque<MenuSnapshot>> HISTORY = new HashMap<>();
+
+    // Cleanup task
+    private static BukkitTask cleanupTask;
 
     /**
      * Opens a menu and records it in navigation history.
@@ -40,6 +61,11 @@ public class NavigationHistory {
 
         // Push current menu to history
         stack.push(new MenuSnapshot(menu, params));
+
+        // Limit depth to prevent unbounded growth
+        while (stack.size() > MAX_DEPTH) {
+            stack.removeLast(); // Remove oldest entry
+        }
 
         // Open the menu
         menu.open(player);
@@ -138,6 +164,95 @@ public class NavigationHistory {
         UUID playerId = player.getUniqueId();
         Deque<MenuSnapshot> stack = HISTORY.get(playerId);
         return (stack == null) ? 0 : stack.size();
+    }
+
+    /**
+     * Gets the maximum allowed depth for navigation history.
+     *
+     * @return The maximum depth (10)
+     */
+    public static int getMaxDepth() {
+        return MAX_DEPTH;
+    }
+
+    // ========================================
+    // MEMORY LEAK PREVENTION
+    // ========================================
+
+    /**
+     * Starts the periodic cleanup task.
+     * This removes orphaned navigation history entries where the player
+     * is no longer viewing the top menu.
+     * <p>
+     * This method is idempotent - calling it multiple times is safe.
+     * If the task is already running, this method does nothing.
+     * <p>
+     * The task is automatically started when the first menu is created.
+     *
+     * @param plugin The plugin instance
+     */
+    public static void startCleanupTask(@NonNull Plugin plugin) {
+        if (cleanupTask != null) {
+            return; // Already running, don't recreate
+        }
+
+        cleanupTask = Bukkit.getScheduler().runTaskTimer(plugin,
+            NavigationHistory::cleanup,
+            CLEANUP_INTERVAL,
+            CLEANUP_INTERVAL
+        );
+    }
+
+    /**
+     * Stops the periodic cleanup task.
+     * Call this when the plugin disables.
+     */
+    public static void stopCleanupTask() {
+        if (cleanupTask != null) {
+            cleanupTask.cancel();
+            cleanupTask = null;
+        }
+    }
+
+    /**
+     * Cleans up orphaned navigation history entries.
+     * Removes entries where the player is no longer viewing the top menu.
+     * <p>
+     * This is called automatically by the cleanup task, but can also be
+     * called manually if needed.
+     */
+    public static void cleanup() {
+        Iterator<Map.Entry<UUID, Deque<MenuSnapshot>>> it = HISTORY.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<UUID, Deque<MenuSnapshot>> entry = it.next();
+            UUID playerId = entry.getKey();
+            Deque<MenuSnapshot> stack = entry.getValue();
+
+            // Remove empty stacks
+            if (stack.isEmpty()) {
+                it.remove();
+                continue;
+            }
+
+            // Check if player is still viewing the top menu
+            MenuSnapshot top = stack.peek();
+            Menu topMenu = top.getMenu();
+
+            // If the player is not viewing this menu anymore, clean up the entire history
+            if (topMenu.getViewerState(playerId) == null) {
+                it.remove();
+            }
+        }
+    }
+
+    /**
+     * Gets the total number of players with navigation history.
+     * Useful for monitoring and debugging.
+     *
+     * @return The number of players in the history map
+     */
+    public static int getTotalPlayers() {
+        return HISTORY.size();
     }
 
     /**

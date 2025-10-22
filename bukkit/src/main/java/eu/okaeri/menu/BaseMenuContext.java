@@ -1,7 +1,11 @@
 package eu.okaeri.menu;
 
+import eu.okaeri.menu.async.AsyncCache;
+import eu.okaeri.menu.async.ComputedValue;
+import eu.okaeri.menu.async.PaneDataState;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.navigation.NavigationHistory;
+import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.pane.PaginatedPane;
 import eu.okaeri.menu.pane.Pane;
 import eu.okaeri.menu.pane.StaticPane;
@@ -15,7 +19,12 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 /**
  * Base class for all menu contexts.
@@ -213,7 +222,7 @@ public abstract class BaseMenuContext {
      */
     @NonNull
     @SuppressWarnings("unchecked")
-    public <T> eu.okaeri.menu.pagination.PaginationContext<T> pagination(@NonNull String paneName) {
+    public <T> PaginationContext<T> pagination(@NonNull String paneName) {
         Pane pane = this.menu.getPane(paneName);
         if (!(pane instanceof PaginatedPane)) {
             throw new IllegalArgumentException("Pane '" + paneName + "' is not a PaginatedPane");
@@ -222,7 +231,7 @@ public abstract class BaseMenuContext {
         PaginatedPane<T> paginatedPane = (PaginatedPane<T>) pane;
 
         // Get items from the pane and create/get context
-        java.util.List<T> items = paginatedPane.getItemsSupplier().get();
+        List<T> items = paginatedPane.getItemsSupplier().get();
         return eu.okaeri.menu.pagination.PaginationContext.get(
             this.menu,  // Menu instance for scoped pagination contexts
             paneName,
@@ -278,5 +287,150 @@ public abstract class BaseMenuContext {
         if (viewerState != null) {
             viewerState.getInventory().setItem(globalSlot, item);
         }
+    }
+
+    // ========================================
+    // ASYNC DATA ACCESS
+    // ========================================
+
+    /**
+     * Access async data by key with computed transformations.
+     * The key should be registered via AsyncPaginatedPane or MenuItem.async().
+     *
+     * @param key The data key
+     * @param <T> The value type
+     * @return ComputedValue wrapper supporting map/loading/error/orElse
+     */
+    @NonNull
+    public <T> ComputedValue<T> computed(@NonNull String key) {
+        Menu.ViewerState state = this.menu.getViewerState(this.entity.getUniqueId());
+        if (state == null) {
+            return ComputedValue.empty();
+        }
+
+        AsyncCache cache = state.getAsyncCache();
+        AsyncCache.AsyncState asyncState = cache.getState(key);
+
+        if (asyncState == null) {
+            return ComputedValue.empty();
+        }
+
+        switch (asyncState) {
+            case SUCCESS:
+                Optional<?> value = cache.get(key, Object.class);
+                @SuppressWarnings("unchecked")
+                T castValue = (T) value.orElse(null);
+                return ComputedValue.success(castValue);
+            case LOADING:
+                return ComputedValue.loading();
+            case ERROR:
+                return ComputedValue.error(cache.getError(key).orElse(null));
+            default:
+                return ComputedValue.empty();
+        }
+    }
+
+    /**
+     * Access async data by key with type hint.
+     *
+     * @param key  The data key
+     * @param type The expected type
+     * @param <T>  The value type
+     * @return ComputedValue wrapper supporting map/loading/error/orElse
+     */
+    @NonNull
+    public <T> ComputedValue<T> computed(@NonNull String key, @NonNull Class<T> type) {
+        return this.computed(key);
+    }
+
+    /**
+     * Access full pane state (filtered, paginated, etc).
+     *
+     * @param paneName The name of the pane
+     * @param itemType The item type class
+     * @param <T>      The item type
+     * @return ComputedValue wrapping PaneDataState
+     */
+    @NonNull
+    public <T> ComputedValue<PaneDataState<T>> paneData(@NonNull String paneName, @NonNull Class<T> itemType) {
+        // Get the pane data from cache
+        ComputedValue<?> dataValue = this.computed(paneName);
+
+        // Map to PaneDataState which adds filtering/pagination info
+        return dataValue.map(allItems -> {
+            @SuppressWarnings("unchecked")
+            List<T> items = (List<T>) allItems;
+            PaginationContext<T> paginationCtx = this.pagination(paneName);
+            return new PaneDataState<>(items, paginationCtx);
+        });
+    }
+
+    /**
+     * Get loaded reactive data directly (for handlers).
+     * Returns empty if still loading or error.
+     *
+     * @param key  The data key
+     * @param type The expected type
+     * @param <T>  The value type
+     * @return Optional of the loaded value
+     */
+    @NonNull
+    public <T> Optional<T> getReactive(@NonNull String key, @NonNull Class<T> type) {
+        return this.computed(key, type).toOptional();
+    }
+
+    /**
+     * Invalidate cached async data, triggering reload on next access.
+     *
+     * @param key The data key to invalidate
+     */
+    public void invalidate(@NonNull String key) {
+        Menu.ViewerState state = this.menu.getViewerState(this.entity.getUniqueId());
+        if (state != null) {
+            state.getAsyncCache().invalidate(key);
+        }
+    }
+
+    /**
+     * Manually load async data (used by async components).
+     * Schedules load on async thread, refreshes on completion.
+     *
+     * @param key    The cache key
+     * @param loader The async data loader
+     * @param ttl    Time-to-live for cached data
+     * @param <T>    The result type
+     * @return CompletableFuture for the load operation
+     */
+    @NonNull
+    public <T> CompletableFuture<T> loadAsync(@NonNull String key, @NonNull Supplier<T> loader, @NonNull Duration ttl) {
+        Menu.ViewerState state = this.menu.getViewerState(this.entity.getUniqueId());
+        if (state == null) {
+            return CompletableFuture.failedFuture(new IllegalStateException("ViewerState not found"));
+        }
+
+        AsyncCache cache = state.getAsyncCache();
+
+        // Get or start load (prevents duplicate loads)
+        CompletableFuture<T> future = cache.getOrStartLoad(key, loader, ttl);
+
+        // On completion, refresh menu on server thread
+        future.whenComplete((value, error) -> {
+            if (error != null) {
+                cache.setError(key, error);
+            } else {
+                cache.put(key, value, ttl);
+            }
+
+            // Schedule refresh on server thread
+            Plugin plugin = this.menu.getPlugin();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                // Only refresh if player still viewing this menu
+                if (this.menu.getViewerState(this.entity.getUniqueId()) != null) {
+                    this.menu.refresh(this.entity);
+                }
+            });
+        });
+
+        return future;
     }
 }

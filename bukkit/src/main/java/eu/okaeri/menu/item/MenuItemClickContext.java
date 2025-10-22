@@ -32,4 +32,8 @@ public class MenuItemClickContext extends BaseMenuItemContext {
     public boolean isShiftClick() {
         return (this.clickType == ClickType.SHIFT_LEFT) || (this.clickType == ClickType.SHIFT_RIGHT);
     }
+
+    public boolean isMiddleClick() {
+        return this.clickType == ClickType.MIDDLE;
+    }
 }

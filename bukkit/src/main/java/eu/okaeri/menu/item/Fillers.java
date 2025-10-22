@@ -29,7 +29,7 @@ public final class Fillers {
     public static final MenuItem BLACK_GLASS_PANE = glassPane(Material.BLACK_STAINED_GLASS_PANE);
 
     // Other common fillers
-    public static final MenuItem AIR = MenuItem.builder()
+    public static final MenuItem AIR = MenuItem.item()
         .material(Material.AIR)
         .build();
 
@@ -41,7 +41,7 @@ public final class Fillers {
      */
     @NonNull
     private static MenuItem glassPane(@NonNull Material material) {
-        return MenuItem.builder()
+        return MenuItem.item()
             .material(material)
             .name(" ")
             .build();

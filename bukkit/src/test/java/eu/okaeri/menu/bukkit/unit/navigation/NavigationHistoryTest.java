@@ -38,22 +38,19 @@ class NavigationHistoryTest {
         NavigationHistory.clearAll();
 
         // Create test menus
-        this.menu1 = Menu.builder()
+        this.menu1 = Menu.builder(this.plugin)
             .title("Menu 1")
             .rows(3)
-            .plugin(this.plugin)
             .build();
 
-        this.menu2 = Menu.builder()
+        this.menu2 = Menu.builder(this.plugin)
             .title("Menu 2")
             .rows(3)
-            .plugin(this.plugin)
             .build();
 
-        this.menu3 = Menu.builder()
+        this.menu3 = Menu.builder(this.plugin)
             .title("Menu 3")
             .rows(3)
-            .plugin(this.plugin)
             .build();
     }
 
@@ -285,10 +282,9 @@ class NavigationHistoryTest {
     void testDeepNavigationChain() {
         // Create a deep stack
         for (int i = 0; i < 10; i++) {
-            Menu menu = Menu.builder()
+            Menu menu = Menu.builder(this.plugin)
                 .title("Menu " + i)
                 .rows(3)
-                .plugin(this.plugin)
                 .build();
             NavigationHistory.open(this.player, menu);
         }
@@ -306,5 +302,207 @@ class NavigationHistoryTest {
         boolean navigated = NavigationHistory.back(this.player);
         assertThat(navigated).isFalse();
         assertThat(NavigationHistory.depth(this.player)).isEqualTo(0);
+    }
+
+    // ========================================
+    // MEMORY LEAK PREVENTION
+    // ========================================
+
+    @Test
+    @DisplayName("Should limit navigation depth to maximum")
+    void testDepthLimiting() {
+        int maxDepth = NavigationHistory.getMaxDepth();
+
+        // Try to push more than max depth
+        for (int i = 0; i < (maxDepth + 5); i++) {
+            Menu menu = Menu.builder(this.plugin)
+                .title("Menu " + i)
+                .rows(3)
+                .build();
+            NavigationHistory.open(this.player, menu);
+        }
+
+        // Should be limited to max depth
+        assertThat(NavigationHistory.depth(this.player)).isEqualTo(maxDepth);
+    }
+
+    @Test
+    @DisplayName("Should enforce depth limit on every open call")
+    void testDepthLimitingGradual() {
+        int maxDepth = NavigationHistory.getMaxDepth();
+
+        // Push exactly max depth
+        for (int i = 0; i < maxDepth; i++) {
+            Menu menu = Menu.builder(this.plugin)
+                .title("Menu " + i)
+                .rows(3)
+                .build();
+            NavigationHistory.open(this.player, menu);
+        }
+
+        assertThat(NavigationHistory.depth(this.player)).isEqualTo(maxDepth);
+
+        // Push one more - should still be max depth
+        Menu extraMenu = Menu.builder(this.plugin)
+            .title("Extra Menu")
+            .rows(3)
+            .build();
+        NavigationHistory.open(this.player, extraMenu);
+
+        assertThat(NavigationHistory.depth(this.player)).isEqualTo(maxDepth);
+    }
+
+    @Test
+    @DisplayName("Should remove oldest entries when depth limit exceeded")
+    void testDepthLimitingRemovesOldest() {
+        int maxDepth = NavigationHistory.getMaxDepth();
+
+        // Push max depth menus
+        for (int i = 0; i < maxDepth; i++) {
+            Menu menu = Menu.builder(this.plugin)
+                .title("Menu " + i)
+                .rows(3)
+                .build();
+            NavigationHistory.open(this.player, menu);
+        }
+
+        // The stack should have menus 0-9 (menu 9 is current)
+        // Go back once to see menu 8
+        NavigationHistory.back(this.player);
+        Menu.ViewerState state = this.menu1.getViewerState(this.player.getUniqueId());
+
+        // Push another menu - should remove menu 0 (oldest)
+        Menu newMenu = Menu.builder(this.plugin)
+            .title("New Menu")
+            .rows(3)
+            .build();
+        NavigationHistory.open(this.player, newMenu);
+
+        // Should still be at max depth
+        assertThat(NavigationHistory.depth(this.player)).isEqualTo(maxDepth);
+
+        // Navigate back through all - should only go back maxDepth times
+        int backCount = 0;
+        while (NavigationHistory.back(this.player)) {
+            backCount++;
+        }
+
+        assertThat(backCount).isLessThanOrEqualTo(maxDepth - 1);
+    }
+
+    @Test
+    @DisplayName("Should cleanup orphaned navigation entries")
+    void testCleanupOrphanedEntries() {
+        // Open menu and add to history
+        NavigationHistory.open(this.player, this.menu1);
+
+        assertThat(NavigationHistory.depth(this.player)).isEqualTo(1);
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(1);
+
+        // Close the menu manually (simulating player quit or crash)
+        this.menu1.close(this.player);
+
+        // Run cleanup
+        NavigationHistory.cleanup();
+
+        // Should have cleaned up the orphaned entry
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Should cleanup empty stacks")
+    void testCleanupEmptyStacks() {
+        PlayerMock player2 = this.server.addPlayer("Player2");
+
+        // Create history for two players
+        NavigationHistory.open(this.player, this.menu1);
+        NavigationHistory.open(player2, this.menu2);
+
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(2);
+
+        // Manually clear one player's stack (simulating back navigation to empty)
+        NavigationHistory.clear(this.player);
+
+        // Manually add empty entry (shouldn't happen in practice, but test defensive coding)
+        // We'll simulate by opening then immediately backing all the way out
+        NavigationHistory.open(this.player, this.menu3);
+        NavigationHistory.back(this.player);
+
+        // Run cleanup
+        NavigationHistory.cleanup();
+
+        // Player with no history should be cleaned, player2 should remain
+        // Note: back() already clears when empty, so getTotalPlayers should show only player2
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should not cleanup active navigation entries")
+    void testCleanupPreservesActiveEntries() {
+        // Open menu and keep it open
+        NavigationHistory.open(this.player, this.menu1);
+
+        assertThat(NavigationHistory.depth(this.player)).isEqualTo(1);
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(1);
+
+        // Run cleanup while menu is still open
+        NavigationHistory.cleanup();
+
+        // Should NOT have cleaned up the active entry
+        assertThat(NavigationHistory.depth(this.player)).isEqualTo(1);
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should cleanup multiple orphaned entries at once")
+    void testCleanupMultipleOrphaned() {
+        PlayerMock player2 = this.server.addPlayer("Player2");
+        PlayerMock player3 = this.server.addPlayer("Player3");
+
+        // Create history for multiple players
+        NavigationHistory.open(this.player, this.menu1);
+        NavigationHistory.open(player2, this.menu2);
+        NavigationHistory.open(player3, this.menu3);
+
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(3);
+
+        // Close menus for player1 and player2
+        this.menu1.close(this.player);
+        this.menu2.close(player2);
+
+        // Run cleanup
+        NavigationHistory.cleanup();
+
+        // Should have cleaned up player1 and player2, kept player3
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(1);
+        assertThat(NavigationHistory.depth(player3)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should get maximum depth constant")
+    void testGetMaxDepth() {
+        int maxDepth = NavigationHistory.getMaxDepth();
+
+        assertThat(maxDepth).isEqualTo(10);
+        assertThat(maxDepth).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("Should track total players in history")
+    void testGetTotalPlayers() {
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(0);
+
+        NavigationHistory.open(this.player, this.menu1);
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(1);
+
+        PlayerMock player2 = this.server.addPlayer("Player2");
+        NavigationHistory.open(player2, this.menu2);
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(2);
+
+        NavigationHistory.clear(this.player);
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(1);
+
+        NavigationHistory.clearAll();
+        assertThat(NavigationHistory.getTotalPlayers()).isEqualTo(0);
     }
 }

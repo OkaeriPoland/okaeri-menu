@@ -124,6 +124,26 @@ public class PaginationContext<T> {
     }
 
     /**
+     * Gets the IDs of all currently active filters.
+     * Useful for displaying filter counts or checking which filters are enabled.
+     *
+     * @return Unmodifiable set of active filter IDs
+     */
+    @NonNull
+    public Set<String> getActiveFilterIds() {
+        return Collections.unmodifiableSet(this.activeFilters.keySet());
+    }
+
+    /**
+     * Gets the number of currently active filters.
+     *
+     * @return Count of active filters
+     */
+    public int getActiveFilterCount() {
+        return this.activeFilters.size();
+    }
+
+    /**
      * Clears all filters.
      */
     public void clearFilters() {

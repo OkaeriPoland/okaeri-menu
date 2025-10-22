@@ -32,7 +32,7 @@ public class PaginationUtils {
      * @return MenuItem builder for next page button
      */
     public static MenuItem.@NonNull Builder nextPageButton(@NonNull String paneName, @NonNull Material material, @NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        MenuItem.Builder builder = MenuItem.builder()
+        MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
             .visible(ctx -> {
@@ -82,7 +82,7 @@ public class PaginationUtils {
      * @return MenuItem builder for previous page button
      */
     public static MenuItem.@NonNull Builder previousPageButton(@NonNull String paneName, @NonNull Material material, @NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        MenuItem.Builder builder = MenuItem.builder()
+        MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
             .visible(ctx -> {
@@ -132,7 +132,7 @@ public class PaginationUtils {
      * @return MenuItem builder for page indicator
      */
     public static MenuItem.@NonNull Builder pageIndicator(@NonNull String paneName, @NonNull Material material, @NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        MenuItem.Builder builder = MenuItem.builder()
+        MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name, ctx -> {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
@@ -180,7 +180,7 @@ public class PaginationUtils {
      * @return MenuItem builder for filter button
      */
     public static <T> MenuItem.@NonNull Builder filterButton(@NonNull String paneName, @NonNull String filterId, @NonNull Map<Locale, String> filterName, Map<Locale, String> lore, @NonNull Predicate<T> predicate) {
-        MenuItem.Builder builder = MenuItem.builder()
+        MenuItem.Builder builder = MenuItem.item()
             .material(ctx -> {
                 PaginationContext<T> pagination = ctx.pagination(paneName);
                 return pagination.hasFilter(filterId) ? Material.EMERALD : Material.COAL;
@@ -214,7 +214,7 @@ public class PaginationUtils {
      * @return MenuItem builder for clear filters button
      */
     public static MenuItem.@NonNull Builder clearFiltersButton(@NonNull String paneName, @NonNull Material material, @NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        MenuItem.Builder builder = MenuItem.builder()
+        MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
             .visible(ctx -> {
@@ -260,7 +260,7 @@ public class PaginationUtils {
      * @return MenuItem builder for empty indicator
      */
     public static MenuItem.@NonNull Builder emptyIndicator(@NonNull String paneName, @NonNull Material material, @NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        MenuItem.Builder builder = MenuItem.builder()
+        MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
             .visible(ctx -> {
@@ -395,7 +395,7 @@ public class PaginationUtils {
      * @return MenuItem builder for first page button
      */
     public static MenuItem.@NonNull Builder firstPageButton(@NonNull String paneName) {
-        return MenuItem.builder()
+        return MenuItem.item()
             .material(Material.ARROW)
             .name("<aqua>⏮ First Page")
             .visible(ctx -> {
@@ -417,7 +417,7 @@ public class PaginationUtils {
      * @return MenuItem builder for last page button
      */
     public static MenuItem.@NonNull Builder lastPageButton(@NonNull String paneName) {
-        return MenuItem.builder()
+        return MenuItem.item()
             .material(Material.ARROW)
             .name("<aqua>Last Page ⏭")
             .visible(ctx -> {

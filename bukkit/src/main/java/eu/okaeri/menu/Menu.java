@@ -1,7 +1,10 @@
 package eu.okaeri.menu;
 
+import eu.okaeri.menu.async.AsyncCache;
+import eu.okaeri.menu.async.AsyncExecutor;
 import eu.okaeri.menu.message.DefaultMessageProvider;
 import eu.okaeri.menu.message.MessageProvider;
+import eu.okaeri.menu.navigation.NavigationHistory;
 import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.pane.Pane;
 import eu.okaeri.menu.pane.PaneBounds;
@@ -37,7 +40,10 @@ public class Menu implements InventoryHolder {
     @NonNull
     private final Map<String, Pane> panes = new LinkedHashMap<>();
     private final Duration updateInterval;
+    @NonNull
     private final Plugin plugin;
+    @NonNull
+    private final AsyncExecutor asyncExecutor;
     @NonNull
     private final MessageProvider messageProvider;
 
@@ -49,7 +55,7 @@ public class Menu implements InventoryHolder {
 
     /**
      * Encapsulates all state for a single viewer of this menu.
-     * Includes inventory and pagination contexts per pane.
+     * Includes inventory, pagination contexts per pane, and async data cache.
      */
     @Getter
     public static class ViewerState {
@@ -57,9 +63,12 @@ public class Menu implements InventoryHolder {
         private Inventory inventory;
         @NonNull
         private final Map<String, PaginationContext<?>> paginationContexts = new ConcurrentHashMap<>();
+        @NonNull
+        private final AsyncCache asyncCache;
 
-        ViewerState(@NonNull Inventory inventory) {
+        ViewerState(@NonNull Inventory inventory, @NonNull AsyncExecutor asyncExecutor) {
             this.inventory = inventory;
+            this.asyncCache = new AsyncCache(asyncExecutor);
         }
 
         /**
@@ -87,10 +96,17 @@ public class Menu implements InventoryHolder {
         this.panes.putAll(builder.panes);
         this.updateInterval = builder.updateInterval;
         this.plugin = builder.plugin;
+        this.asyncExecutor = (builder.asyncExecutor != null) ? builder.asyncExecutor : AsyncExecutor.bukkit(this.plugin);
         this.messageProvider = (builder.messageProvider != null) ? builder.messageProvider : new DefaultMessageProvider();
 
+        // Auto-register MenuListener (idempotent - safe to call multiple times)
+        MenuListener.register(this.plugin);
+
+        // Start navigation history cleanup task (idempotent - safe to call multiple times)
+        NavigationHistory.startCleanupTask(this.plugin);
+
         // Create update task if interval is set
-        if ((this.updateInterval != null) && (this.plugin != null)) {
+        if (this.updateInterval != null) {
             this.updateTask = new MenuUpdateTask(this, this.plugin, this.updateInterval);
         }
     }
@@ -113,7 +129,7 @@ public class Menu implements InventoryHolder {
             Component titleComponent = this.messageProvider.resolve(player, titleTemplate, Map.of());
             String invTitle = LegacyComponentSerializer.legacySection().serialize(titleComponent);
             Inventory inv = Bukkit.createInventory(this, this.rows * 9, invTitle);
-            return new ViewerState(inv);
+            return new ViewerState(inv, this.asyncExecutor);
         });
         Inventory inventory = state.getInventory();
 
@@ -182,6 +198,9 @@ public class Menu implements InventoryHolder {
 
                 // Reopen with new inventory
                 player.openInventory(newInventory);
+
+                // Clean up the old inventory for glitch safety
+                inventory.clear();
             }
 
             // Invalidate all panes
@@ -310,8 +329,15 @@ public class Menu implements InventoryHolder {
         return this.plugin;
     }
 
-    public static Builder builder() {
-        return new Builder();
+    /**
+     * Creates a new menu builder.
+     *
+     * @param plugin The plugin instance (required for async operations and scheduling)
+     * @return A new menu builder
+     */
+    @NonNull
+    public static Builder builder(@NonNull Plugin plugin) {
+        return new Builder(plugin);
     }
 
     public static class Builder {
@@ -321,8 +347,14 @@ public class Menu implements InventoryHolder {
         @NonNull
         private Map<String, Pane> panes = new LinkedHashMap<>();
         private Duration updateInterval = null;
-        private Plugin plugin = null;
+        @NonNull
+        private final Plugin plugin;
+        private AsyncExecutor asyncExecutor = null;
         private MessageProvider messageProvider = null;
+
+        private Builder(@NonNull Plugin plugin) {
+            this.plugin = plugin;
+        }
 
         @NonNull
         public Builder title(@NonNull String title) {
@@ -333,6 +365,12 @@ public class Menu implements InventoryHolder {
         @NonNull
         public Builder title(@NonNull Supplier<String> supplier) {
             this.title = ReactiveProperty.of(supplier);
+            return this;
+        }
+
+        @NonNull
+        public Builder title(@NonNull java.util.function.Function<MenuContext, String> function) {
+            this.title = ReactiveProperty.ofContext(function);
             return this;
         }
 
@@ -394,15 +432,15 @@ public class Menu implements InventoryHolder {
         }
 
         /**
-         * Sets the plugin instance for task scheduling.
-         * Required if using updateInterval.
+         * Sets a custom async executor for background tasks.
+         * If not set, defaults to Bukkit's scheduler.
          *
-         * @param plugin The plugin instance
+         * @param asyncExecutor The async executor
          * @return This builder
          */
         @NonNull
-        public Builder plugin(Plugin plugin) {
-            this.plugin = plugin;
+        public Builder asyncExecutor(@NonNull AsyncExecutor asyncExecutor) {
+            this.asyncExecutor = asyncExecutor;
             return this;
         }
 

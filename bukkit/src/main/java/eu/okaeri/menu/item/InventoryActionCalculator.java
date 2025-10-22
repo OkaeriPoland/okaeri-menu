@@ -281,6 +281,6 @@ public final class InventoryActionCalculator {
     }
 
     private static boolean isSimilar(ItemStack item1, ItemStack item2) {
-        return isEmpty(item1) && isEmpty(item2) || !isEmpty(item1) && !isEmpty(item2) && item1.isSimilar(item2);
+        return (isEmpty(item1) && isEmpty(item2)) || (!isEmpty(item1) && !isEmpty(item2) && item1.isSimilar(item2));
     }
 }

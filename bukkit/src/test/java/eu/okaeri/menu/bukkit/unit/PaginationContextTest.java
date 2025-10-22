@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PaginationContextTest {
 
     private static ServerMock server;
+    private org.bukkit.plugin.java.JavaPlugin plugin;
     private Player player;
     private List<String> testItems;
     private Menu menu;
@@ -35,6 +36,7 @@ class PaginationContextTest {
 
     @BeforeEach
     void setUp() {
+        this.plugin = MockBukkit.createMockPlugin();
         this.player = server.addPlayer();
 
         this.testItems = Arrays.asList(
@@ -43,7 +45,7 @@ class PaginationContextTest {
         );
 
         // Create a menu and open it for the player to establish ViewerState
-        this.menu = Menu.builder().rows(3).build();
+        this.menu = Menu.builder(this.plugin).rows(3).build();
         this.menu.open(this.player);
     }
 

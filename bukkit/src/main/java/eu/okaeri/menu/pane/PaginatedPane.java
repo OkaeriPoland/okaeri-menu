@@ -37,7 +37,7 @@ public class PaginatedPane<T> implements Pane {
     // Cache for rendered items
     private boolean dirty = true;
 
-    private PaginatedPane(Builder<T> builder) {
+    protected PaginatedPane(Builder<T> builder) {
         this.name = builder.name;
         this.bounds = builder.bounds;
         this.itemsSupplier = builder.itemsSupplier;
@@ -217,7 +217,20 @@ public class PaginatedPane<T> implements Pane {
     }
 
     @NonNull
-    public static <T> Builder<T> builder() {
+    public static <T> Builder<T> pane() {
+        return new Builder<>();
+    }
+
+    /**
+     * Creates a new builder for PaginatedPane with explicit type.
+     * This avoids the need for type parameter specification at the call site.
+     *
+     * @param type The class of items to paginate (not used at runtime, only for type inference)
+     * @param <T>  The type of items to paginate
+     * @return A new builder instance
+     */
+    @NonNull
+    public static <T> Builder<T> pane(@NonNull Class<T> type) {
         return new Builder<>();
     }
 

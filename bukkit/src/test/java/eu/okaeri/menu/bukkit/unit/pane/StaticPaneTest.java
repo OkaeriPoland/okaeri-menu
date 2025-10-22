@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class StaticPaneTest {
 
     private ServerMock server;
+    private org.bukkit.plugin.java.JavaPlugin plugin;
     private PlayerMock player;
     private Menu menu;
     private MenuContext context;
@@ -33,8 +34,9 @@ class StaticPaneTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
+        this.plugin = MockBukkit.createMockPlugin();
         this.player = this.server.addPlayer();
-        this.menu = Menu.builder()
+        this.menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(6)
             .build();
@@ -94,7 +96,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should add item at local coordinates")
     void testAddItem() {
-        MenuItem item = MenuItem.builder()
+        MenuItem item = MenuItem.item()
             .material(Material.DIAMOND)
             .build();
 
@@ -109,9 +111,9 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should add multiple items")
     void testAddMultipleItems() {
-        MenuItem item1 = MenuItem.builder().material(Material.DIAMOND).build();
-        MenuItem item2 = MenuItem.builder().material(Material.GOLD_INGOT).build();
-        MenuItem item3 = MenuItem.builder().material(Material.EMERALD).build();
+        MenuItem item1 = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem item2 = MenuItem.item().material(Material.GOLD_INGOT).build();
+        MenuItem item3 = MenuItem.item().material(Material.EMERALD).build();
 
         StaticPane pane = StaticPane.builder()
             .bounds(0, 0, 9, 3)
@@ -131,7 +133,7 @@ class StaticPaneTest {
         StaticPane.Builder builder = StaticPane.builder()
             .bounds(0, 0, 5, 3);
 
-        MenuItem item = MenuItem.builder().material(Material.DIAMOND).build();
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
         assertThatThrownBy(() -> builder.item(5, 0, item))
             .isInstanceOf(IllegalArgumentException.class)
@@ -144,7 +146,7 @@ class StaticPaneTest {
         StaticPane.Builder builder = StaticPane.builder()
             .bounds(0, 0, 9, 3);
 
-        MenuItem item = MenuItem.builder().material(Material.DIAMOND).build();
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
         assertThatThrownBy(() -> builder.item(0, 3, item))
             .isInstanceOf(IllegalArgumentException.class)
@@ -157,7 +159,7 @@ class StaticPaneTest {
         StaticPane.Builder builder = StaticPane.builder()
             .bounds(0, 0, 9, 3);
 
-        MenuItem item = MenuItem.builder().material(Material.DIAMOND).build();
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
         assertThatThrownBy(() -> builder.item(-1, 0, item))
             .isInstanceOf(IllegalArgumentException.class)
@@ -170,7 +172,7 @@ class StaticPaneTest {
         StaticPane.Builder builder = StaticPane.builder()
             .bounds(0, 0, 9, 3);
 
-        MenuItem item = MenuItem.builder().material(Material.DIAMOND).build();
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
         assertThatThrownBy(() -> builder.item(0, -1, item))
             .isInstanceOf(IllegalArgumentException.class)
@@ -180,11 +182,11 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should render items to inventory")
     void testRenderItems() {
-        MenuItem item1 = MenuItem.builder()
+        MenuItem item1 = MenuItem.item()
             .material(Material.DIAMOND)
             .name("Diamond")
             .build();
-        MenuItem item2 = MenuItem.builder()
+        MenuItem item2 = MenuItem.item()
             .material(Material.GOLD_INGOT)
             .name("Gold")
             .build();
@@ -218,7 +220,7 @@ class StaticPaneTest {
         inventory.setItem(9, new ItemStack(Material.DIRT));
 
         // Create pane that only fills one slot
-        MenuItem item = MenuItem.builder()
+        MenuItem item = MenuItem.item()
             .material(Material.DIAMOND)
             .build();
 
@@ -241,7 +243,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should handle pane bounds offset correctly")
     void testPaneBoundsOffset() {
-        MenuItem item = MenuItem.builder()
+        MenuItem item = MenuItem.item()
             .material(Material.EMERALD)
             .build();
 
@@ -264,7 +266,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should get item by local coordinates")
     void testGetItemByLocalCoordinates() {
-        MenuItem item = MenuItem.builder().material(Material.DIAMOND).build();
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
         StaticPane pane = StaticPane.builder()
             .bounds(0, 0, 9, 3)
@@ -279,7 +281,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should get item by global slot (within bounds)")
     void testGetItemByGlobalSlot() {
-        MenuItem item = MenuItem.builder().material(Material.DIAMOND).build();
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
         StaticPane pane = StaticPane.builder()
             .bounds(0, 0, 9, 3)
@@ -293,7 +295,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should return null for global slot outside pane bounds")
     void testGetItemByGlobalSlotOutsideBounds() {
-        MenuItem item = MenuItem.builder().material(Material.DIAMOND).build();
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
         // Pane covers only rows 0-2
         StaticPane pane = StaticPane.builder()
@@ -308,7 +310,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should handle global slot with pane offset")
     void testGetItemByGlobalSlotWithOffset() {
-        MenuItem item = MenuItem.builder().material(Material.EMERALD).build();
+        MenuItem item = MenuItem.item().material(Material.EMERALD).build();
 
         // Pane at (2, 1) with size (5, 2)
         StaticPane pane = StaticPane.builder()
@@ -324,10 +326,10 @@ class StaticPaneTest {
     @DisplayName("Should invalidate all items")
     void testInvalidate() {
         // Create items with reactive properties
-        MenuItem item1 = MenuItem.builder()
+        MenuItem item1 = MenuItem.item()
             .material(() -> Material.DIAMOND)
             .build();
-        MenuItem item2 = MenuItem.builder()
+        MenuItem item2 = MenuItem.item()
             .material(() -> Material.GOLD_INGOT)
             .build();
 
@@ -375,7 +377,7 @@ class StaticPaneTest {
         // Fill entire inventory
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 9; x++) {
-                builder.item(x, y, MenuItem.builder()
+                builder.item(x, y, MenuItem.item()
                     .material(Material.STONE)
                     .build());
             }
@@ -395,12 +397,12 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should handle invisible items (not rendered)")
     void testInvisibleItems() {
-        MenuItem visibleItem = MenuItem.builder()
+        MenuItem visibleItem = MenuItem.item()
             .material(Material.DIAMOND)
             .visible(true)
             .build();
 
-        MenuItem invisibleItem = MenuItem.builder()
+        MenuItem invisibleItem = MenuItem.item()
             .material(Material.GOLD_INGOT)
             .visible(false)
             .build();
@@ -421,11 +423,11 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should handle AIR material items (not rendered)")
     void testAirMaterialItems() {
-        MenuItem airItem = MenuItem.builder()
+        MenuItem airItem = MenuItem.item()
             .material(Material.AIR)
             .build();
 
-        MenuItem normalItem = MenuItem.builder()
+        MenuItem normalItem = MenuItem.item()
             .material(Material.DIAMOND)
             .build();
 
@@ -445,7 +447,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should replace existing items on re-render")
     void testReRender() {
-        MenuItem item1 = MenuItem.builder()
+        MenuItem item1 = MenuItem.item()
             .material(Material.DIAMOND)
             .build();
 
@@ -473,10 +475,10 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should handle overlapping item replacements")
     void testOverlappingItems() {
-        MenuItem item1 = MenuItem.builder()
+        MenuItem item1 = MenuItem.item()
             .material(Material.DIAMOND)
             .build();
-        MenuItem item2 = MenuItem.builder()
+        MenuItem item2 = MenuItem.item()
             .material(Material.GOLD_INGOT)
             .build();
 

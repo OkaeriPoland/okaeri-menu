@@ -27,7 +27,7 @@ public class DynamicTitleExample {
     public static Menu createCountdownMenu(Plugin plugin, int startSeconds) {
         AtomicInteger countdown = new AtomicInteger(startSeconds);
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title(() -> {
                 int remaining = countdown.get();
                 if (remaining > 0) {
@@ -38,11 +38,10 @@ public class DynamicTitleExample {
             })
             .rows(3)
             .updateInterval(Duration.ofSeconds(1))
-            .plugin(plugin)
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(4, 1, MenuItem.builder()
+                .item(4, 1, MenuItem.item()
                     .material(() -> {
                         int remaining = countdown.get();
                         if (remaining > 10) return Material.LIME_CONCRETE;
@@ -60,7 +59,7 @@ public class DynamicTitleExample {
                     .lore("""
                         <gray>Watch the countdown in the title
                         <gray>and in this item!
-
+                        
                         <yellow>The color changes as time runs out.""")
                     .build())
                 .build())
@@ -74,7 +73,7 @@ public class DynamicTitleExample {
     public static Menu createProgressBarMenu(Plugin plugin) {
         AtomicInteger progress = new AtomicInteger(0);
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title(() -> {
                 int percent = progress.get();
                 int bars = percent / 10;  // 10 bars total
@@ -91,40 +90,39 @@ public class DynamicTitleExample {
                 return bar.toString();
             })
             .rows(3)
-            .updateInterval(Duration.ofMillis(500))  // Fast updates for smooth progress
-            .plugin(plugin)
+            .updateInterval(Duration.ofMillis(500))
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(3, 1, MenuItem.builder()
+                .item(3, 1, MenuItem.item()
                     .material(Material.RED_WOOL)
                     .name("<red><b>Decrease Progress")
                     .lore("""
                         <gray>Click to decrease progress
                         <gray>by 10%
-
+                        
                         <yellow>Click me!""")
                     .onClick(ctx -> {
                         progress.updateAndGet(n -> Math.max(0, n - 10));
                         ctx.refresh();
                     })
                     .build())
-                .item(4, 1, MenuItem.builder()
+                .item(4, 1, MenuItem.item()
                     .material(Material.PAPER)
                     .name(() -> "<yellow><b>" + progress.get() + "% Complete")
                     .lore("""
                         <gray>Watch the progress bar
                         <gray>in the title update!
-
+                        
                         <gray>Use the buttons to change it.""")
                     .build())
-                .item(5, 1, MenuItem.builder()
+                .item(5, 1, MenuItem.item()
                     .material(Material.LIME_WOOL)
                     .name("<green><b>Increase Progress")
                     .lore("""
                         <gray>Click to increase progress
                         <gray>by 10%
-
+                        
                         <yellow>Click me!""")
                     .onClick(ctx -> {
                         progress.updateAndGet(n -> Math.min(100, n + 10));
@@ -139,26 +137,25 @@ public class DynamicTitleExample {
      * Creates a menu showing date and time with MiniMessage formatting.
      */
     public static Menu createDateTimeMenu(Plugin plugin) {
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title(() -> {
                 LocalDateTime now = LocalDateTime.now();
                 return "<gradient:yellow:gold>" + now.format(DATE_FORMAT);
             })
             .rows(3)
             .updateInterval(Duration.ofSeconds(1))
-            .plugin(plugin)
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(4, 1, MenuItem.builder()
+                .item(4, 1, MenuItem.item()
                     .material(Material.CLOCK)
                     .name("<gradient:yellow:gold><b>Current Date & Time")
                     .lore("""
-                        <gray>Date: <white><date>
-                        <gray>Time: <white><time>
-                        <gray>Day of Week: <white><day>
-
-                        <gray>Updates every second!""",
+                            <gray>Date: <white><date>
+                            <gray>Time: <white><time>
+                            <gray>Day of Week: <white><day>
+                            
+                            <gray>Updates every second!""",
                         ctx -> {
                             LocalDateTime now = LocalDateTime.now();
                             return Map.of(

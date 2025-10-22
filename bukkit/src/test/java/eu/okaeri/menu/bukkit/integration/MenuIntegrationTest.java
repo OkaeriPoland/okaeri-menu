@@ -39,10 +39,9 @@ class MenuIntegrationTest {
     @Test
     @DisplayName("Should create menu with valid configuration")
     void testCreateMenu() {
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .plugin(this.plugin)
             .build();
 
         assertNotNull(menu);
@@ -55,10 +54,9 @@ class MenuIntegrationTest {
     void testOpenMenu() {
         PlayerMock player = this.server.addPlayer();
 
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .plugin(this.plugin)
             .build();
 
         menu.open(player);
@@ -73,22 +71,21 @@ class MenuIntegrationTest {
     void testRenderItems() {
         PlayerMock player = this.server.addPlayer();
 
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(0, 0, MenuItem.builder()
+                .item(0, 0, MenuItem.item()
                     .material(Material.DIAMOND)
                     .name("Diamond")
                     .build())
-                .item(4, 1, MenuItem.builder()
+                .item(4, 1, MenuItem.item()
                     .material(Material.EMERALD)
                     .name("Emerald")
                     .build())
                 .build())
-            .plugin(this.plugin)
             .build();
 
         menu.open(player);
@@ -108,7 +105,7 @@ class MenuIntegrationTest {
     @DisplayName("Should validate pane overlap at build time")
     void testPaneOverlapValidation() {
         assertThrows(IllegalArgumentException.class, () ->
-            Menu.builder()
+            Menu.builder(this.plugin)
                 .title("Invalid Menu")
                 .rows(3)
                 .pane("pane1", StaticPane.builder()
@@ -127,7 +124,7 @@ class MenuIntegrationTest {
     @DisplayName("Should validate pane fits within menu rows")
     void testPaneBoundsValidation() {
         assertThrows(IllegalArgumentException.class, () ->
-            Menu.builder()
+            Menu.builder(this.plugin)
                 .title("Invalid Menu")
                 .rows(3)
                 .pane("pane1", StaticPane.builder()
@@ -143,10 +140,9 @@ class MenuIntegrationTest {
     void testCloseMenu() {
         PlayerMock player = this.server.addPlayer();
 
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .plugin(this.plugin)
             .build();
 
         menu.open(player);
@@ -168,10 +164,9 @@ class MenuIntegrationTest {
         PlayerMock player1 = this.server.addPlayer("Player1");
         PlayerMock player2 = this.server.addPlayer("Player2");
 
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .plugin(this.plugin)
             .build();
 
         menu.open(player1);
@@ -194,10 +189,9 @@ class MenuIntegrationTest {
         PlayerMock player = this.server.addPlayer();
         int[] counter = {0};
 
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title(() -> "Count: " + counter[0])
             .rows(3)
-            .plugin(this.plugin)
             .build();
 
         menu.open(player);

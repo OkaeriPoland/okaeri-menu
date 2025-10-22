@@ -10,6 +10,7 @@ import eu.okaeri.menu.pane.StaticPane;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import org.bukkit.Material;
+import org.bukkit.plugin.Plugin;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +26,7 @@ public class ShopExample {
      * Creates a shop menu with toggleable filters.
      * Filters are declared on menu items and automatically applied.
      */
-    public static Menu createShopMenu() {
+    public static Menu createShopMenu(Plugin plugin) {
         List<ShopItem> items = createShopItems();
 
         // Filter activation states
@@ -33,19 +34,19 @@ public class ShopExample {
         boolean[] armorFilterActive = {false};
         boolean[] expensiveFilterActive = {false};
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title("&6&lItem Shop")
             .rows(6)
             // Filter buttons with declarative filters
             .pane("filters", StaticPane.builder()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
-                .item(1, 0, MenuItem.builder()
+                .item(1, 0, MenuItem.item()
                     .material(() -> weaponFilterActive[0] ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
                     .name(() -> weaponFilterActive[0] ? "&a✓ Weapons" : "&7Weapons")
                     .lore("""
                         &7Show weapons only
-
+                        
                         &eClick to toggle!""")
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
@@ -57,12 +58,12 @@ public class ShopExample {
                         weaponFilterActive[0] = !weaponFilterActive[0];
                     })
                     .build())
-                .item(3, 0, MenuItem.builder()
+                .item(3, 0, MenuItem.item()
                     .material(() -> armorFilterActive[0] ? Material.DIAMOND_CHESTPLATE : Material.LEATHER_CHESTPLATE)
                     .name(() -> armorFilterActive[0] ? "&a✓ Armor" : "&7Armor")
                     .lore("""
                         &7Show armor only
-
+                        
                         &eClick to toggle!""")
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
@@ -74,12 +75,12 @@ public class ShopExample {
                         armorFilterActive[0] = !armorFilterActive[0];
                     })
                     .build())
-                .item(5, 0, MenuItem.builder()
+                .item(5, 0, MenuItem.item()
                     .material(() -> expensiveFilterActive[0] ? Material.GOLD_INGOT : Material.IRON_INGOT)
                     .name(() -> expensiveFilterActive[0] ? "&a✓ Expensive (>100)" : "&7Expensive (>100)")
                     .lore("""
                         &7Show items over 100 coins
-
+                        
                         &eClick to toggle!""")
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
@@ -91,15 +92,15 @@ public class ShopExample {
                         expensiveFilterActive[0] = !expensiveFilterActive[0];
                     })
                     .build())
-                .item(7, 0, MenuItem.builder()
+                .item(7, 0, MenuItem.item()
                     .material(Material.PAPER)
                     .name("&eFilter Info")
                     .lore("""
-                        &7Active filters: &f<active_count>
-                        &7Strategy: &fAND
-
-                        &7All active filters
-                        &7must match!""",
+                            &7Active filters: &f<active_count>
+                            &7Strategy: &fAND
+                            
+                            &7All active filters
+                            &7must match!""",
                         ctx -> {
                             int activeCount = 0;
                             if (weaponFilterActive[0]) activeCount++;
@@ -109,7 +110,7 @@ public class ShopExample {
                             return Map.of("active_count", activeCount);
                         })
                     .build())
-                .item(8, 0, MenuItem.builder()
+                .item(8, 0, MenuItem.item()
                     .material(Material.BARRIER)
                     .name("&cClear All")
                     .onClick(ctx -> {
@@ -120,12 +121,12 @@ public class ShopExample {
                     .build())
                 .build())
             // Shop items
-            .pane("shop", PaginatedPane.<ShopItem>builder()
+            .pane("shop", PaginatedPane.<ShopItem>pane()
                 .name("shop")
                 .bounds(0, 1, 9, 4)
                 .items(items)
                 // itemsPerPage defaults to pane size (9x4 = 36 slots)
-                .renderer((item, index) -> MenuItem.builder()
+                .renderer((item, index) -> MenuItem.item()
                     .material(item.material())
                     .vars(Map.of(
                         "name", item.name(),
@@ -136,7 +137,7 @@ public class ShopExample {
                     .lore("""
                         &7Category: &f<category>
                         &7Price: &6<price> coins
-
+                        
                         &eClick to purchase!""")
                     .onClick(ctx -> {
                         ctx.sendMessage("&aPurchased " + item.name() + " for " + item.price() + " coins!");

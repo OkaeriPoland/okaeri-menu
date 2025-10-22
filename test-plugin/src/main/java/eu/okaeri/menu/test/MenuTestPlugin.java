@@ -1,6 +1,5 @@
 package eu.okaeri.menu.test;
 
-import eu.okaeri.menu.MenuListener;
 import eu.okaeri.menu.test.example.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -28,9 +27,6 @@ public class MenuTestPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Register event listener
-        getServer().getPluginManager().registerEvents(new MenuListener(this), this);
-
         getLogger().info("MenuTestPlugin enabled! Use /menu to see examples.");
     }
 
@@ -70,21 +66,23 @@ public class MenuTestPlugin extends JavaPlugin {
             sendColoredMessage(player, "&7  /menu countdown [seconds] - Countdown timer");
             sendColoredMessage(player, "&7  /menu progress - Progress bar title");
             sendColoredMessage(player, "&7  /menu datetime - Date/time title");
+            sendColoredMessage(player, "&e&lAsync Examples:");
+            sendColoredMessage(player, "&7  /menu async - Async shop with loading states");
             return true;
         }
 
         try {
             switch (args[0].toLowerCase()) {
                 case "simple" -> {
-                    SimpleMenuExample.createSimpleMenu().open(player);
+                    SimpleMenuExample.createSimpleMenu(this).open(player);
                     sendColoredMessage(player, "&aOpened simple menu");
                 }
                 case "pane" -> {
-                    SimpleMenuExample.createPaneExample().open(player);
+                    SimpleMenuExample.createPaneExample(this).open(player);
                     sendColoredMessage(player, "&aOpened pane example");
                 }
                 case "reactive" -> {
-                    SimpleMenuExample.createReactiveExample(player).open(player);
+                    SimpleMenuExample.createReactiveExample(this, player).open(player);
                     sendColoredMessage(player, "&aOpened reactive example");
                 }
                 case "autoupdate" -> {
@@ -92,55 +90,55 @@ public class MenuTestPlugin extends JavaPlugin {
                     sendColoredMessage(player, "&aOpened auto-update example");
                 }
                 case "nav", "navigation" -> {
-                    NavigationExample.createMainMenu().open(player);
+                    NavigationExample.createMainMenu(this).open(player);
                     sendColoredMessage(player, "&aOpened navigation example");
                 }
                 case "pagination" -> {
-                    PaginationExample.createSimplePaginatedMenu().open(player);
+                    PaginationExample.createSimplePaginatedMenu(this).open(player);
                     sendColoredMessage(player, "&aOpened pagination example");
                 }
                 case "browser" -> {
-                    PaginationExample.createPlayerBrowser().open(player);
+                    PaginationExample.createPlayerBrowser(this).open(player);
                     sendColoredMessage(player, "&aOpened player browser");
                 }
                 case "shop" -> {
-                    ShopExample.createShopMenu().open(player);
+                    ShopExample.createShopMenu(this).open(player);
                     sendColoredMessage(player, "&aOpened shop example");
                 }
                 case "vars", "itemvars" -> {
-                    ItemVarsExample.createItemVarsMenu().open(player);
+                    ItemVarsExample.createItemVarsMenu(this).open(player);
                     sendColoredMessage(player, "&aOpened item-level variables example");
                 }
                 case "strategy", "filterstrategy" -> {
-                    FilterStrategyExample.createFilterStrategyMenu().open(player);
+                    FilterStrategyExample.createFilterStrategyMenu(this).open(player);
                     sendColoredMessage(player, "&aOpened filter strategy example");
                 }
                 case "minimessage", "mm" -> {
-                    MessageExample.createMiniMessageExample().open(player);
+                    MessageExample.createMiniMessageExample(this).open(player);
                     sendColoredMessage(player, "&aOpened MiniMessage example");
                 }
                 case "legacy" -> {
-                    MessageExample.createLegacyColorsExample().open(player);
+                    MessageExample.createLegacyColorsExample(this).open(player);
                     sendColoredMessage(player, "&aOpened legacy colors example");
                 }
                 case "i18n" -> {
-                    MessageExample.createI18nExample().open(player);
+                    MessageExample.createI18nExample(this).open(player);
                     sendColoredMessage(player, "&aOpened i18n example");
                 }
                 case "mixed" -> {
-                    MessageExample.createMixedFormatsExample().open(player);
+                    MessageExample.createMixedFormatsExample(this).open(player);
                     sendColoredMessage(player, "&aOpened mixed formats example");
                 }
                 case "reactive-msg" -> {
-                    MessageExample.createReactiveExample().open(player);
+                    MessageExample.createReactiveExample(this).open(player);
                     sendColoredMessage(player, "&aOpened reactive messages example");
                 }
                 case "papi", "placeholderapi" -> {
-                    MessageExample.createPlaceholderAPIExample().open(player);
+                    MessageExample.createPlaceholderAPIExample(this).open(player);
                     sendColoredMessage(player, "&aOpened PlaceholderAPI example");
                 }
                 case "deposit" -> {
-                    InteractiveSlotExample.createDepositBoxMenu().open(player);
+                    InteractiveSlotExample.createDepositBoxMenu(this).open(player);
                     sendColoredMessage(player, "&aOpened deposit box menu");
                 }
                 case "sell" -> {
@@ -152,11 +150,11 @@ public class MenuTestPlugin extends JavaPlugin {
                     sendColoredMessage(player, "&aOpened item processor menu");
                 }
                 case "equipment" -> {
-                    InteractiveSlotExample.createEquipmentMenu(player).open(player);
+                    InteractiveSlotExample.createEquipmentMenu(this, player).open(player);
                     sendColoredMessage(player, "&aOpened equipment menu");
                 }
                 case "validation" -> {
-                    InteractiveSlotExample.createValidationMenu().open(player);
+                    InteractiveSlotExample.createValidationMenu(this).open(player);
                     sendColoredMessage(player, "&aOpened validation example menu");
                 }
                 case "countdown" -> {
@@ -171,6 +169,11 @@ public class MenuTestPlugin extends JavaPlugin {
                 case "datetime" -> {
                     DynamicTitleExample.createDateTimeMenu(this).open(player);
                     sendColoredMessage(player, "&aOpened date/time menu");
+                }
+                case "async" -> {
+                    AsyncShopExample.createAsyncShopMenu(this, player).open(player);
+                    sendColoredMessage(player, "&aOpened async shop menu");
+                    sendColoredMessage(player, "&7Watch the loading states and async balance!");
                 }
                 default -> {
                     sendColoredMessage(player, "&cUnknown example: " + args[0]);

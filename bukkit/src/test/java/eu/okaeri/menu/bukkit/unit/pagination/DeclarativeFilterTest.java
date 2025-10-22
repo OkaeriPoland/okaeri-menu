@@ -30,11 +30,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DeclarativeFilterTest {
 
     private ServerMock server;
+    private org.bukkit.plugin.java.JavaPlugin plugin;
     private PlayerMock player;
 
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
+        this.plugin = MockBukkit.createMockPlugin();
         this.player = this.server.addPlayer();
     }
 
@@ -124,7 +126,7 @@ class DeclarativeFilterTest {
             .predicate(item -> item.price > 100)
             .build();
 
-        MenuItem menuItem = MenuItem.builder()
+        MenuItem menuItem = MenuItem.item()
             .material(Material.DIAMOND)
             .name("Expensive Only")
             .filter(filter)
@@ -149,7 +151,7 @@ class DeclarativeFilterTest {
             .predicate(item -> "weapon".equals(item.category))
             .build();
 
-        MenuItem menuItem = MenuItem.builder()
+        MenuItem menuItem = MenuItem.item()
             .material(Material.DIAMOND)
             .filter(filter1)
             .filter(filter2)
@@ -164,7 +166,7 @@ class DeclarativeFilterTest {
         boolean[] expensiveOnly = {true};
 
         // Create filter button
-        MenuItem filterButton = MenuItem.builder()
+        MenuItem filterButton = MenuItem.item()
             .material(Material.DIAMOND)
             .name("Expensive Only")
             .filter(ItemFilter.<ShopItem>builder()
@@ -182,18 +184,18 @@ class DeclarativeFilterTest {
         );
 
         // Create menu with filter button and paginated shop
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title("Test Shop")
             .pane("filters", StaticPane.builder()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, filterButton)
                 .build())
-            .pane("shop", PaginatedPane.<ShopItem>builder()
+            .pane("shop", PaginatedPane.pane(ShopItem.class)
                 .name("shop")
                 .bounds(0, 1, 9, 5)
                 .items(items)
-                .renderer((item, index) -> MenuItem.builder()
+                .renderer((item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item.name)
                     .build())
@@ -222,7 +224,7 @@ class DeclarativeFilterTest {
     void testInactiveFilterNotApplied() {
         boolean[] expensiveOnly = {false};  // INACTIVE
 
-        MenuItem filterButton = MenuItem.builder()
+        MenuItem filterButton = MenuItem.item()
             .material(Material.COAL)
             .name("Expensive Only (OFF)")
             .filter(ItemFilter.<ShopItem>builder()
@@ -238,18 +240,18 @@ class DeclarativeFilterTest {
             new ShopItem("Gold", 100, "metal")
         );
 
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title("Test Shop")
             .pane("filters", StaticPane.builder()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, filterButton)
                 .build())
-            .pane("shop", PaginatedPane.<ShopItem>builder()
+            .pane("shop", PaginatedPane.pane(ShopItem.class)
                 .name("shop")
                 .bounds(0, 1, 9, 5)
                 .items(items)
-                .renderer((item, index) -> MenuItem.builder()
+                .renderer((item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item.name)
                     .build())
@@ -275,7 +277,7 @@ class DeclarativeFilterTest {
     void testToggleFilterOnClick() {
         boolean[] weaponOnly = {false};
 
-        MenuItem filterButton = MenuItem.builder()
+        MenuItem filterButton = MenuItem.item()
             .material(() -> weaponOnly[0] ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
             .name("Weapon Filter")
             .filter(ItemFilter.<ShopItem>builder()
@@ -295,18 +297,18 @@ class DeclarativeFilterTest {
             new ShopItem("Bow", 75, "weapon")
         );
 
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title("Test Shop")
             .pane("filters", StaticPane.builder()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, filterButton)
                 .build())
-            .pane("shop", PaginatedPane.<ShopItem>builder()
+            .pane("shop", PaginatedPane.pane(ShopItem.class)
                 .name("shop")
                 .bounds(0, 1, 9, 5)
                 .items(items)
-                .renderer((item, index) -> MenuItem.builder()
+                .renderer((item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item.name)
                     .build())
@@ -360,7 +362,7 @@ class DeclarativeFilterTest {
             .predicate(item -> "rare".equals(item.category))
             .build();
 
-        MenuItem button = MenuItem.builder()
+        MenuItem button = MenuItem.item()
             .material(Material.DIAMOND)
             .filter(shopFilter)
             .filter(auctionFilter)
@@ -402,12 +404,12 @@ class DeclarativeFilterTest {
         boolean[] weaponFilter = {true};
         boolean[] expensiveFilter = {true};
 
-        Menu menu = Menu.builder()
+        Menu menu = Menu.builder(this.plugin)
             .title("Multi-Filter Shop")
             .pane("categoryFilters", StaticPane.builder()
                 .name("categoryFilters")
                 .bounds(0, 0, 5, 1)
-                .item(0, 0, MenuItem.builder()
+                .item(0, 0, MenuItem.item()
                     .material(Material.IRON_SWORD)
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
@@ -419,7 +421,7 @@ class DeclarativeFilterTest {
             .pane("priceFilters", StaticPane.builder()
                 .name("priceFilters")
                 .bounds(5, 0, 4, 1)
-                .item(0, 0, MenuItem.builder()
+                .item(0, 0, MenuItem.item()
                     .material(Material.GOLD_INGOT)
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
@@ -428,7 +430,7 @@ class DeclarativeFilterTest {
                         .build())
                     .build())
                 .build())
-            .pane("shop", PaginatedPane.<ShopItem>builder()
+            .pane("shop", PaginatedPane.pane(ShopItem.class)
                 .name("shop")
                 .bounds(0, 1, 9, 5)
                 .items(Arrays.asList(
@@ -436,7 +438,7 @@ class DeclarativeFilterTest {
                     new ShopItem("Cheap Sword", 50, "weapon"),
                     new ShopItem("Expensive Helmet", 120, "armor")
                 ))
-                .renderer((item, index) -> MenuItem.builder()
+                .renderer((item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())

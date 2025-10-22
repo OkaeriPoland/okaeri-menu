@@ -32,7 +32,7 @@ public class NavigationUtils {
      */
     @NonNull
     public static MenuItem.Builder backButton(@NonNull Material material, @NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        MenuItem.Builder builder = MenuItem.builder()
+        MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
             .visible(ctx -> ctx.hasLast())
@@ -71,7 +71,7 @@ public class NavigationUtils {
      */
     @NonNull
     public static MenuItem.Builder closeButton(@NonNull Material material, @NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        MenuItem.Builder builder = MenuItem.builder()
+        MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
             .onClick(ctx -> {
@@ -109,7 +109,7 @@ public class NavigationUtils {
      */
     @NonNull
     public static MenuItem.Builder depthIndicator(@NonNull Material material, @NonNull Map<Locale, String> name, @NonNull Map<Locale, String> lore) {
-        return MenuItem.builder()
+        return MenuItem.item()
             .material(material)
             .name(name)
             .lore(lore, ctx -> Map.of(

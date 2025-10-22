@@ -3,13 +3,14 @@ package eu.okaeri.menu.test.example;
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.navigation.NavigationUtils;
-import eu.okaeri.menu.pane.PaginatedPane;
-import eu.okaeri.menu.pane.StaticPane;
 import eu.okaeri.menu.pagination.PaginationFilter;
 import eu.okaeri.menu.pagination.PaginationUtils;
+import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.pane.StaticPane;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.bukkit.Material;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +25,7 @@ public class PaginationExample {
     /**
      * Simple example: Paginate a list of strings.
      */
-    public static Menu createSimplePaginatedMenu() {
+    public static Menu createSimplePaginatedMenu(Plugin plugin) {
         // Create some sample data
         List<String> items = Arrays.asList(
             "Apple", "Apricot", "Avocado", "Banana", "Blackberry",
@@ -40,20 +41,20 @@ public class PaginationExample {
             "Longan", "Loquat", "Rambutan", "Soursop", "Tamarind"
         );
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title("&6Fruit List")
             .rows(6)
-            .pane("content", PaginatedPane.<String>builder()
+            .pane("content", PaginatedPane.<String>pane()
                 .name("content")
                 .bounds(0, 0, 9, 5)  // 5 rows for content
                 .items(items)
                 // itemsPerPage defaults to pane size (9x5 = 45 slots)
-                .renderer((fruit, index) -> MenuItem.builder()
+                .renderer((fruit, index) -> MenuItem.item()
                     .material(Material.APPLE)  // Could map different materials
                     .name("&e" + fruit)
                     .lore("""
                         &7Index: &f%d
-
+                        
                         &eClick for more info!""".formatted(index))
                     .onClick(ctx -> {
                         ctx.sendMessage("&aYou selected: " + fruit);
@@ -76,26 +77,26 @@ public class PaginationExample {
      * Example with static items in paginated pane.
      * Shows how to reserve slots for buttons within the paginated area.
      */
-    public static Menu createPaginatedWithStaticItems() {
+    public static Menu createPaginatedWithStaticItems(Plugin plugin) {
         List<String> players = Arrays.asList(
             "Player1", "Player2", "Player3", "Player4", "Player5",
             "Player6", "Player7", "Player8", "Player9", "Player10",
             "Player11", "Player12", "Player13", "Player14", "Player15"
         );
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title("&bPlayer List")
             .rows(4)
-            .pane("players", PaginatedPane.<String>builder()
+            .pane("players", PaginatedPane.<String>pane()
                 .name("players")
                 .bounds(0, 0, 9, 4)
                 .items(players)
-                .renderer((playerName, index) -> MenuItem.builder()
+                .renderer((playerName, index) -> MenuItem.item()
                     .material(Material.PLAYER_HEAD)
                     .name("&a" + playerName)
                     .lore("""
                         &7Status: &aOnline
-
+                        
                         &eClick to view profile!""")
                     .build())
                 // Static buttons in the paginated area
@@ -108,10 +109,10 @@ public class PaginationExample {
     /**
      * Advanced example: Player profile browser with search/filter.
      */
-    public static Menu createPlayerBrowser() {
+    public static Menu createPlayerBrowser(Plugin plugin) {
         List<PlayerProfile> profiles = createPlayerProfiles();
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title("&d&lPlayer Browser")
             .rows(6)
             // Filter controls
@@ -140,19 +141,19 @@ public class PaginationExample {
                 .item(8, 0, PaginationUtils.emptyIndicator("profiles").build())
                 .build())
             // Player list
-            .pane("profiles", PaginatedPane.<PlayerProfile>builder()
+            .pane("profiles", PaginatedPane.<PlayerProfile>pane()
                 .name("profiles")
                 .bounds(0, 1, 9, 4)
                 .items(profiles)
                 // itemsPerPage defaults to pane size (9x4 = 36 slots)
-                .renderer((profile, index) -> MenuItem.builder()
+                .renderer((profile, index) -> MenuItem.item()
                     .material(profile.isOnline() ? Material.LIME_WOOL : Material.GRAY_WOOL)
                     .name((profile.isOnline() ? "&a" : "&7") + profile.getName())
                     .lore("""
                         &7Level: &f%d
                         &7Status: %s
                         %s
-
+                        
                         &eClick for details!""".formatted(
                         profile.getLevel(),
                         profile.isOnline() ? "&aOnline" : "&7Offline",

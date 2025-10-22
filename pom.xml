@@ -11,6 +11,7 @@
 
     <modules>
         <module>bukkit</module>
+        <module>bukkit-compat</module>
         <module>test-plugin</module>
     </modules>
 

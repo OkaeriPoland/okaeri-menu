@@ -23,16 +23,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FilterStrategyTest {
 
     private ServerMock server;
+    private org.bukkit.plugin.java.JavaPlugin plugin;
     private PlayerMock player;
     private Menu menu;
 
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
+        this.plugin = MockBukkit.createMockPlugin();
         this.player = this.server.addPlayer();
 
         // Create menu and open for player to establish ViewerState
-        this.menu = Menu.builder().rows(3).build();
+        this.menu = Menu.builder(this.plugin).rows(3).build();
         this.menu.open(this.player);
     }
 

@@ -4,11 +4,11 @@ import eu.okaeri.menu.item.InventoryActionCalculator;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.item.MenuItemChangeContext;
 import eu.okaeri.menu.item.MenuItemClickContext;
+import eu.okaeri.menu.navigation.NavigationHistory;
 import eu.okaeri.menu.pane.PaginatedPane;
 import eu.okaeri.menu.pane.Pane;
 import eu.okaeri.menu.pane.StaticPane;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -16,6 +16,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -30,11 +31,92 @@ import java.util.logging.Level;
  * - All event handlers wrapped in try-catch to prevent exceptions from causing duplication glitches
  * - Events are cancelled by default on any exception
  * - Extensive logging for debugging without breaking functionality
+ * <p>
+ * AUTO-REGISTRATION:
+ * - Automatically registered when the first Menu is created
+ * - Prevents duplicate registration (which would cause double event firing)
+ * - Thread-safe singleton pattern
  */
-@RequiredArgsConstructor
 public class MenuListener implements Listener {
 
+    private static volatile MenuListener instance;
+    private static final Object LOCK = new Object();
+
     private final @NonNull Plugin plugin;
+
+    /**
+     * Private constructor - use {@link #register(Plugin)} instead.
+     * Prevents direct instantiation to avoid double registration bugs.
+     *
+     * @param plugin The plugin instance
+     */
+    private MenuListener(@NonNull Plugin plugin) {
+        this.plugin = plugin;
+    }
+
+    /**
+     * Registers the MenuListener if not already registered.
+     * This method is idempotent - calling it multiple times is safe.
+     * <p>
+     * This is automatically called when the first Menu is created.
+     * Manual registration is not recommended - use Menu.builder() instead.
+     *
+     * @param plugin The plugin instance
+     * @return The singleton MenuListener instance (useful for testing)
+     */
+    public static MenuListener register(@NonNull Plugin plugin) {
+        if (instance != null) {
+            return instance; // Already registered
+        }
+
+        synchronized (LOCK) {
+            if (instance != null) {
+                return instance; // Double-check after acquiring lock
+            }
+
+            instance = new MenuListener(plugin);
+            plugin.getServer().getPluginManager().registerEvents(instance, plugin);
+            return instance;
+        }
+    }
+
+    /**
+     * Unregisters the MenuListener.
+     * Call this in your plugin's onDisable() method.
+     */
+    public static void unregister() {
+        synchronized (LOCK) {
+            if (instance != null) {
+                org.bukkit.event.HandlerList.unregisterAll(instance);
+                instance = null;
+            }
+        }
+    }
+
+    /**
+     * Checks if the listener is registered.
+     * Useful for testing and debugging.
+     *
+     * @return true if registered
+     */
+    public static boolean isRegistered() {
+        return instance != null;
+    }
+
+    /**
+     * Gets the singleton instance.
+     * Used for testing purposes to access the registered listener.
+     * <p>
+     * <b>Note:</b> This may return null if no menu has been created yet.
+     * In production code, just create a menu and the listener will auto-register.
+     * <p>
+     * For tests, use {@link #register(Plugin)} which returns the instance directly.
+     *
+     * @return The singleton instance, or null if not registered yet
+     */
+    public static MenuListener getInstance() {
+        return instance;
+    }
 
     /**
      * Handles inventory click events.
@@ -77,6 +159,22 @@ public class MenuListener implements Listener {
         } catch (Throwable throwable) {
             // Note: Can't cancel close event, but log the error
             this.plugin.getLogger().log(Level.SEVERE, "FAIL-SAFE: Exception in menu close handler", throwable);
+        }
+    }
+
+    /**
+     * Handles player quit events to prevent navigation history memory leaks.
+     * Clears the navigation history for the player who quit.
+     * <p>
+     * This provides immediate cleanup as a safety net alongside the periodic
+     * cleanup task in NavigationHistory.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerQuit(@NonNull PlayerQuitEvent event) {
+        try {
+            NavigationHistory.clear(event.getPlayer());
+        } catch (Throwable throwable) {
+            this.plugin.getLogger().log(Level.WARNING, "Exception in player quit navigation cleanup", throwable);
         }
     }
 

@@ -11,8 +11,12 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.plugin.Plugin;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Examples demonstrating the message system (Phase 4).
@@ -24,15 +28,15 @@ public class MessageExample {
      * Example using MiniMessage formatting.
      * DefaultMessageProvider supports MiniMessage tags like <red>, <gradient>, <bold>, etc.
      */
-    public static Menu createMiniMessageExample() {
-        return Menu.builder()
+    public static Menu createMiniMessageExample(Plugin plugin) {
+        return Menu.builder(plugin)
             .title("<gradient:red:blue>MiniMessage Example</gradient>")
             .rows(3)
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Simple colors
-                .item(0, 1, MenuItem.builder()
+                .item(0, 1, MenuItem.item()
                     .material(Material.RED_WOOL)
                     .name("<red>Red Text")
                     .lore("""
@@ -40,7 +44,7 @@ public class MessageExample {
                         <gray>for text formatting!""")
                     .build())
                 // Gradient
-                .item(2, 1, MenuItem.builder()
+                .item(2, 1, MenuItem.item()
                     .material(Material.NETHER_STAR)
                     .name("<gradient:red:blue>Rainbow Gradient</gradient>")
                     .lore("""
@@ -48,7 +52,7 @@ public class MessageExample {
                         <gradient:gold:yellow>beautiful gradients!</gradient>""")
                     .build())
                 // Formatting
-                .item(4, 1, MenuItem.builder()
+                .item(4, 1, MenuItem.item()
                     .material(Material.DIAMOND)
                     .name("<bold><blue>Bold & Blue")
                     .lore("""
@@ -58,15 +62,15 @@ public class MessageExample {
                         <obfuscated>Obfuscated""")
                     .build())
                 // Placeholders with reactive values
-                .item(6, 1, MenuItem.builder()
+                .item(6, 1, MenuItem.item()
                     .material(Material.CLOCK)
                     .name(
                         "<gold>Time: <time>",
                         ctx -> Map.of("time", System.currentTimeMillis())
                     )
                     .lore("""
-                        <gray>Current: <white><time>
-                        <gray>This updates on refresh!""",
+                            <gray>Current: <white><time>
+                            <gray>This updates on refresh!""",
                         ctx -> Map.of("time", System.currentTimeMillis())
                     )
                     .onClick(ctx -> ctx.refresh())
@@ -80,37 +84,37 @@ public class MessageExample {
      * Example using legacy color codes (§ and &).
      * DefaultMessageProvider automatically handles both formats.
      */
-    public static Menu createLegacyColorsExample() {
-        return Menu.builder()
+    public static Menu createLegacyColorsExample(Plugin plugin) {
+        return Menu.builder(plugin)
             .title("§6Legacy Colors")  // § codes work
             .rows(3)
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(2, 1, MenuItem.builder()
+                .item(2, 1, MenuItem.item()
                     .material(Material.REDSTONE)
                     .name("§c§lRed Title")  // § codes
                     .lore("""
                         &7This uses legacy
                         §7color codes!
-
+                        
                         &aGreen text
                         §9Blue text
                         &6Gold text""")
                     .build())
-                .item(4, 1, MenuItem.builder()
+                .item(4, 1, MenuItem.item()
                     .material(Material.PAPER)
                     .name("&6Price: <price> coins", Map.of("price", "100"))  // Mixed & and placeholder
                     .lore("""
-                        &7With placeholders:
-                        §7Player: §f<player>
-                        §7Balance: &6<balance>
-
-                        &eClick for details!""",
+                            &7With placeholders:
+                            §7Player: §f<player>
+                            §7Balance: &6<balance>
+                            
+                            &eClick for details!""",
                         Map.of("player", "Steve", "balance", "500")
                     )
                     .build())
-                .item(6, 1, MenuItem.builder()
+                .item(6, 1, MenuItem.item()
                     .material(Material.ENCHANTED_BOOK)
                     .name("§b&lFormatting Codes")  // Mix § and &
                     .lore("""
@@ -129,21 +133,21 @@ public class MessageExample {
      * Example mixing all formats: §, &, and MiniMessage.
      * DefaultMessageProvider handles all three simultaneously!
      */
-    public static Menu createMixedFormatsExample() {
-        return Menu.builder()
+    public static Menu createMixedFormatsExample(Plugin plugin) {
+        return Menu.builder(plugin)
             .title("§6Mixed &b<gradient:red:blue>Formats</gradient>")  // All three!
             .rows(3)
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(1, 1, MenuItem.builder()
+                .item(1, 1, MenuItem.item()
                     .material(Material.EMERALD)
                     .name("§aLegacy §b<gradient:gold:yellow>MiniMessage</gradient>")
                     .lore("""
                         &7Mix § codes, & codes,
                         <gradient:red:blue>and MiniMessage tags!</gradient>""")
                     .build())
-                .item(4, 1, MenuItem.builder()
+                .item(4, 1, MenuItem.item()
                     .material(Material.DIAMOND)
                     .name("<bold>&6Gold <gradient:blue:aqua>Gradient</gradient>")
                     .lore("""
@@ -151,10 +155,10 @@ public class MessageExample {
                         &a- Legacy § section codes
                         &b- Legacy & ampersand codes
                         <gradient:red:blue>- Modern MiniMessage tags</gradient>
-
+                        
                         &eNo need to choose!""")
                     .build())
-                .item(7, 1, MenuItem.builder()
+                .item(7, 1, MenuItem.item()
                     .material(Material.NETHER_STAR)
                     .name("§b<rainbow>Rainbow §6Gold &cRed")
                     .lore("""
@@ -170,26 +174,26 @@ public class MessageExample {
      * Example with reactive properties and dynamic messages.
      * Shows context-aware placeholders that update on refresh.
      */
-    public static Menu createReactiveExample() {
+    public static Menu createReactiveExample(Plugin plugin) {
         final int[] clickCount = {0};
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title("<gradient:blue:aqua>Reactive Messages</gradient>")
             .rows(3)
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Reactive name with context-aware placeholders
-                .item(3, 1, MenuItem.builder()
+                .item(3, 1, MenuItem.item()
                     .material(Material.DIAMOND)
                     .name(
                         "<gradient:blue:aqua>Clicks: <count></gradient>",
                         ctx -> Map.of("count", clickCount[0])
                     )
                     .lore("""
-                        <status>
-
-                        &7Click to increment!""",
+                            <status>
+                            
+                            &7Click to increment!""",
                         ctx -> {
                             String status = clickCount[0] == 0 ? "<gray>Never clicked" :
                                 clickCount[0] < 5 ? "<yellow>Beginner" :
@@ -204,7 +208,7 @@ public class MessageExample {
                     })
                     .build())
                 // Dynamic color based on value
-                .item(5, 1, MenuItem.builder()
+                .item(5, 1, MenuItem.item()
                     .material(() -> clickCount[0] > 5 ? Material.EMERALD : Material.COAL)
                     .name(
                         "<color>Status Indicator",
@@ -214,8 +218,8 @@ public class MessageExample {
                         }
                     )
                     .lore("""
-                        <gray>Clicks: <white><count>
-                        <gray>Material changes at 5+ clicks!""",
+                            <gray>Clicks: <white><count>
+                            <gray>Material changes at 5+ clicks!""",
                         ctx -> Map.of("count", clickCount[0])
                     )
                     .build())
@@ -228,15 +232,15 @@ public class MessageExample {
      * Example using Map<Locale, String> for built-in i18n support.
      * MenuItem now supports locale maps for name and lore directly!
      */
-    public static Menu createLocaleMapExample() {
-        return Menu.builder()
+    public static Menu createLocaleMapExample(Plugin plugin) {
+        return Menu.builder(plugin)
             .title("<gold>Multi-Language Shop")
             .rows(3)
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Diamond Sword with locale-specific name and lore
-                .item(1, 1, MenuItem.builder()
+                .item(1, 1, MenuItem.item()
                     .material(Material.DIAMOND_SWORD)
                     .vars(Map.of("damage", 10, "price", 150))
                     .name(Map.of(
@@ -249,28 +253,28 @@ public class MessageExample {
                         Locale.ENGLISH, """
                             <gray>Damage: <red><damage>
                             <gray>Price: <gold><price> coins
-
+                            
                             <yellow>Click to purchase!""",
                         new Locale("pl"), """
                             <gray>Obrażenia: <red><damage>
                             <gray>Cena: <gold><price> monet
-
+                            
                             <yellow>Kliknij aby kupić!""",
                         new Locale("de"), """
                             <gray>Schaden: <red><damage>
                             <gray>Preis: <gold><price> Münzen
-
+                            
                             <yellow>Klicken zum Kaufen!""",
                         new Locale("fr"), """
                             <gray>Dégâts: <red><damage>
                             <gray>Prix: <gold><price> pièces
-
+                            
                             <yellow>Cliquez pour acheter!"""
                     ))
                     .onClick(ctx -> ctx.sendMessage("<green>Purchased Diamond Sword!"))
                     .build())
                 // Health Potion with locale map and dynamic variables
-                .item(3, 1, MenuItem.builder()
+                .item(3, 1, MenuItem.item()
                     .material(Material.POTION)
                     .vars(Map.of("healing", 4))
                     .name(Map.of(
@@ -283,27 +287,27 @@ public class MessageExample {
                         Locale.ENGLISH, """
                             <gray>Restores <red><healing> hearts
                             <gray>Price: <gold>50 coins
-
+                            
                             <green>Ready to use!""",
                         new Locale("pl"), """
                             <gray>Przywraca <red><healing> serc
                             <gray>Cena: <gold>50 monet
-
+                            
                             <green>Gotowe do użycia!""",
                         new Locale("de"), """
                             <gray>Stellt <red><healing> Herzen wieder her
                             <gray>Preis: <gold>50 Münzen
-
+                            
                             <green>Einsatzbereit!""",
                         new Locale("fr"), """
                             <gray>Restaure <red><healing> cœurs
                             <gray>Prix: <gold>50 pièces
-
+                            
                             <green>Prêt à utiliser!"""
                     ))
                     .build())
                 // Golden Apple with method-level variable override
-                .item(5, 1, MenuItem.builder()
+                .item(5, 1, MenuItem.item()
                     .material(Material.GOLDEN_APPLE)
                     .vars(Map.of("price", 100))  // Item-level price
                     .name(Map.of(
@@ -316,27 +320,27 @@ public class MessageExample {
                         Locale.ENGLISH, """
                             <yellow>Rare item!
                             <gray>Price: <gold><price> coins
-
+                            
                             <red>Sale: <sale> coins!""",
                         new Locale("pl"), """
                             <yellow>Rzadki przedmiot!
                             <gray>Cena: <gold><price> monet
-
+                            
                             <red>Promocja: <sale> monet!""",
                         new Locale("de"), """
                             <yellow>Seltener Gegenstand!
                             <gray>Preis: <gold><price> Münzen
-
+                            
                             <red>Angebot: <sale> Münzen!""",
                         new Locale("fr"), """
                             <yellow>Objet rare!
                             <gray>Prix: <gold><price> pièces
-
+                            
                             <red>Solde: <sale> pièces!"""
                     ), Map.of("sale", 75))  // Method-level override for sale price
                     .build())
                 // Info button
-                .item(8, 1, MenuItem.builder()
+                .item(8, 1, MenuItem.item()
                     .material(Material.BOOK)
                     .name(Map.of(
                         Locale.ENGLISH, "<yellow>Language Info",
@@ -348,46 +352,46 @@ public class MessageExample {
                         Locale.ENGLISH, """
                             <gray>This menu uses Map<Locale, String>
                             <gray>for automatic language selection!
-
+                            
                             <aqua>Supported languages:
                             <white>- English
                             <white>- Polish (Polski)
                             <white>- German (Deutsch)
                             <white>- French (Français)
-
+                            
                             <yellow>Your locale determines the text!""",
                         new Locale("pl"), """
                             <gray>To menu używa Map<Locale, String>
                             <gray>do automatycznego wyboru języka!
-
+                            
                             <aqua>Obsługiwane języki:
                             <white>- Angielski (English)
                             <white>- Polski
                             <white>- Niemiecki (Deutsch)
                             <white>- Francuski (Français)
-
+                            
                             <yellow>Twój język decyduje o tekście!""",
                         new Locale("de"), """
                             <gray>Dieses Menü verwendet Map<Locale, String>
                             <gray>für automatische Sprachauswahl!
-
+                            
                             <aqua>Unterstützte Sprachen:
                             <white>- Englisch (English)
                             <white>- Polnisch (Polski)
                             <white>- Deutsch
                             <white>- Französisch (Français)
-
+                            
                             <yellow>Ihre Sprache bestimmt den Text!""",
                         new Locale("fr"), """
                             <gray>Ce menu utilise Map<Locale, String>
                             <gray>pour sélection automatique de langue!
-
+                            
                             <aqua>Langues supportées:
                             <white>- Anglais (English)
                             <white>- Polonais (Polski)
                             <white>- Allemand (Deutsch)
                             <white>- Français
-
+                            
                             <yellow>Votre langue détermine le texte!"""
                     ))
                     .build())
@@ -400,37 +404,37 @@ public class MessageExample {
      * Example showing how to extend DefaultMessageProvider for custom i18n support.
      * This demonstrates the extensibility pattern for locale-based messages.
      */
-    public static Menu createI18nExample() {
+    public static Menu createI18nExample(Plugin plugin) {
         // Create a custom i18n provider
         MessageProvider i18nProvider = new I18nMessageProvider();
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title("<gold>i18n Example")
             .rows(3)
             .messageProvider(i18nProvider)  // Set custom provider at menu level
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(3, 1, MenuItem.builder()
+                .item(3, 1, MenuItem.item()
                     .material(Material.DIAMOND_SWORD)
                     .name("menu.shop.sword.name")  // Resolves via i18n
                     .lore("""
-                        menu.shop.sword.lore.damage
-                        menu.shop.sword.lore.price
-
-                        <yellow>Click to purchase!""",
+                            menu.shop.sword.lore.damage
+                            menu.shop.sword.lore.price
+                            
+                            <yellow>Click to purchase!""",
                         Map.of("damage", "7", "price", "150")
                     )
                     .onClick(ctx -> ctx.sendMessage("&aPurchased Diamond Sword for 150 coins!"))
                     .build())
-                .item(5, 1, MenuItem.builder()
+                .item(5, 1, MenuItem.item()
                     .material(Material.BOOK)
                     .name("menu.info.title")
                     .lore("""
-                        menu.info.description
-
-                        <gray>Player: <white><player>
-                        <gray>Locale: <white><locale>""",
+                            menu.info.description
+                            
+                            <gray>Player: <white><player>
+                            <gray>Locale: <white><locale>""",
                         ctx -> Map.of(
                             "player", ctx.getEntity().getName(),
                             "locale", "en_US"  // In real use, get from player settings
@@ -494,25 +498,25 @@ public class MessageExample {
      * Example showing PlaceholderAPI integration pattern.
      * This demonstrates how to add custom placeholder resolvers.
      */
-    public static Menu createPlaceholderAPIExample() {
+    public static Menu createPlaceholderAPIExample(Plugin plugin) {
         // Create a provider with custom placeholders
         MessageProvider papiProvider = new PlaceholderAPIMessageProvider();
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title("<gradient:gold:yellow>PlaceholderAPI Example</gradient>")
             .rows(3)
             .messageProvider(papiProvider)
             .pane("main", StaticPane.builder()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(4, 1, MenuItem.builder()
+                .item(4, 1, MenuItem.item()
                     .material(Material.PLAYER_HEAD)
                     .name("<gradient:blue:aqua><player_name>")  // Custom placeholder
                     .lore("""
                         <gray>World: <white><world_name>
                         <gray>Health: <red><player_health>
                         <gray>Level: <green><player_level>
-
+                        
                         <yellow>Placeholders auto-update!""")
                     .build())
                 .item(8, 2, NavigationUtils.closeButton().build())
@@ -551,22 +555,22 @@ public class MessageExample {
      * Example demonstrating i18n-aware utility buttons.
      * Shows how to use NavigationUtils and PaginationUtils with locale maps.
      */
-    public static Menu createI18nButtonsExample() {
+    public static Menu createI18nButtonsExample(Plugin plugin) {
         // Sample data for pagination
-        java.util.List<String> items = java.util.List.of(
+        List<String> items = java.util.List.of(
             "Item 1", "Item 2", "Item 3", "Item 4", "Item 5",
             "Item 6", "Item 7", "Item 8", "Item 9", "Item 10"
         );
 
-        return Menu.builder()
+        return Menu.builder(plugin)
             .title("<gold>i18n Buttons Demo")
             .rows(5)
-            .pane("items", eu.okaeri.menu.pane.PaginatedPane.<String>builder()
+            .pane("items", eu.okaeri.menu.pane.PaginatedPane.<String>pane()
                 .name("items")
                 .bounds(0, 1, 9, 3)
                 .items(items)
                 .itemsPerPage(9)
-                .renderer((item, index) -> MenuItem.builder()
+                .renderer((item, index) -> MenuItem.item()
                     .material(Material.PAPER)
                     .name("<yellow>" + item)
                     .build())
@@ -586,19 +590,19 @@ public class MessageExample {
                     Map.of(
                         Locale.ENGLISH, """
                             <gray>Page: <white><current>/<total>
-
+                            
                             <yellow>Go to previous page""",
                         new Locale("pl"), """
                             <gray>Strona: <white><current>/<total>
-
+                            
                             <yellow>Przejdź do poprzedniej""",
                         new Locale("de"), """
                             <gray>Seite: <white><current>/<total>
-
+                            
                             <yellow>Zur vorherigen Seite""",
                         new Locale("fr"), """
                             <gray>Page: <white><current>/<total>
-
+                            
                             <yellow>Aller à la page précédente"""
                     )
                 ).build())
@@ -636,19 +640,19 @@ public class MessageExample {
                     Map.of(
                         Locale.ENGLISH, """
                             <gray>Page: <white><current>/<total>
-
+                            
                             <yellow>Go to next page""",
                         new Locale("pl"), """
                             <gray>Strona: <white><current>/<total>
-
+                            
                             <yellow>Przejdź do następnej""",
                         new Locale("de"), """
                             <gray>Seite: <white><current>/<total>
-
+                            
                             <yellow>Zur nächsten Seite""",
                         new Locale("fr"), """
                             <gray>Page: <white><current>/<total>
-
+                            
                             <yellow>Aller à la page suivante"""
                     )
                 ).build())
@@ -667,19 +671,19 @@ public class MessageExample {
                     Map.of(
                         Locale.ENGLISH, """
                             <gray>Return to previous menu
-
+                            
                             <yellow>Click to go back!""",
                         new Locale("pl"), """
                             <gray>Wróć do poprzedniego menu
-
+                            
                             <yellow>Kliknij aby wrócić!""",
                         new Locale("de"), """
                             <gray>Zurück zum vorherigen Menü
-
+                            
                             <yellow>Klicken zum Zurückkehren!""",
                         new Locale("fr"), """
                             <gray>Retour au menu précédent
-
+                            
                             <yellow>Cliquez pour revenir!"""
                     )
                 ).build())
@@ -694,19 +698,19 @@ public class MessageExample {
                     Map.of(
                         Locale.ENGLISH, """
                             <gray>Close this menu
-
+                            
                             <red>Click to close!""",
                         new Locale("pl"), """
                             <gray>Zamknij to menu
-
+                            
                             <red>Kliknij aby zamknąć!""",
                         new Locale("de"), """
                             <gray>Dieses Menü schließen
-
+                            
                             <red>Klicken zum Schließen!""",
                         new Locale("fr"), """
                             <gray>Fermer ce menu
-
+                            
                             <red>Cliquez pour fermer!"""
                     )
                 ).build())
