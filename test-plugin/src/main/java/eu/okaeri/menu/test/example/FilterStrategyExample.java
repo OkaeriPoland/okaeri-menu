@@ -1,7 +1,6 @@
 package eu.okaeri.menu.test.example;
 
 import eu.okaeri.menu.Menu;
-import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.navigation.NavigationUtils;
 import eu.okaeri.menu.pagination.FilterStrategy;
 import eu.okaeri.menu.pagination.PaginationContext;
@@ -16,6 +15,8 @@ import org.bukkit.plugin.Plugin;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import static eu.okaeri.menu.item.MenuItem.item;
 
 /**
  * Examples demonstrating filter strategies (AND vs OR).
@@ -34,10 +35,10 @@ public class FilterStrategyExample {
             .title("&6Filter Strategies Demo")
             .rows(6)
             // Strategy selector (top row)
-            .pane("strategy", StaticPane.builder()
+            .pane("strategy", StaticPane.staticPane()
                 .name("strategy")
                 .bounds(0, 0, 9, 1)
-                .item(1, 0, MenuItem.item()
+                .item(1, 0, item()
                     .material(ctx -> {
                         PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
                         return pagination.getFilterStrategy() == FilterStrategy.AND ? Material.LIME_WOOL : Material.GRAY_WOOL;
@@ -54,7 +55,7 @@ public class FilterStrategyExample {
                         ctx.refresh();
                     })
                     .build())
-                .item(3, 0, MenuItem.item()
+                .item(3, 0, item()
                     .material(ctx -> {
                         PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
                         return pagination.getFilterStrategy() == FilterStrategy.OR ? Material.LIME_WOOL : Material.GRAY_WOOL;
@@ -71,7 +72,7 @@ public class FilterStrategyExample {
                         ctx.refresh();
                     })
                     .build())
-                .item(8, 0, MenuItem.item()
+                .item(8, 0, item()
                     .material(Material.BARRIER)
                     .name("&cClear Filters")
                     .onClick(ctx -> {
@@ -82,10 +83,10 @@ public class FilterStrategyExample {
                     .build())
                 .build())
             // Filter controls (row 2)
-            .pane("filters", StaticPane.builder()
+            .pane("filters", StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 1, 9, 1)
-                .item(1, 0, MenuItem.item()
+                .item(1, 0, item()
                     .material(Material.DIAMOND_SWORD)
                     .name("&bWeapons Only")
                     .lore("""
@@ -102,7 +103,7 @@ public class FilterStrategyExample {
                         ctx.refresh();
                     })
                     .build())
-                .item(3, 0, MenuItem.item()
+                .item(3, 0, item()
                     .material(Material.DIAMOND_CHESTPLATE)
                     .name("&9Armor Only")
                     .lore("""
@@ -119,7 +120,7 @@ public class FilterStrategyExample {
                         ctx.refresh();
                     })
                     .build())
-                .item(5, 0, MenuItem.item()
+                .item(5, 0, item()
                     .material(Material.GOLD_INGOT)
                     .name("&6Expensive (>100)")
                     .lore("""
@@ -136,7 +137,7 @@ public class FilterStrategyExample {
                         ctx.refresh();
                     })
                     .build())
-                .item(7, 0, MenuItem.item()
+                .item(7, 0, item()
                     .material(Material.EMERALD)
                     .name("&aAffordable (<100)")
                     .lore("""
@@ -160,7 +161,7 @@ public class FilterStrategyExample {
                 .bounds(0, 2, 9, 3)
                 .items(items)
                 // itemsPerPage defaults to pane size (9x3 = 27 slots)
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((item, index) -> item()
                     .material(item.material())
                     .vars(Map.of(
                         "name", item.name(),
@@ -176,7 +177,7 @@ public class FilterStrategyExample {
                     .build())
                 .build())
             // Navigation
-            .pane("nav", StaticPane.builder()
+            .pane("nav", StaticPane.staticPane()
                 .name("nav")
                 .bounds(0, 5, 9, 1)
                 .item(3, 0, PaginationUtils.previousPageButton("shop").build())

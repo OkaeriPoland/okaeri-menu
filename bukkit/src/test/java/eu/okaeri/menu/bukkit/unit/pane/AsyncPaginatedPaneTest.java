@@ -87,7 +87,7 @@ class AsyncPaginatedPaneTest {
         AsyncPaginatedPane<String> pane = paneAsync(String.class)
             .name("test-pane")
             .bounds(0, 0, 3, 3)
-            .loader(() -> Collections.emptyList())
+            .loader(Collections::emptyList)
             .renderer((item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
 
@@ -100,7 +100,7 @@ class AsyncPaginatedPaneTest {
         AsyncPaginatedPane<String> pane = paneAsync(String.class)
             .name("test-pane")
             .bounds(0, 0, 3, 3)
-            .loader(() -> Collections.emptyList())
+            .loader(Collections::emptyList)
             .ttl(Duration.ofMinutes(5))
             .renderer((item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
@@ -166,7 +166,7 @@ class AsyncPaginatedPaneTest {
             .pane("async-pane", paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)  // 3x3 = 9 slots
-                .loader(() -> Collections.emptyList())
+                .loader(Collections::emptyList)
                 .renderer((item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
@@ -493,7 +493,7 @@ class AsyncPaginatedPaneTest {
     @DisplayName("Should render with default loading item")
     void testRendersWithDefaultLoadingItem() {
         Menu testMenu = Menu.builder(this.plugin)
-            .asyncExecutor(SyncTestExecutor.create())
+            .asyncExecutor(pooledExecutor)
             .title("Async Menu")
             .rows(3)
             .pane("async-pane", paneAsync(String.class)

@@ -1,12 +1,10 @@
 package eu.okaeri.menu.test.example;
 
 import eu.okaeri.menu.Menu;
-import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.navigation.NavigationUtils;
 import eu.okaeri.menu.pagination.PaginationFilter;
 import eu.okaeri.menu.pagination.PaginationUtils;
 import eu.okaeri.menu.pane.PaginatedPane;
-import eu.okaeri.menu.pane.StaticPane;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.bukkit.Material;
@@ -15,6 +13,9 @@ import org.bukkit.plugin.Plugin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static eu.okaeri.menu.item.MenuItem.item;
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 
 /**
  * Examples demonstrating the pagination system (Phase 3).
@@ -49,7 +50,7 @@ public class PaginationExample {
                 .bounds(0, 0, 9, 5)  // 5 rows for content
                 .items(items)
                 // itemsPerPage defaults to pane size (9x5 = 45 slots)
-                .renderer((fruit, index) -> MenuItem.item()
+                .renderer((fruit, index) -> item()
                     .material(Material.APPLE)  // Could map different materials
                     .name("&e" + fruit)
                     .lore("""
@@ -62,7 +63,7 @@ public class PaginationExample {
                     .build())
                 .build())
             // Navigation row (bottom row)
-            .pane("nav", StaticPane.builder()
+            .pane("nav", staticPane()
                 .name("nav")
                 .bounds(0, 5, 9, 1)
                 .item(3, 0, PaginationUtils.previousPageButton("content").build())
@@ -91,7 +92,7 @@ public class PaginationExample {
                 .name("players")
                 .bounds(0, 0, 9, 4)
                 .items(players)
-                .renderer((playerName, index) -> MenuItem.item()
+                .renderer((playerName, index) -> item()
                     .material(Material.PLAYER_HEAD)
                     .name("&a" + playerName)
                     .lore("""
@@ -116,7 +117,7 @@ public class PaginationExample {
             .title("&d&lPlayer Browser")
             .rows(6)
             // Filter controls
-            .pane("filters", StaticPane.builder()
+            .pane("filters", staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(1, 0, PaginationUtils.<PlayerProfile>filterButton(
@@ -146,7 +147,7 @@ public class PaginationExample {
                 .bounds(0, 1, 9, 4)
                 .items(profiles)
                 // itemsPerPage defaults to pane size (9x4 = 36 slots)
-                .renderer((profile, index) -> MenuItem.item()
+                .renderer((profile, index) -> item()
                     .material(profile.isOnline() ? Material.LIME_WOOL : Material.GRAY_WOOL)
                     .name((profile.isOnline() ? "&a" : "&7") + profile.getName())
                     .lore("""
@@ -163,7 +164,7 @@ public class PaginationExample {
                     .build())
                 .build())
             // Navigation
-            .pane("nav", StaticPane.builder()
+            .pane("nav", staticPane()
                 .name("nav")
                 .bounds(0, 5, 9, 1)
                 .item(3, 0, PaginationUtils.previousPageButton("profiles").build())

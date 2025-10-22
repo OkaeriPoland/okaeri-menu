@@ -2,7 +2,6 @@ package eu.okaeri.menu.bukkit.integration;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.item.MenuItem;
-import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -14,6 +13,7 @@ import org.mockbukkit.mockbukkit.ServerMock;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -55,7 +55,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
@@ -127,7 +127,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("pane1", StaticPane.builder()
+            .pane("pane1", staticPane()
                 .bounds(0, 0, 4, 3)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
@@ -136,7 +136,7 @@ class MenuRefreshTest {
                     })
                     .build())
                 .build())
-            .pane("pane2", StaticPane.builder()
+            .pane("pane2", staticPane()
                 .bounds(5, 0, 4, 3)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
@@ -187,7 +187,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("pane1", StaticPane.builder()
+            .pane("pane1", staticPane()
                 .bounds(0, 0, 4, 3)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
@@ -196,7 +196,7 @@ class MenuRefreshTest {
                     })
                     .build())
                 .build())
-            .pane("pane2", StaticPane.builder()
+            .pane("pane2", staticPane()
                 .bounds(5, 0, 4, 3)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
@@ -227,7 +227,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title(title::get)
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .build())
             .build();
@@ -251,7 +251,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Static Title")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .build())
             .build();
@@ -274,7 +274,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .build())
             .build();
@@ -292,7 +292,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .build())
             .build();
@@ -316,7 +316,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title(title::get)
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .item(0, 0, MenuItem.item()
                     .material(Material.DIAMOND)
@@ -344,7 +344,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title(title::get)
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .item(0, 0, MenuItem.item()
                     .material(Material.DIAMOND)
@@ -376,7 +376,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .item(0, 0, MenuItem.item()
                     .material(material::get)
@@ -404,7 +404,7 @@ class MenuRefreshTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .item(0, 0, MenuItem.item()
                     .material(Material.DIAMOND)

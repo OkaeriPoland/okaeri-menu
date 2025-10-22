@@ -57,9 +57,6 @@ public class PaginationContext<T> {
      */
     @SuppressWarnings("unchecked")
     public static <T> @NonNull PaginationContext<T> get(@NonNull Menu menu, @NonNull String paneId, @NonNull HumanEntity player, @NonNull List<T> allItems, int itemsPerPage) {
-        if (menu == null) {
-            throw new IllegalArgumentException("Menu cannot be null");
-        }
 
         UUID playerId = player.getUniqueId();
         Menu.ViewerState state = menu.getViewerState(playerId);

@@ -16,6 +16,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import java.util.Locale;
 import java.util.Map;
 
+import static eu.okaeri.menu.item.MenuItem.item;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -52,7 +53,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should use item-level vars in name()")
     void testItemVarsInName() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .vars(Map.of("price", 100))
             .name("Price: <price> coins")
@@ -65,7 +66,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should use item-level vars in lore()")
     void testItemVarsInLore() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .vars(Map.of("stock", 50))
             .lore("Stock: <stock> items")
@@ -79,7 +80,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should share item-level vars between name and lore")
     void testVarsSharedBetweenNameAndLore() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.GOLD_INGOT)
             .vars(Map.of(
                 "price", 250,
@@ -101,7 +102,7 @@ class ItemLevelVarsTest {
     void testReactiveVars() {
         int[] counter = {0};
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .vars(Map.of("count", (java.util.function.Supplier<Integer>) () -> counter[0]))
             .name("Count: <count>")
@@ -123,7 +124,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should allow method-level vars to override item-level vars")
     void testMethodVarsOverride() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .vars(Map.of("price", 100))  // Item-level: 100
             .name("Name price: <price>")
@@ -140,7 +141,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should merge item-level and method-level vars")
     void testVarsMerging() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.EMERALD)
             .vars(Map.of(
                 "price", 100,
@@ -159,7 +160,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should work with empty item-level vars")
     void testEmptyItemVars() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .name("Price: <price>", Map.of("price", 50))  // Only method-level vars
             .build();
@@ -171,7 +172,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should work with empty method-level vars")
     void testEmptyMethodVars() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.IRON_INGOT)
             .vars(Map.of("price", 75))
             .name("Price: <price>")  // Only item-level vars
@@ -184,7 +185,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should handle multiple placeholders from item-level vars")
     void testMultiplePlaceholders() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND_SWORD)
             .vars(Map.of(
                 "name", "Excalibur",
@@ -209,7 +210,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should preserve MiniMessage formatting with item-level vars")
     void testMiniMessageWithVars() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.GOLD_BLOCK)
             .vars(Map.of("amount", 1000))
             .name("<gold>Balance: <amount> coins</gold>")
@@ -223,7 +224,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should work with null vars map")
     void testNullMethodVars() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .vars(Map.of("price", 100))
             .name("Price: <price>", (Map<String, Object>) null)  // Explicitly null
@@ -238,7 +239,7 @@ class ItemLevelVarsTest {
     void testReactiveVarsInLore() {
         int[] stock = {10};
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.APPLE)
             .vars(Map.of("stock", (java.util.function.Supplier<Integer>) () -> stock[0]))
             .lore("Stock: <stock> apples")
@@ -261,7 +262,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should support name with locale map")
     void testNameWithLocaleMap() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND_SWORD)
             .name(Map.of(
                 Locale.ENGLISH, "Diamond Sword",
@@ -278,7 +279,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should support lore with locale map")
     void testLoreWithLocaleMap() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .lore(Map.of(
                 Locale.ENGLISH, """
@@ -297,7 +298,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should support locale map with placeholders")
     void testLocaleMapWithPlaceholders() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.GOLD_INGOT)
             .vars(Map.of("price", 100))
             .name(Map.of(
@@ -314,7 +315,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should support locale map with method-level vars override")
     void testLocaleMapWithVarsOverride() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.EMERALD)
             .vars(Map.of("price", 50))  // Item-level: 50
             .name(Map.of(
@@ -339,7 +340,7 @@ class ItemLevelVarsTest {
     void testLocaleMapWithDynamicVars() {
         int[] stock = {100};
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.APPLE)
             .name(Map.of(
                 Locale.ENGLISH, "Stock: <stock> apples",
@@ -363,7 +364,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should support locale map in lore with multiple lines")
     void testLocaleMapLoreMultiline() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND_SWORD)
             .vars(Map.of(
                 "damage", 10,
@@ -393,7 +394,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should handle empty locale map gracefully")
     void testEmptyLocaleMap() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .name(Map.of())  // Empty locale map
             .build();
@@ -406,7 +407,7 @@ class ItemLevelVarsTest {
     @Test
     @DisplayName("Should merge item-level vars with locale map vars")
     void testLocaleMapWithMergedVars() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.IRON_SWORD)
             .vars(Map.of(
                 "damage", 5,

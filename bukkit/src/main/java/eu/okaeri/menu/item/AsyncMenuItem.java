@@ -77,31 +77,36 @@ public class AsyncMenuItem extends MenuItem {
         AsyncCache cache = state.getAsyncCache();
         AsyncCache.AsyncState asyncState = cache.getState(this.cacheKey);
 
-        // Start load if needed (not loaded or expired)
+        // Start load if needed (first time or expired)
         if ((asyncState == null) || cache.isExpired(this.cacheKey)) {
+            // Start async load (or background reload if stale data exists)
+            // AsyncCache handles stale-while-revalidate: keeps showing old data during reload
             context.loadAsync(this.cacheKey, this.asyncLoader, this.ttl);
+            // Re-check state after starting load
+            asyncState = cache.getState(this.cacheKey);
+        }
+
+        // Handle null state (shouldn't happen but safety fallback)
+        if (asyncState == null) {
             asyncState = AsyncCache.AsyncState.LOADING;
         }
 
         // Delegate to appropriate state item
-        switch (asyncState) {
-            case LOADING:
-                return this.loadingState.render(context);
-
-            case ERROR:
+        return switch (asyncState) {
+            case LOADING -> this.loadingState.render(context);
+            case ERROR -> {
                 Throwable error = cache.getError(this.cacheKey)
                     .orElse(new RuntimeException("Unknown error"));
                 MenuItem errorItem = this.errorStateFactory.apply(error);
-                return errorItem.render(context);
-
-            case SUCCESS:
+                yield errorItem.render(context);
+            }
+            case SUCCESS -> {
                 Object data = cache.get(this.cacheKey, Object.class).orElse(null);
                 MenuItem successItem = this.successStateFactory.apply(data);
-                return successItem.render(context);
-
-            default:
-                return this.loadingState.render(context);
-        }
+                yield successItem.render(context);
+            }
+            default -> this.loadingState.render(context);
+        };
     }
 
     /**
@@ -122,25 +127,19 @@ public class AsyncMenuItem extends MenuItem {
         AsyncCache.AsyncState asyncState = cache.getState(this.cacheKey);
 
         switch (asyncState) {
-            case LOADING:
-                this.loadingState.handleClick(context);
-                break;
-
-            case ERROR:
+            case LOADING -> this.loadingState.handleClick(context);
+            case ERROR -> {
                 Throwable error = cache.getError(this.cacheKey)
                     .orElse(new RuntimeException("Unknown error"));
                 MenuItem errorItem = this.errorStateFactory.apply(error);
                 errorItem.handleClick(context);
-                break;
-
-            case SUCCESS:
+            }
+            case SUCCESS -> {
                 Object data = cache.get(this.cacheKey, Object.class).orElse(null);
                 MenuItem successItem = this.successStateFactory.apply(data);
                 successItem.handleClick(context);
-                break;
-
-            default:
-                this.loadingState.handleClick(context);
+            }
+            default -> this.loadingState.handleClick(context);
         }
     }
 

@@ -224,20 +224,21 @@ public abstract class BaseMenuContext {
     @SuppressWarnings("unchecked")
     public <T> PaginationContext<T> pagination(@NonNull String paneName) {
         Pane pane = this.menu.getPane(paneName);
-        if (!(pane instanceof PaginatedPane)) {
+        if (!(pane instanceof PaginatedPane<?> paginatedPane)) {
             throw new IllegalArgumentException("Pane '" + paneName + "' is not a PaginatedPane");
         }
 
-        PaginatedPane<T> paginatedPane = (PaginatedPane<T>) pane;
+        // Cast to specific type parameter (unchecked due to type erasure)
+        PaginatedPane<T> typedPane = (PaginatedPane<T>) paginatedPane;
 
         // Get items from the pane and create/get context
-        List<T> items = paginatedPane.getItemsSupplier().get();
+        List<T> items = typedPane.getItemsSupplier().get();
         return eu.okaeri.menu.pagination.PaginationContext.get(
             this.menu,  // Menu instance for scoped pagination contexts
             paneName,
             this.entity,
             items,
-            paginatedPane.getItemsPerPage()
+            typedPane.getItemsPerPage()
         );
     }
 
@@ -261,11 +262,10 @@ public abstract class BaseMenuContext {
             throw new IllegalArgumentException("Pane not found: " + paneName);
         }
 
-        if (!(pane instanceof StaticPane)) {
+        if (!(pane instanceof StaticPane staticPane)) {
             throw new IllegalArgumentException("setSlotItem only supports StaticPane, not " + pane.getClass().getSimpleName());
         }
 
-        StaticPane staticPane = (StaticPane) pane;
         MenuItem menuItem = staticPane.getItem(localX, localY);
 
         if (menuItem == null) {
@@ -315,19 +315,17 @@ public abstract class BaseMenuContext {
             return ComputedValue.empty();
         }
 
-        switch (asyncState) {
-            case SUCCESS:
+        return switch (asyncState) {
+            case SUCCESS -> {
                 Optional<?> value = cache.get(key, Object.class);
                 @SuppressWarnings("unchecked")
                 T castValue = (T) value.orElse(null);
-                return ComputedValue.success(castValue);
-            case LOADING:
-                return ComputedValue.loading();
-            case ERROR:
-                return ComputedValue.error(cache.getError(key).orElse(null));
-            default:
-                return ComputedValue.empty();
-        }
+                yield ComputedValue.success(castValue);
+            }
+            case LOADING -> ComputedValue.loading();
+            case ERROR -> ComputedValue.error(cache.getError(key).orElse(null));
+            default -> ComputedValue.empty();
+        };
     }
 
     /**
@@ -360,7 +358,27 @@ public abstract class BaseMenuContext {
         return dataValue.map(allItems -> {
             @SuppressWarnings("unchecked")
             List<T> items = (List<T>) allItems;
-            PaginationContext<T> paginationCtx = this.pagination(paneName);
+
+            // Get or create pagination context using items from async cache (not supplier)
+            // This prevents race conditions where supplier returns empty/stale data
+            Pane pane = this.menu.getPane(paneName);
+            if (!(pane instanceof PaginatedPane<?> paginatedPane)) {
+                throw new IllegalArgumentException("Pane '" + paneName + "' is not a PaginatedPane");
+            }
+
+            // Cast to specific type parameter (unchecked due to type erasure)
+            @SuppressWarnings("unchecked")
+            PaginatedPane<T> typedPane = (PaginatedPane<T>) paginatedPane;
+
+            // Create pagination context with items from async cache, not supplier
+            PaginationContext<T> paginationCtx = eu.okaeri.menu.pagination.PaginationContext.get(
+                this.menu,
+                paneName,
+                this.entity,
+                items,  // Use items from async cache!
+                typedPane.getItemsPerPage()
+            );
+
             return new PaneDataState<>(items, paginationCtx);
         });
     }

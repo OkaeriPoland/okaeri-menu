@@ -2,8 +2,7 @@ package eu.okaeri.menu.bukkit.integration;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuListener;
-import eu.okaeri.menu.item.MenuItem;
-import eu.okaeri.menu.pane.StaticPane;
+import eu.okaeri.menu.item.BaseMenuItemContext;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -21,6 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static eu.okaeri.menu.item.MenuItem.item;
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -65,9 +66,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
-                .item(2, 1, MenuItem.item()
+                .item(2, 1, item()
                     .material(Material.DIAMOND)
                     .onClick(ctx -> clicked.set(true))
                     .build())
@@ -98,7 +99,7 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 3)
                 .build())
             .build();
@@ -154,9 +155,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.STONE)
                     .onClick(ctx -> clickCount.incrementAndGet())
                     .build())
@@ -189,9 +190,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.EMERALD)
                     .onLeftClick(ctx -> leftClicks.incrementAndGet())
                     .onRightClick(ctx -> rightClicks.incrementAndGet())
@@ -233,9 +234,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(2)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 2)
-                .item(5, 1, MenuItem.item()  // Slot 14
+                .item(5, 1, item()  // Slot 14
                     .material(Material.GOLD_INGOT)
                     .onClick(ctx -> capturedSlot.set(ctx.getSlot()))
                     .build())
@@ -269,9 +270,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .allowPickup(true)
                     .onItemChange(ctx -> changeHandlerCalled.set(true))
                     .build())
@@ -308,9 +309,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .allowPlacement(true)
                     .onItemChange(ctx -> changeHandlerCalled.set(true))
                     .build())
@@ -341,9 +342,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.DIAMOND)
                     .build())
                 .build())
@@ -371,9 +372,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .allowPickup(true)
                     // No allowPlacement
                     .build())
@@ -405,9 +406,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .interactive()
                     .onItemChange(ctx -> {
                         capturedBefore.set(ctx.getPreviousItem());
@@ -504,9 +505,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.TNT)
                     .onClick(ctx -> {
                         throw new RuntimeException("Test exception");
@@ -539,9 +540,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .interactive()
                     .onItemChange(ctx -> {
                         throw new RuntimeException("Test exception");
@@ -581,13 +582,13 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.DIAMOND)
                     .onClick(ctx -> slot0Clicks.incrementAndGet())
                     .build())
-                .item(8, 0, MenuItem.item()
+                .item(8, 0, item()
                     .material(Material.EMERALD)
                     .onClick(ctx -> slot8Clicks.incrementAndGet())
                     .build())
@@ -780,16 +781,16 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("top", StaticPane.builder()
+            .pane("top", staticPane()
                 .bounds(0, 0, 9, 1)  // First row
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.DIAMOND)
                     .onClick(ctx -> topPaneClicks.incrementAndGet())
                     .build())
                 .build())
-            .pane("bottom", StaticPane.builder()
+            .pane("bottom", staticPane()
                 .bounds(0, 2, 9, 1)  // Third row
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.EMERALD)
                     .onClick(ctx -> bottomPaneClicks.incrementAndGet())
                     .build())
@@ -832,9 +833,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(2)
-            .pane("first", StaticPane.builder()
+            .pane("first", staticPane()
                 .bounds(0, 0, 5, 1)
-                .item(2, 0, MenuItem.item()
+                .item(2, 0, item()
                     .material(Material.GOLD_INGOT)
                     .onClick(ctx -> firstPaneClicks.incrementAndGet())
                     .build())
@@ -869,9 +870,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .interactive()  // Both pickup and placement allowed
                     .onItemChange(ctx -> {
                         if (ctx.wasItemSwapped()) {
@@ -909,9 +910,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .allowPickup(true)
                     // No allowPlacement
                     .build())
@@ -937,17 +938,15 @@ class MenuListenerTest {
     @Test
     @DisplayName("Should allow cancellation from change handler")
     void testChangeHandlerCanCancel() {
+        // Handler cancels the event
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .interactive()
-                    .onItemChange(ctx -> {
-                        // Handler cancels the event
-                        ctx.cancel();
-                    })
+                    .onItemChange(BaseMenuItemContext::cancel)
                     .build())
                 .build())
             .build();
@@ -1053,9 +1052,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.STONE)
                     .onClick(ctx -> clickCount.incrementAndGet())
                     .build())
@@ -1087,9 +1086,9 @@ class MenuListenerTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(1)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .bounds(0, 0, 9, 1)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.COMPASS)
                     .onClick(ctx -> capturedClickType.set(ctx.getClickType()))
                     .build())

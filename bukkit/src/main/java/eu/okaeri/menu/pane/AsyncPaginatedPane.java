@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -42,7 +43,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
     // Mutable container for items to support delegation to parent render
     private final AtomicReference<List<T>> currentItems;
 
-    private AsyncPaginatedPane(Builder<T> builder) {
+    private AsyncPaginatedPane(@NonNull Builder<T> builder) {
         super(convertToParentBuilder(builder, new AtomicReference<>(Collections.emptyList())));
         this.currentItems = builder.currentItemsRef;  // Capture the same reference used in parent
         this.asyncLoader = builder.asyncLoader;
@@ -77,7 +78,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
         // Copy static items
         asyncBuilder.staticItems.forEach(entry ->
-            parentBuilder.staticItem(entry.localX, entry.localY, entry.menuItem));
+            parentBuilder.staticItem(entry.getLocalX(), entry.getLocalY(), entry.getMenuItem()));
 
         return parentBuilder;
     }
@@ -94,21 +95,24 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         AsyncCache cache = state.getAsyncCache();
         AsyncCache.AsyncState asyncState = cache.getState(cacheKey);
 
-        // Check if we need to load
+        // Check if we need to load (first time or expired)
         if ((asyncState == null) || cache.isExpired(cacheKey)) {
-            // Start async load
+            // Start async load (or background reload if stale data exists)
+            // AsyncCache handles stale-while-revalidate: keeps showing old data during reload
             context.loadAsync(cacheKey, this.asyncLoader, this.ttl);
+            // Re-check state after starting load
+            asyncState = cache.getState(cacheKey);
+        }
+
+        // Handle null state (shouldn't happen but safety fallback)
+        if (asyncState == null) {
             asyncState = AsyncCache.AsyncState.LOADING;
         }
 
         switch (asyncState) {
-            case LOADING:
-                this.renderLoadingState(inventory, context);
-                break;
-            case ERROR:
-                this.renderErrorState(inventory, context);
-                break;
-            case SUCCESS:
+            case LOADING -> this.renderLoadingState(inventory, context);
+            case ERROR -> this.renderErrorState(inventory, context);
+            case SUCCESS -> {
                 // Get loaded data from cache
                 cache.get(cacheKey, List.class).ifPresentOrElse(
                     data -> {
@@ -122,10 +126,8 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
                     },
                     () -> this.renderEmptyState(inventory, context)
                 );
-                break;
-            default:
-                // Shouldn't happen, but render empty as fallback
-                this.renderEmptyState(inventory, context);
+            }
+            default -> this.renderEmptyState(inventory, context);
         }
     }
 
@@ -133,38 +135,24 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
      * Renders loading state by filling all slots with loading item.
      */
     private void renderLoadingState(@NonNull Inventory inventory, @NonNull MenuContext context) {
-        PaneBounds bounds = this.getBounds();
-
-        // Fill all slots in pane bounds with loading item
-        for (int localY = 0; localY < bounds.getHeight(); localY++) {
-            for (int localX = 0; localX < bounds.getWidth(); localX++) {
-                int globalSlot = bounds.toGlobalSlot(localX, localY);
-                ItemStack item = this.loadingItem.render(context);
-                inventory.setItem(globalSlot, item);
-            }
-        }
+        // Fill all slots with loading item
+        ItemStack loadingItemStack = this.loadingItem.render(context);
+        this.getBounds().slots().fill(inventory, loadingItemStack);
 
         // Render static items on top
-        this.renderStaticItems(inventory, context);
+        this.renderStaticItems(inventory, context, this.getStaticItems());
     }
 
     /**
      * Renders error state by filling all slots with error item.
      */
     private void renderErrorState(@NonNull Inventory inventory, @NonNull MenuContext context) {
-        PaneBounds bounds = this.getBounds();
-
-        // Fill all slots in pane bounds with error item
-        for (int localY = 0; localY < bounds.getHeight(); localY++) {
-            for (int localX = 0; localX < bounds.getWidth(); localX++) {
-                int globalSlot = bounds.toGlobalSlot(localX, localY);
-                ItemStack item = this.errorItem.render(context);
-                inventory.setItem(globalSlot, item);
-            }
-        }
+        // Fill all slots with error item
+        ItemStack errorItemStack = this.errorItem.render(context);
+        this.getBounds().slots().fill(inventory, errorItemStack);
 
         // Render static items on top
-        this.renderStaticItems(inventory, context);
+        this.renderStaticItems(inventory, context, this.getStaticItems());
     }
 
     /**
@@ -173,21 +161,18 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
     private void renderEmptyState(@NonNull Inventory inventory, @NonNull MenuContext context) {
         PaneBounds bounds = this.getBounds();
 
-        // Clear pane area
-        for (int localY = 0; localY < bounds.getHeight(); localY++) {
-            for (int localX = 0; localX < bounds.getWidth(); localX++) {
-                int globalSlot = bounds.toGlobalSlot(localX, localY);
-                inventory.setItem(globalSlot, null);
-            }
-        }
+        // Show empty item at top-left (0,0)
+        ItemStack emptyItemStack = this.emptyItem.render(context);
+        inventory.setItem(bounds.toGlobalSlot(0, 0), emptyItemStack);
 
-        // Show empty item at top-left (0,0) to avoid off-center placement
-        int globalSlot = bounds.toGlobalSlot(0, 0);
-        ItemStack item = this.emptyItem.render(context);
-        inventory.setItem(globalSlot, item);
+        // Clear other slots (exclude slot 0 and static items)
+        bounds.slots()
+            .excludeKeys(this.getStaticItems())
+            .exclude(Set.of(0))
+            .clear(inventory);
 
         // Render static items on top
-        this.renderStaticItems(inventory, context);
+        this.renderStaticItems(inventory, context, this.getStaticItems());
     }
 
     /**
@@ -200,24 +185,6 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
         // Delegate to parent class render which will use items from currentItems
         super.render(inventory, context);
-    }
-
-    /**
-     * Renders static items (navigation buttons, etc).
-     * Called after state-specific rendering to ensure they're always visible.
-     */
-    private void renderStaticItems(@NonNull Inventory inventory, @NonNull MenuContext context) {
-        PaneBounds bounds = this.getBounds();
-
-        this.getStaticItems().forEach((localSlot, menuItem) -> {
-            int localX = localSlot % bounds.getWidth();
-            int localY = localSlot / bounds.getWidth();
-            int globalSlot = bounds.toGlobalSlot(localX, localY);
-            ItemStack item = menuItem.render(context);
-            if (item != null) {
-                inventory.setItem(globalSlot, item);
-            }
-        });
     }
 
     /**
@@ -252,7 +219,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         private Duration ttl = Duration.ofSeconds(30);  // Default TTL
         private BiFunction<T, Integer, MenuItem> itemRenderer;
         private int itemsPerPage;
-        private List<StaticItemEntry> staticItems = new ArrayList<>();
+        private List<AbstractPane.ItemCoordinateEntry> staticItems = new ArrayList<>();
         private MenuItem loadingItem;
         private MenuItem errorItem;
         private MenuItem emptyItem;
@@ -360,7 +327,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
          */
         @NonNull
         public Builder<T> staticItem(int localX, int localY, @NonNull MenuItem menuItem) {
-            this.staticItems.add(new StaticItemEntry(localX, localY, menuItem));
+            this.staticItems.add(new AbstractPane.ItemCoordinateEntry(localX, localY, menuItem));
             return this;
         }
 
@@ -436,21 +403,6 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
             }
 
             return new AsyncPaginatedPane<>(this);
-        }
-
-        /**
-         * Helper class to store static item positions during building.
-         */
-        private static class StaticItemEntry {
-            final int localX;
-            final int localY;
-            final MenuItem menuItem;
-
-            StaticItemEntry(int localX, int localY, MenuItem menuItem) {
-                this.localX = localX;
-                this.localY = localY;
-                this.menuItem = menuItem;
-            }
         }
     }
 }

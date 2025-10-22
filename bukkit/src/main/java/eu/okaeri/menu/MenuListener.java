@@ -5,9 +5,8 @@ import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.item.MenuItemChangeContext;
 import eu.okaeri.menu.item.MenuItemClickContext;
 import eu.okaeri.menu.navigation.NavigationHistory;
-import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.pane.AbstractPane;
 import eu.okaeri.menu.pane.Pane;
-import eu.okaeri.menu.pane.StaticPane;
 import lombok.NonNull;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
@@ -333,32 +332,20 @@ public class MenuListener implements Listener {
      */
     private boolean shouldAllowInteraction(@NonNull InventoryClickEvent event, @NonNull MenuItem item,
                                            ItemStack currentItem, ItemStack calculatedNewItem) {
-        switch (event.getAction()) {
+        return switch (event.getAction()) {
             // Pickup actions - require allowPickup
-            case PICKUP_ALL:
-            case PICKUP_HALF:
-            case PICKUP_ONE:
-            case PICKUP_SOME:
-            case DROP_ALL_SLOT:
-            case DROP_ONE_SLOT:
-                return item.isAllowPickup();
+            case PICKUP_ALL, PICKUP_HALF, PICKUP_ONE, PICKUP_SOME, DROP_ALL_SLOT, DROP_ONE_SLOT -> item.isAllowPickup();
 
             // Placement actions - require allowPlacement
-            case PLACE_ALL:
-            case PLACE_SOME:
-            case PLACE_ONE:
-                return item.isAllowPlacement();
+            case PLACE_ALL, PLACE_SOME, PLACE_ONE -> item.isAllowPlacement();
 
             // Swap actions - require both
-            case SWAP_WITH_CURSOR:
-            case HOTBAR_SWAP:
-                return item.isAllowPickup() && item.isAllowPlacement();
+            case SWAP_WITH_CURSOR, HOTBAR_SWAP -> item.isAllowPickup() && item.isAllowPlacement();
 
             // Nothing/Unknown - allow
-            case NOTHING:
-            default:
-                return true;
-        }
+            case NOTHING -> true;
+            default -> true;
+        };
     }
 
     private void handlePlayerInventoryClickWhileMenuOpen(@NonNull InventoryClickEvent event, @NonNull Inventory menuInventory) {
@@ -368,27 +355,25 @@ public class MenuListener implements Listener {
 
         switch (event.getAction()) {
             // Block actions that automatically move items into the menu
-            case MOVE_TO_OTHER_INVENTORY:    // Shift-click
-            case COLLECT_TO_CURSOR:           // Double-click to collect
+            case MOVE_TO_OTHER_INVENTORY, COLLECT_TO_CURSOR -> {    // Shift-click, Double-click to collect
                 event.setCancelled(true);
                 this.plugin.getLogger().fine("Blocked shift-click/collect while menu open");
-                break;
+            }
 
             // Block hotbar swaps that could affect menu slots
-            case HOTBAR_SWAP:
-            case HOTBAR_MOVE_AND_READD:
+            case HOTBAR_SWAP, HOTBAR_MOVE_AND_READD -> {
                 // Only block if it would affect the menu inventory
                 int hotbarButton = event.getHotbarButton();
                 if ((hotbarButton >= 0) && (hotbarButton <= 8)) {
                     event.setCancelled(true);
                     this.plugin.getLogger().fine("Blocked hotbar swap while menu open");
                 }
-                break;
+            }
 
             // Allow all other actions in player inventory (PICKUP, PLACE, etc.)
-            default:
+            default -> {
                 // Don't cancel - allow normal inventory interactions
-                break;
+            }
         }
     }
 
@@ -472,12 +457,10 @@ public class MenuListener implements Listener {
         if (inventory == null) {
             return null;
         }
-
         InventoryHolder holder = inventory.getHolder();
-        if (holder instanceof Menu) {
-            return (Menu) holder;
+        if (holder instanceof Menu menu) {
+            return menu;
         }
-
         return null;
     }
 
@@ -488,20 +471,13 @@ public class MenuListener implements Listener {
     private MenuItem findMenuItemAtSlot(@NonNull Menu menu, int globalSlot) {
         for (Pane pane : menu.getPanes().values()) {
             MenuItem item = null;
-
-            if (pane instanceof StaticPane) {
-                StaticPane staticPane = (StaticPane) pane;
-                item = staticPane.getItemByGlobalSlot(globalSlot);
-            } else if (pane instanceof PaginatedPane) {
-                PaginatedPane<?> paginatedPane = (PaginatedPane<?>) pane;
-                item = paginatedPane.getItemByGlobalSlot(globalSlot);
+            if (pane instanceof AbstractPane abstractPane) {
+                item = abstractPane.getItemByGlobalSlot(globalSlot);
             }
-
             if (item != null) {
                 return item;
             }
         }
-
         return null;
     }
 }

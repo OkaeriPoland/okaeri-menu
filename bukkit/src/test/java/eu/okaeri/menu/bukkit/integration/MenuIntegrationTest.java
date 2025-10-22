@@ -2,7 +2,6 @@ package eu.okaeri.menu.bukkit.integration;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.item.MenuItem;
-import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -14,6 +13,7 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -74,7 +74,7 @@ class MenuIntegrationTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 .item(0, 0, MenuItem.item()
@@ -108,11 +108,11 @@ class MenuIntegrationTest {
             Menu.builder(this.plugin)
                 .title("Invalid Menu")
                 .rows(3)
-                .pane("pane1", StaticPane.builder()
+                .pane("pane1", staticPane()
                     .name("pane1")
                     .bounds(0, 0, 5, 2)
                     .build())
-                .pane("pane2", StaticPane.builder()
+                .pane("pane2", staticPane()
                     .name("pane2")
                     .bounds(3, 1, 4, 2) // Overlaps with pane1
                     .build())
@@ -127,7 +127,7 @@ class MenuIntegrationTest {
             Menu.builder(this.plugin)
                 .title("Invalid Menu")
                 .rows(3)
-                .pane("pane1", StaticPane.builder()
+                .pane("pane1", staticPane()
                     .name("pane1")
                     .bounds(0, 2, 9, 2) // Ends at row 4, but menu has only 3 rows
                     .build())

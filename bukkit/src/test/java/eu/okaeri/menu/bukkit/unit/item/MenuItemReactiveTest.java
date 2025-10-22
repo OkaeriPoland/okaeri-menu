@@ -2,8 +2,6 @@ package eu.okaeri.menu.bukkit.unit.item;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.bukkit.test.SyncTestExecutor;
-import eu.okaeri.menu.item.MenuItem;
-import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -15,6 +13,8 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import java.time.Duration;
 
+import static eu.okaeri.menu.item.MenuItem.item;
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -53,10 +53,10 @@ class MenuItemReactiveTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("player-level", () -> 42, Duration.ofSeconds(30))
                     .material(Material.EXPERIENCE_BOTTLE)
                     .name(ctx -> ctx.computed("player-level")
@@ -86,10 +86,10 @@ class MenuItemReactiveTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("slow-data", () -> {
                         try {
                             Thread.sleep(1000);
@@ -127,10 +127,10 @@ class MenuItemReactiveTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("failing-data", () -> {
                         throw new RuntimeException("Database error");
                     }, Duration.ofSeconds(30))
@@ -164,10 +164,10 @@ class MenuItemReactiveTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("player-level", () -> 50, Duration.ofSeconds(30))
                     .reactive("player-guild", () -> "Warriors", Duration.ofSeconds(30))
                     .reactive("player-balance", () -> 10000, Duration.ofSeconds(30))
@@ -207,10 +207,10 @@ class MenuItemReactiveTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("fast-data", () -> "Quick", Duration.ofSeconds(30))
                     .reactive("slow-data", () -> "Slow", Duration.ofSeconds(30))
                     .material(Material.PAPER)
@@ -245,10 +245,10 @@ class MenuItemReactiveTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("raw-stats", () -> "100:50:25", Duration.ofSeconds(30))
                     .material(Material.BOOK)
                     .name(ctx -> ctx.computed("raw-stats")
@@ -280,10 +280,10 @@ class MenuItemReactiveTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("error-data", () -> {
                         throw new IllegalStateException("Service unavailable");
                     }, Duration.ofSeconds(30))
@@ -317,10 +317,10 @@ class MenuItemReactiveTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("int-data", () -> 123, Duration.ofSeconds(30))
                     .reactive("string-data", () -> "Hello", Duration.ofSeconds(30))
                     .reactive("bool-data", () -> true, Duration.ofSeconds(30))
@@ -360,10 +360,10 @@ class MenuItemReactiveTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("cached-data", () -> {
                         loadCount[0]++;
                         return "Load " + loadCount[0];
@@ -404,10 +404,10 @@ class MenuItemReactiveTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("expiring-data", () -> {
                         loadCount[0]++;
                         return "Load " + loadCount[0];
@@ -444,10 +444,10 @@ class MenuItemReactiveTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("shared-data", () -> {
                         loadCount[0]++;
                         return "Shared Value";
@@ -487,10 +487,10 @@ class MenuItemReactiveTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("null-data", () -> null, Duration.ofSeconds(30))
                     .material(Material.PAPER)
                     .name(ctx -> ctx.computed("null-data")
@@ -523,10 +523,10 @@ class MenuItemReactiveTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("empty-string", () -> "", Duration.ofSeconds(30))
                     .material(Material.PAPER)
                     .name(ctx -> ctx.computed("empty-string")
@@ -564,10 +564,10 @@ class MenuItemReactiveTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Reactive Test")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 3, 3)
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .reactive("player-stats", () -> new PlayerStats(99, "Legend"), Duration.ofSeconds(30))
                     .material(Material.DIAMOND)
                     .name(ctx -> ctx.computed("player-stats")

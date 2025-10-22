@@ -1,5 +1,6 @@
 package eu.okaeri.menu.bukkit.unit.item;
 
+import eu.okaeri.menu.item.AsyncMenuItem;
 import eu.okaeri.menu.item.MenuItem;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -7,6 +8,8 @@ import org.bukkit.inventory.ItemFlag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static eu.okaeri.menu.item.MenuItem.item;
+import static eu.okaeri.menu.item.MenuItem.itemAsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -22,7 +25,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should create MenuItem with default values")
     void testDefaultBuilder() {
-        MenuItem item = MenuItem.item().build();
+        MenuItem item = item().build();
 
         assertThat(item).isNotNull();
         assertThat(item.isInteractive()).isFalse();
@@ -31,7 +34,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set material")
     void testSetMaterial() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .build();
 
@@ -41,7 +44,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set name")
     void testSetName() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .name("Test Item")
             .build();
@@ -52,7 +55,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set lore")
     void testSetLore() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.IRON_SWORD)
             .lore("Line 1\nLine 2\nLine 3")
             .build();
@@ -63,7 +66,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set amount")
     void testSetAmount() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.ARROW)
             .amount(64)
             .build();
@@ -74,7 +77,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set enchantments")
     void testSetEnchantments() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND_SWORD)
             .enchant(Enchantment.SHARPNESS, 5)
             .enchant(Enchantment.UNBREAKING, 3)
@@ -86,7 +89,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set item flags")
     void testSetItemFlags() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.GOLDEN_SWORD)
             .itemFlag(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES)
             .build();
@@ -97,7 +100,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set glint")
     void testSetGlint() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STICK)
             .glint(true)
             .build();
@@ -112,7 +115,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should create interactive item with allowPickup")
     void testInteractiveWithAllowPickup() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPickup(true)
             .build();
 
@@ -123,7 +126,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should create interactive item with allowPlacement")
     void testInteractiveWithAllowPlacement() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPlacement(true)
             .build();
 
@@ -135,7 +138,7 @@ class MenuItemBuilderTest {
     @DisplayName("Should reject interactive item with material set")
     void testInteractiveWithMaterialRejects() {
         assertThatThrownBy(() ->
-            MenuItem.item()
+            item()
                 .material(Material.DIAMOND)
                 .allowPickup(true)
                 .build()
@@ -148,7 +151,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should allow interactive item with AIR material (default)")
     void testInteractiveWithAirMaterialAllowed() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.AIR)  // Explicitly set to AIR (default)
             .allowPickup(true)
             .build();
@@ -161,7 +164,7 @@ class MenuItemBuilderTest {
     @DisplayName("Should reject interactive item with name set")
     void testInteractiveWithNameRejects() {
         assertThatThrownBy(() ->
-            MenuItem.item()
+            item()
                 .name("Test Item")
                 .allowPickup(true)
                 .build()
@@ -175,7 +178,7 @@ class MenuItemBuilderTest {
     @DisplayName("Should reject interactive item with lore set")
     void testInteractiveWithLoreRejects() {
         assertThatThrownBy(() ->
-            MenuItem.item()
+            item()
                 .lore("Line 1\nLine 2")
                 .allowPlacement(true)
                 .build()
@@ -192,7 +195,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set onClick handler")
     void testSetOnClickHandler() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .onClick(ctx -> ctx.playSound(org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP))
             .build();
@@ -203,7 +206,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set onLeftClick handler")
     void testSetOnLeftClickHandler() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.EMERALD)
             .onLeftClick(ctx -> {
             })
@@ -215,7 +218,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set onRightClick handler")
     void testSetOnRightClickHandler() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.GOLD_INGOT)
             .onRightClick(ctx -> {
             })
@@ -227,7 +230,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set multiple click handlers")
     void testSetMultipleClickHandlers() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.REDSTONE)
             .onClick(ctx -> {
             })
@@ -247,7 +250,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set onItemChange handler for interactive slot")
     void testSetOnItemChangeHandler() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPickup(true)
             .onItemChange(ctx -> {
             })
@@ -264,7 +267,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should set visibility condition")
     void testSetVisibilityCondition() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.BARRIER)
             .visible(ctx -> true)
             .build();
@@ -279,9 +282,9 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should add reactive data source with TTL")
     void testAddReactiveDataSourceWithTTL() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.CLOCK)
-            .reactive("time", () -> System.currentTimeMillis(), java.time.Duration.ofSeconds(1))
+            .reactive("time", System::currentTimeMillis, java.time.Duration.ofSeconds(1))
             .name(ctx -> "Time: " + ctx.computed("time").orElse("?"))
             .build();
 
@@ -291,7 +294,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should add reactive data source with default TTL")
     void testAddReactiveDataSourceWithDefaultTTL() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.COMPASS)
             .reactive("direction", () -> "North")
             .name(ctx -> "Direction: " + ctx.computed("direction").orElse("?"))
@@ -303,7 +306,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should add multiple reactive data sources")
     void testAddMultipleReactiveDataSources() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.PAPER)
             .reactive("source1", () -> "A")
             .reactive("source2", () -> "B")
@@ -326,7 +329,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should support full method chaining")
     void testFullMethodChaining() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND_SWORD)
             .name("&cPowerful Sword")
             .lore("&7A very powerful weapon\n&7Deals massive damage")
@@ -349,7 +352,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should create builder via static method")
     void testStaticBuilderMethod() {
-        MenuItem.Builder builder = MenuItem.item();
+        MenuItem.Builder builder = item();
 
         assertThat(builder).isNotNull();
     }
@@ -357,7 +360,7 @@ class MenuItemBuilderTest {
     @Test
     @DisplayName("Should create async builder via static method")
     void testStaticAsyncBuilderMethod() {
-        eu.okaeri.menu.item.AsyncMenuItem.Builder builder = MenuItem.itemAsync();
+        AsyncMenuItem.Builder builder = itemAsync();
 
         assertThat(builder).isNotNull();
     }

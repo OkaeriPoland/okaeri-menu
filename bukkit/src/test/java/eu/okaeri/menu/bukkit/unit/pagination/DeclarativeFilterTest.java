@@ -186,7 +186,7 @@ class DeclarativeFilterTest {
         // Create menu with filter button and paginated shop
         Menu menu = Menu.builder(this.plugin)
             .title("Test Shop")
-            .pane("filters", StaticPane.builder()
+            .pane("filters", StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, filterButton)
@@ -242,7 +242,7 @@ class DeclarativeFilterTest {
 
         Menu menu = Menu.builder(this.plugin)
             .title("Test Shop")
-            .pane("filters", StaticPane.builder()
+            .pane("filters", StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, filterButton)
@@ -299,7 +299,7 @@ class DeclarativeFilterTest {
 
         Menu menu = Menu.builder(this.plugin)
             .title("Test Shop")
-            .pane("filters", StaticPane.builder()
+            .pane("filters", StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, filterButton)
@@ -406,7 +406,7 @@ class DeclarativeFilterTest {
 
         Menu menu = Menu.builder(this.plugin)
             .title("Multi-Filter Shop")
-            .pane("categoryFilters", StaticPane.builder()
+            .pane("categoryFilters", StaticPane.staticPane()
                 .name("categoryFilters")
                 .bounds(0, 0, 5, 1)
                 .item(0, 0, MenuItem.item()
@@ -418,7 +418,7 @@ class DeclarativeFilterTest {
                         .build())
                     .build())
                 .build())
-            .pane("priceFilters", StaticPane.builder()
+            .pane("priceFilters", StaticPane.staticPane()
                 .name("priceFilters")
                 .bounds(5, 0, 4, 1)
                 .item(0, 0, MenuItem.item()

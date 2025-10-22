@@ -25,83 +25,56 @@ public final class InventoryActionCalculator {
         ItemStack cursor = event.getCursor();
         InventoryAction action = event.getAction();
 
-        switch (action) {
+        return switch (action) {
             // Pickup actions - remove from slot
-            case PICKUP_ALL:
-                return null;
-
-            case PICKUP_HALF:
-                return calculatePickupHalf(currentItem);
-
-            case PICKUP_ONE:
-                return calculatePickupOne(currentItem);
-
-            case PICKUP_SOME:
-                return calculatePickupSome(currentItem, cursor);
+            case PICKUP_ALL -> null;
+            case PICKUP_HALF -> calculatePickupHalf(currentItem);
+            case PICKUP_ONE -> calculatePickupOne(currentItem);
+            case PICKUP_SOME -> calculatePickupSome(currentItem, cursor);
 
             // Place actions - add to slot
-            case PLACE_ALL:
-                return calculatePlaceAll(currentItem, cursor);
-
-            case PLACE_SOME:
-                return calculatePlaceSome(currentItem, cursor);
-
-            case PLACE_ONE:
-                return calculatePlaceOne(currentItem, cursor);
+            case PLACE_ALL -> calculatePlaceAll(currentItem, cursor);
+            case PLACE_SOME -> calculatePlaceSome(currentItem, cursor);
+            case PLACE_ONE -> calculatePlaceOne(currentItem, cursor);
 
             // Swap action
-            case SWAP_WITH_CURSOR:
-                return cloneOrNull(cursor);
+            case SWAP_WITH_CURSOR -> cloneOrNull(cursor);
 
             // Drop actions
-            case DROP_ALL_SLOT:
-                return null;
-
-            case DROP_ONE_SLOT:
-                return calculateDropOne(currentItem);
+            case DROP_ALL_SLOT -> null;
+            case DROP_ONE_SLOT -> calculateDropOne(currentItem);
 
             // Hotbar swap
-            case HOTBAR_SWAP:
-                return calculateHotbarSwap(event);
+            case HOTBAR_SWAP -> calculateHotbarSwap(event);
 
             // Nothing happens
-            case NOTHING:
-                return cloneOrNull(currentItem);
+            case NOTHING -> cloneOrNull(currentItem);
 
             // Complex actions that we cannot/should not support for interactive slots
-            case MOVE_TO_OTHER_INVENTORY:      // Shift-click - requires full inventory scan
-            case COLLECT_TO_CURSOR:            // Double-click collect - requires full inventory scan
-            case HOTBAR_MOVE_AND_READD:        // Complex inventory shuffling
-            case CLONE_STACK:                  // Creative mode only
-            case DROP_ALL_CURSOR:              // Doesn't affect slot
-            case DROP_ONE_CURSOR:              // Doesn't affect slot
-            case UNKNOWN:
-            default:
-                return null; // Cannot calculate - should block these actions
-        }
+            case MOVE_TO_OTHER_INVENTORY,      // Shift-click - requires full inventory scan
+                 COLLECT_TO_CURSOR,            // Double-click collect - requires full inventory scan
+                 HOTBAR_MOVE_AND_READD,        // Complex inventory shuffling
+                 CLONE_STACK,                  // Creative mode only
+                 DROP_ALL_CURSOR,              // Doesn't affect slot
+                 DROP_ONE_CURSOR,              // Doesn't affect slot
+                 UNKNOWN -> null;              // Cannot calculate - should block these actions
+            default -> null;
+        };
     }
 
     /**
      * Checks if an action can be calculated and is supported for interactive slots.
      */
     public static boolean isActionSupported(@NonNull InventoryAction action) {
-        switch (action) {
-            case PICKUP_ALL:
-            case PICKUP_HALF:
-            case PICKUP_ONE:
-            case PICKUP_SOME:
-            case PLACE_ALL:
-            case PLACE_SOME:
-            case PLACE_ONE:
-            case SWAP_WITH_CURSOR:
-            case DROP_ALL_SLOT:
-            case DROP_ONE_SLOT:
-            case HOTBAR_SWAP:
-            case NOTHING:
-                return true;
-            default:
-                return false;
-        }
+        return switch (action) {
+            case PICKUP_ALL, PICKUP_HALF, PICKUP_ONE, PICKUP_SOME,
+                 PLACE_ALL, PLACE_SOME, PLACE_ONE,
+                 SWAP_WITH_CURSOR,
+                 DROP_ALL_SLOT, DROP_ONE_SLOT,
+                 HOTBAR_SWAP,
+                 NOTHING -> true;
+            default -> false;
+        };
     }
 
     // Helper calculation methods

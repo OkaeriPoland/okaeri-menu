@@ -1,11 +1,12 @@
 package eu.okaeri.menu.test.example;
 
 import eu.okaeri.menu.Menu;
-import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.navigation.NavigationUtils;
-import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;
+
+import static eu.okaeri.menu.item.MenuItem.item;
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 
 /**
  * Examples demonstrating the navigation system (Phase 2).
@@ -20,11 +21,11 @@ public class NavigationExample {
         return Menu.builder(plugin)
             .title("Main Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Navigate to Shop
-                .item(1, 1, MenuItem.item()
+                .item(1, 1, item()
                     .material(Material.EMERALD)
                     .name("&a&lShop")
                     .lore("""
@@ -36,7 +37,7 @@ public class NavigationExample {
                     })
                     .build())
                 // Navigate to Settings
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.COMPARATOR)
                     .name("&b&lSettings")
                     .lore("""
@@ -48,7 +49,7 @@ public class NavigationExample {
                     })
                     .build())
                 // Navigate to Profile
-                .item(7, 1, MenuItem.item()
+                .item(7, 1, item()
                     .material(Material.PLAYER_HEAD)
                     .name("&d&lProfile")
                     .lore("""
@@ -72,11 +73,11 @@ public class NavigationExample {
         return Menu.builder(plugin)
             .title("&a&lShop")
             .rows(4)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 4)
                 // Shop categories
-                .item(1, 1, MenuItem.item()
+                .item(1, 1, item()
                     .material(Material.DIAMOND_SWORD)
                     .name("&b&lWeapons")
                     .lore("""
@@ -87,7 +88,7 @@ public class NavigationExample {
                         ctx.open(createWeaponsMenu(ctx.getMenu().getPlugin()));
                     })
                     .build())
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.DIAMOND_CHESTPLATE)
                     .name("&9&lArmor")
                     .lore("""
@@ -98,7 +99,7 @@ public class NavigationExample {
                         ctx.open(createArmorMenu(ctx.getMenu().getPlugin()));
                     })
                     .build())
-                .item(7, 1, MenuItem.item()
+                .item(7, 1, item()
                     .material(Material.GOLDEN_APPLE)
                     .name("&6&lConsumables")
                     .lore("""
@@ -124,11 +125,11 @@ public class NavigationExample {
         return Menu.builder(plugin)
             .title("&b&lWeapons Shop")
             .rows(4)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 4)
                 // Weapons
-                .item(1, 1, MenuItem.item()
+                .item(1, 1, item()
                     .material(Material.DIAMOND_SWORD)
                     .name("&b&lDiamond Sword")
                     .lore("""
@@ -140,7 +141,7 @@ public class NavigationExample {
                         ctx.sendMessage("&aPurchased Diamond Sword!");
                     })
                     .build())
-                .item(2, 1, MenuItem.item()
+                .item(2, 1, item()
                     .material(Material.IRON_SWORD)
                     .name("&f&lIron Sword")
                     .lore("""
@@ -152,7 +153,7 @@ public class NavigationExample {
                         ctx.sendMessage("&aPurchased Iron Sword!");
                     })
                     .build())
-                .item(3, 1, MenuItem.item()
+                .item(3, 1, item()
                     .material(Material.BOW)
                     .name("&e&lBow")
                     .lore("""
@@ -179,32 +180,32 @@ public class NavigationExample {
         return Menu.builder(plugin)
             .title("&9&lArmor Shop")
             .rows(4)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 4)
                 // Armor pieces
-                .item(1, 1, MenuItem.item()
+                .item(1, 1, item()
                     .material(Material.DIAMOND_HELMET)
                     .name("&b&lDiamond Helmet")
                     .lore("""
                         &7Defense: &a+3
                         &7Price: &6150 coins""")
                     .build())
-                .item(2, 1, MenuItem.item()
+                .item(2, 1, item()
                     .material(Material.DIAMOND_CHESTPLATE)
                     .name("&b&lDiamond Chestplate")
                     .lore("""
                         &7Defense: &a+8
                         &7Price: &6300 coins""")
                     .build())
-                .item(3, 1, MenuItem.item()
+                .item(3, 1, item()
                     .material(Material.DIAMOND_LEGGINGS)
                     .name("&b&lDiamond Leggings")
                     .lore("""
                         &7Defense: &a+6
                         &7Price: &6250 coins""")
                     .build())
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.DIAMOND_BOOTS)
                     .name("&b&lDiamond Boots")
                     .lore("""
@@ -225,25 +226,25 @@ public class NavigationExample {
         return Menu.builder(plugin)
             .title("&6&lConsumables Shop")
             .rows(4)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 4)
                 // Consumables
-                .item(1, 1, MenuItem.item()
+                .item(1, 1, item()
                     .material(Material.GOLDEN_APPLE)
                     .name("&6&lGolden Apple")
                     .lore("""
                         &7Restores &c4 hearts
                         &7Price: &625 coins""")
                     .build())
-                .item(2, 1, MenuItem.item()
+                .item(2, 1, item()
                     .material(Material.COOKED_BEEF)
                     .name("&e&lSteak")
                     .lore("""
                         &7Restores &c4 hunger
                         &7Price: &65 coins""")
                     .build())
-                .item(3, 1, MenuItem.item()
+                .item(3, 1, item()
                     .material(Material.POTION)
                     .name("&d&lHealing Potion")
                     .lore("""
@@ -264,10 +265,10 @@ public class NavigationExample {
         return Menu.builder(plugin)
             .title("&b&lSettings")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.COMPARATOR)
                     .name("&b&lSettings")
                     .lore("""
@@ -288,10 +289,10 @@ public class NavigationExample {
         return Menu.builder(plugin)
             .title("&d&lYour Profile")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.PLAYER_HEAD)
                     .name(ctx -> "&d&l" + ctx.getEntity().getName())
                     .lore("""
@@ -314,10 +315,10 @@ public class NavigationExample {
         return Menu.builder(plugin)
             .title("Conditional Back Button")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.COMPASS)
                     .name("&e&lNavigation Info")
                     .lore("""

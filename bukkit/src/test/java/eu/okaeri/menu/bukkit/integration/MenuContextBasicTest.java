@@ -54,7 +54,7 @@ class MenuContextBasicTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", StaticPane.staticPane()
                 .bounds(0, 0, 9, 3)
                 .build())
             .build();

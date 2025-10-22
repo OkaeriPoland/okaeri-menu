@@ -177,16 +177,21 @@ public class Menu implements InventoryHolder {
             // Invalidate title to ensure it re-evaluates
             this.title.invalidate();
 
-            // Check if title has changed
+            // Check if title has changed (compare serialized strings, not Component objects)
             String newTitleTemplate = this.title.get(context);
             Component newTitleComponent = this.messageProvider.resolve(player, newTitleTemplate, Map.of());
             Component currentTitle = player.getOpenInventory().title();
 
+            // Serialize both to legacy strings for accurate comparison
+            String newTitleSerialized = LegacyComponentSerializer.legacySection().serialize(newTitleComponent);
+            String currentTitleSerialized = LegacyComponentSerializer.legacySection().serialize(currentTitle);
+            boolean titleChanged = !newTitleSerialized.equals(currentTitleSerialized);
+
             // Only reopen if title changed (to avoid cursor reset)
-            if (!newTitleComponent.equals(currentTitle)) {
+            if (titleChanged) {
+
                 // Update inventory title by creating new one with same contents
-                String newTitleLegacy = LegacyComponentSerializer.legacySection().serialize(newTitleComponent);
-                Inventory newInventory = Bukkit.createInventory(this, this.rows * 9, newTitleLegacy);
+                Inventory newInventory = Bukkit.createInventory(this, this.rows * 9, newTitleSerialized);
 
                 // Copy all items to new inventory
                 for (int i = 0; i < inventory.getSize(); i++) {

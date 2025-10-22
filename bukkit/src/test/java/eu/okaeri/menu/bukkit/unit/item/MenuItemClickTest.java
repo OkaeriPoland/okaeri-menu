@@ -15,6 +15,7 @@ import org.mockbukkit.mockbukkit.ServerMock;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static eu.okaeri.menu.item.MenuItem.item;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
@@ -66,7 +67,7 @@ class MenuItemClickTest {
     void testOnClickHandler() {
         AtomicBoolean clicked = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .onClick(ctx -> clicked.set(true))
             .build();
@@ -84,7 +85,7 @@ class MenuItemClickTest {
     void testOnClickHandlerRightClick() {
         AtomicBoolean clicked = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.EMERALD)
             .onClick(ctx -> clicked.set(true))
             .build();
@@ -100,7 +101,7 @@ class MenuItemClickTest {
     @Test
     @DisplayName("Should not throw if onClick handler not set")
     void testNoClickHandler() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .build();
 
@@ -119,7 +120,7 @@ class MenuItemClickTest {
     void testOnLeftClickHandler() {
         AtomicBoolean leftClicked = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.IRON_SWORD)
             .onLeftClick(ctx -> leftClicked.set(true))
             .build();
@@ -137,7 +138,7 @@ class MenuItemClickTest {
     void testOnLeftClickHandlerRightClick() {
         AtomicBoolean leftClicked = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.GOLDEN_SWORD)
             .onLeftClick(ctx -> leftClicked.set(true))
             .build();
@@ -159,7 +160,7 @@ class MenuItemClickTest {
     void testOnRightClickHandler() {
         AtomicBoolean rightClicked = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.BOW)
             .onRightClick(ctx -> rightClicked.set(true))
             .build();
@@ -177,7 +178,7 @@ class MenuItemClickTest {
     void testOnRightClickHandlerLeftClick() {
         AtomicBoolean rightClicked = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.CROSSBOW)
             .onRightClick(ctx -> rightClicked.set(true))
             .build();
@@ -200,7 +201,7 @@ class MenuItemClickTest {
         AtomicInteger clickCount = new AtomicInteger(0);
         AtomicInteger leftClickCount = new AtomicInteger(0);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.REDSTONE)
             .onClick(ctx -> clickCount.incrementAndGet())
             .onLeftClick(ctx -> leftClickCount.incrementAndGet())
@@ -221,7 +222,7 @@ class MenuItemClickTest {
         AtomicInteger clickCount = new AtomicInteger(0);
         AtomicInteger rightClickCount = new AtomicInteger(0);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.GLOWSTONE)
             .onClick(ctx -> clickCount.incrementAndGet())
             .onRightClick(ctx -> rightClickCount.incrementAndGet())
@@ -243,7 +244,7 @@ class MenuItemClickTest {
         AtomicInteger leftClickCount = new AtomicInteger(0);
         AtomicInteger rightClickCount = new AtomicInteger(0);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.BEACON)
             .onClick(ctx -> clickCount.incrementAndGet())
             .onLeftClick(ctx -> leftClickCount.incrementAndGet())
@@ -276,7 +277,7 @@ class MenuItemClickTest {
     void testClickContextAccess() {
         AtomicInteger capturedSlot = new AtomicInteger(-1);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.CHEST)
             .onClick(ctx -> capturedSlot.set(ctx.getSlot()))
             .build();
@@ -293,7 +294,7 @@ class MenuItemClickTest {
     void testMenuContextAccess() {
         AtomicBoolean playerMatches = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.ENDER_PEARL)
             .onClick(ctx -> {
                 playerMatches.set(ctx.getEntity().equals(this.player));
@@ -313,7 +314,7 @@ class MenuItemClickTest {
         AtomicBoolean isLeftClick = new AtomicBoolean(false);
         AtomicBoolean isRightClick = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.COMPASS)
             .onClick(ctx -> {
                 isLeftClick.set(ctx.isLeftClick());
@@ -348,7 +349,7 @@ class MenuItemClickTest {
     void testHandlerExecutionOrder() {
         StringBuilder executionOrder = new StringBuilder();
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.PAPER)
             .onClick(ctx -> executionOrder.append("1"))
             .onLeftClick(ctx -> executionOrder.append("2"))
@@ -366,7 +367,7 @@ class MenuItemClickTest {
     void testHandlerExecutionOrderRightClick() {
         StringBuilder executionOrder = new StringBuilder();
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.BOOK)
             .onClick(ctx -> executionOrder.append("1"))
             .onRightClick(ctx -> executionOrder.append("2"))
@@ -388,7 +389,7 @@ class MenuItemClickTest {
     void testOnMiddleClickHandler() {
         AtomicBoolean middleClicked = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .onMiddleClick(ctx -> middleClicked.set(true))
             .build();
@@ -406,7 +407,7 @@ class MenuItemClickTest {
     void testOnMiddleClickHandlerNotCalledForLeftClick() {
         AtomicBoolean middleClicked = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.IRON_SWORD)
             .onMiddleClick(ctx -> middleClicked.set(true))
             .build();
@@ -424,7 +425,7 @@ class MenuItemClickTest {
     void testOnMiddleClickHandlerNotCalledForRightClick() {
         AtomicBoolean middleClicked = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.GOLDEN_SWORD)
             .onMiddleClick(ctx -> middleClicked.set(true))
             .build();
@@ -443,7 +444,7 @@ class MenuItemClickTest {
         AtomicInteger clickCount = new AtomicInteger(0);
         AtomicInteger middleClickCount = new AtomicInteger(0);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.REDSTONE)
             .onClick(ctx -> clickCount.incrementAndGet())
             .onMiddleClick(ctx -> middleClickCount.incrementAndGet())
@@ -466,7 +467,7 @@ class MenuItemClickTest {
         AtomicInteger leftClickCount = new AtomicInteger(0);
         AtomicInteger rightClickCount = new AtomicInteger(0);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.BEACON)
             .onClick(ctx -> clickCount.incrementAndGet())
             .onMiddleClick(ctx -> middleClickCount.incrementAndGet())
@@ -490,7 +491,7 @@ class MenuItemClickTest {
     void testHandlerExecutionOrderMiddle() {
         StringBuilder executionOrder = new StringBuilder();
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.PAPER)
             .onClick(ctx -> executionOrder.append("1"))
             .onMiddleClick(ctx -> executionOrder.append("2"))
@@ -508,7 +509,7 @@ class MenuItemClickTest {
     void testMiddleClickContextAccess() {
         AtomicBoolean isMiddleClick = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.CHEST)
             .onMiddleClick(ctx -> {
                 isMiddleClick.set(ctx.isMiddleClick());

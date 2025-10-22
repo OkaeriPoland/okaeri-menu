@@ -133,14 +133,6 @@ class DefaultMessageProviderTest {
     }
 
     @Test
-    @DisplayName("Should handle null template")
-    void testNullTemplate() {
-        Component result = this.provider.resolve(this.player, (String) null, Map.of());
-
-        assertThat(result).isEqualTo(Component.empty());
-    }
-
-    @Test
     @DisplayName("Should NOT resolve i18n keys")
     void testI18nNotResolved() {
         Component result = this.provider.resolve(this.player, "${some.key}", Map.of());

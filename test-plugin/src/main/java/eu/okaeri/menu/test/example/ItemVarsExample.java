@@ -1,13 +1,14 @@
 package eu.okaeri.menu.test.example;
 
 import eu.okaeri.menu.Menu;
-import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.navigation.NavigationUtils;
 import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Map;
+
+import static eu.okaeri.menu.item.MenuItem.item;
 
 /**
  * Examples demonstrating item-level variables (.vars()).
@@ -25,11 +26,11 @@ public class ItemVarsExample {
         return Menu.builder(plugin)
             .title("&6Item-Level Variables")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", StaticPane.staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Example 1: Simple vars shared between name and lore
-                .item(1, 1, MenuItem.item()
+                .item(1, 1, item()
                     .material(Material.DIAMOND)
                     .vars(Map.of(
                         "price", 100,
@@ -42,7 +43,7 @@ public class ItemVarsExample {
                     .onClick(ctx -> ctx.sendMessage("&aPurchased for " + 100 + " coins!"))
                     .build())
                 // Example 2: Reactive vars with Suppliers
-                .item(3, 1, MenuItem.item()
+                .item(3, 1, item()
                     .material(Material.CLOCK)
                     .vars(Map.of(
                         "count", (java.util.function.Supplier<Integer>) () -> counter[0]
@@ -58,7 +59,7 @@ public class ItemVarsExample {
                     })
                     .build())
                 // Example 3: Method-level vars override item-level vars
-                .item(5, 1, MenuItem.item()
+                .item(5, 1, item()
                     .material(Material.EMERALD)
                     .vars(Map.of(
                         "item", "Emerald",
@@ -73,7 +74,7 @@ public class ItemVarsExample {
                         Map.of("price", 25))  // Override item-level price for lore
                     .build())
                 // Example 4: Multiple placeholders from item-level vars
-                .item(7, 1, MenuItem.item()
+                .item(7, 1, item()
                     .material(Material.ENCHANTED_BOOK)
                     .vars(Map.of(
                         "name", "Sharpness V",

@@ -2,6 +2,7 @@ package eu.okaeri.menu.bukkit.unit.async;
 
 import eu.okaeri.menu.async.AsyncExecutor;
 import eu.okaeri.menu.async.BukkitAsyncExecutor;
+import lombok.NonNull;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;
@@ -188,7 +189,7 @@ class AsyncExecutorTest {
         // Create custom executor that executes synchronously
         AsyncExecutor customExecutor = new AsyncExecutor() {
             @Override
-            public <T> CompletableFuture<T> execute(java.util.function.Supplier<T> task) {
+            public <T> CompletableFuture<T> execute(java.util.function.@NonNull Supplier<T> task) {
                 try {
                     return CompletableFuture.completedFuture(task.get());
                 } catch (Exception e) {

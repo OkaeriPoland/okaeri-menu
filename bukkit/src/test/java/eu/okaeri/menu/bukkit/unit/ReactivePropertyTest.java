@@ -92,8 +92,7 @@ class ReactivePropertyTest {
     void testMultipleInvalidations() {
         AtomicInteger counter = new AtomicInteger(0);
 
-        ReactiveProperty<Integer> property = ReactiveProperty.of(() ->
-            counter.incrementAndGet()
+        ReactiveProperty<Integer> property = ReactiveProperty.of(counter::incrementAndGet
         );
 
         MenuContext context = this.createMockContext();

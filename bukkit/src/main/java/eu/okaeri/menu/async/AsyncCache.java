@@ -24,12 +24,13 @@ public class AsyncCache {
     private final Map<String, CacheEntry<?>> cache = new ConcurrentHashMap<>();
 
     /**
-     * Gets cached value if available and not expired.
+     * Gets cached value if available.
+     * Returns stale values (expired but not yet reloaded) to support stale-while-revalidate pattern.
      *
      * @param key  The cache key
      * @param type The expected type
      * @param <T>  The value type
-     * @return Optional of the cached value
+     * @return Optional of the cached value (may be stale if reloading)
      */
     @NonNull
     public <T> Optional<T> get(@NonNull String key, @NonNull Class<T> type) {
@@ -38,12 +39,8 @@ public class AsyncCache {
             return Optional.empty();
         }
 
-        // Check TTL expiry
-        if (this.isExpired(entry)) {
-            this.cache.remove(key);
-            return Optional.empty();
-        }
-
+        // Return value even if expired (stale-while-revalidate)
+        // The value will be updated once background reload completes
         try {
             return Optional.of(type.cast(entry.value));
         } catch (ClassCastException ex) {
@@ -53,6 +50,7 @@ public class AsyncCache {
 
     /**
      * Gets the current state of a cache key.
+     * Returns SUCCESS for stale values (supports stale-while-revalidate pattern).
      *
      * @param key The cache key
      * @return The current state, or null if not found
@@ -63,12 +61,8 @@ public class AsyncCache {
             return null;
         }
 
-        // Check expiry for SUCCESS state
-        if ((entry.state == AsyncState.SUCCESS) && this.isExpired(entry)) {
-            this.cache.remove(key);
-            return null;
-        }
-
+        // Return state even if expired (stale-while-revalidate)
+        // SUCCESS state will be returned for stale data while background reload is in progress
         return entry.state;
     }
 
@@ -108,6 +102,7 @@ public class AsyncCache {
 
     /**
      * Puts a value into the cache with TTL.
+     * Clears any background reload future since fresh data is now available.
      *
      * @param key   The cache key
      * @param value The value to cache
@@ -120,6 +115,7 @@ public class AsyncCache {
         entry.loadedAt = Instant.now();
         entry.ttl = ttl;
         entry.state = AsyncState.SUCCESS;
+        entry.loadingFuture = null;  // Clear reload future - fresh data now available
         this.cache.put(key, entry);
     }
 
@@ -161,17 +157,28 @@ public class AsyncCache {
         @SuppressWarnings("unchecked")
         CacheEntry<T> resultEntry = (CacheEntry<T>) this.cache.compute(key, (k, existing) -> {
             // Check if already loading with a valid future
-            if ((existing != null) && (existing.state == AsyncState.LOADING) && (existing.loadingFuture != null)) {
-                return existing;  // Reuse existing LOADING entry
+            if ((existing != null) && (existing.loadingFuture != null) && !existing.loadingFuture.isDone()) {
+                return existing;  // Reuse existing entry with in-progress future
             }
 
             // Check if we have a valid SUCCESS entry (not expired)
             if ((existing != null) && (existing.state == AsyncState.SUCCESS) && !this.isExpired(existing)) {
-                // Return existing SUCCESS entry - we'll create a completed future below
+                // Fresh data - return as-is
                 return existing;
             }
 
-            // Start new load if: no entry, expired, or error
+            // Handle stale or missing data
+            if ((existing != null) && (existing.state == AsyncState.SUCCESS) && this.isExpired(existing)) {
+                // STALE-WHILE-REVALIDATE: Keep existing value, start background reload
+                @SuppressWarnings("unchecked")
+                CacheEntry<T> existingTyped = (CacheEntry<T>) existing;
+                CompletableFuture<T> future = this.executor.execute(loader);
+                existingTyped.loadingFuture = future;  // Attach reload future
+                // Keep state as SUCCESS and keep existing value
+                return existingTyped;
+            }
+
+            // No existing data (first load) or ERROR state - create new LOADING entry
             CompletableFuture<T> future = this.executor.execute(loader);
             CacheEntry<T> entry = new CacheEntry<>();
             entry.state = AsyncState.LOADING;
@@ -182,12 +189,18 @@ public class AsyncCache {
 
         // Return appropriate future based on state
         if ((resultEntry.state == AsyncState.SUCCESS) && (resultEntry.loadingFuture == null)) {
-            // SUCCESS entry without future - create completed future with cached value
+            // SUCCESS entry without reload - create completed future with cached value
             @SuppressWarnings("unchecked")
             T cachedValue = resultEntry.value;
             return CompletableFuture.completedFuture(cachedValue);
+        } else if (resultEntry.state == AsyncState.SUCCESS) {
+            // SUCCESS entry with background reload - return reload future
+            // The current value is stale but still being used
+            @SuppressWarnings("unchecked")
+            CompletableFuture<T> future = resultEntry.loadingFuture;
+            return future;
         } else {
-            // LOADING entry with future - return the future
+            // LOADING entry (first load) - return the future
             @SuppressWarnings("unchecked")
             CompletableFuture<T> future = resultEntry.loadingFuture;
             return future;

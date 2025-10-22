@@ -102,8 +102,8 @@ public class DefaultMessageProvider implements MessageProvider {
 
     @Override
     @NonNull
-    public Component resolve(@NonNull HumanEntity viewer, String template, @NonNull Map<String, Object> vars) {
-        if ((template == null) || template.isEmpty()) {
+    public Component resolve(@NonNull HumanEntity viewer, @NonNull String template, @NonNull Map<String, Object> vars) {
+        if (template.isEmpty()) {
             return Component.empty();
         }
 
@@ -128,7 +128,7 @@ public class DefaultMessageProvider implements MessageProvider {
     @Override
     @NonNull
     public Component resolve(@NonNull HumanEntity viewer, @NonNull Map<Locale, String> localeMap, @NonNull Map<String, Object> vars) {
-        if ((localeMap == null) || localeMap.isEmpty()) {
+        if (localeMap.isEmpty()) {
             return Component.empty();
         }
 

@@ -16,7 +16,13 @@ public class MenuItemClickContext extends BaseMenuItemContext {
 
     private final ClickType clickType;
 
-    public MenuItemClickContext(@NonNull Menu menu, @NonNull HumanEntity player, @NonNull InventoryClickEvent event, int slot, @NonNull ClickType clickType) {
+    public MenuItemClickContext(
+        @NonNull Menu menu,
+        @NonNull HumanEntity player,
+        @NonNull InventoryClickEvent event,
+        int slot,
+        @NonNull ClickType clickType
+    ) {
         super(menu, player, event, slot);
         this.clickType = clickType;
     }

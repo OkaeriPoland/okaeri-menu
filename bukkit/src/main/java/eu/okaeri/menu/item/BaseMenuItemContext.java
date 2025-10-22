@@ -23,7 +23,12 @@ public abstract class BaseMenuItemContext extends BaseMenuContext {
     protected final InventoryClickEvent event;
     protected final int slot;
 
-    protected BaseMenuItemContext(@NonNull Menu menu, @NonNull HumanEntity entity, @NonNull InventoryClickEvent event, int slot) {
+    protected BaseMenuItemContext(
+        @NonNull Menu menu,
+        @NonNull HumanEntity entity,
+        @NonNull InventoryClickEvent event,
+        int slot
+    ) {
         super(menu, entity);
         this.event = event;
         this.slot = slot;

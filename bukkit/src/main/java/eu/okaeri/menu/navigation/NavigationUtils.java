@@ -1,5 +1,6 @@
 package eu.okaeri.menu.navigation;
 
+import eu.okaeri.menu.BaseMenuContext;
 import eu.okaeri.menu.item.MenuItem;
 import lombok.NonNull;
 import org.bukkit.Material;
@@ -15,7 +16,7 @@ import java.util.Map;
  * <p>Core i18n-aware methods accept Map&lt;Locale, String&gt; for full localization support.
  * Convenience methods provide English defaults by calling the i18n versions.
  */
-public class NavigationUtils {
+public final class NavigationUtils {
 
     // ========================================
     // I18N-AWARE METHODS (Core API)
@@ -35,7 +36,7 @@ public class NavigationUtils {
         MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
-            .visible(ctx -> ctx.hasLast())
+            .visible(BaseMenuContext::hasLast)
             .onClick(ctx -> {
                 ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
                 ctx.back();

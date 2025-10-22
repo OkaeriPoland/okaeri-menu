@@ -1,8 +1,6 @@
 package eu.okaeri.menu.test.example;
 
 import eu.okaeri.menu.Menu;
-import eu.okaeri.menu.item.MenuItem;
-import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -11,6 +9,9 @@ import org.bukkit.plugin.Plugin;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
+
+import static eu.okaeri.menu.item.MenuItem.item;
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 
 /**
  * Simple example demonstrating the new menu system.
@@ -22,15 +23,15 @@ public class SimpleMenuExample {
         return Menu.builder(plugin)
             .title("Simple Menu")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)  // Full 3-row inventory
-                .item(0, 0, MenuItem.item()
+                .item(0, 0, item()
                     .material(Material.DIAMOND)
                     .name("Static Diamond")
                     .onClick(ctx -> ctx.sendMessage("You clicked a diamond!"))
                     .build())
-                .item(1, 0, MenuItem.item()
+                .item(1, 0, item()
                     .material(Material.GOLD_INGOT)
                     .name(() -> "Dynamic: " + System.currentTimeMillis())  // Reactive!
                     .onClick(ctx -> {
@@ -38,7 +39,7 @@ public class SimpleMenuExample {
                         ctx.refresh();
                     })
                     .build())
-                .item(8, 2, MenuItem.item()
+                .item(8, 2, item()
                     .material(Material.BARRIER)
                     .name("Close")
                     .onClick(ctx -> ctx.closeInventory())
@@ -52,24 +53,24 @@ public class SimpleMenuExample {
             .title("Multi-Pane Example")
             .rows(6)
             // Top navigation pane
-            .pane("nav", StaticPane.builder()
+            .pane("nav", staticPane()
                 .name("nav")
                 .bounds(0, 0, 9, 1)
-                .item(4, 0, MenuItem.item()
+                .item(4, 0, item()
                     .material(Material.COMPASS)
                     .name("Navigation")
                     .build())
-                .item(8, 0, MenuItem.item()
+                .item(8, 0, item()
                     .material(Material.BARRIER)
                     .name("Close")
                     .onClick(ctx -> ctx.closeInventory())
                     .build())
                 .build())
             // Content pane
-            .pane("content", StaticPane.builder()
+            .pane("content", staticPane()
                 .name("content")
                 .bounds(0, 1, 9, 5)
-                .item(4, 2, MenuItem.item()
+                .item(4, 2, item()
                     .material(Material.EMERALD)
                     .name("Content Item")
                     .onClick(ctx -> {
@@ -91,10 +92,10 @@ public class SimpleMenuExample {
         return Menu.builder(plugin)
             .title("Reactive Example")
             .rows(3)
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.DIAMOND)
                     .name(() -> "Clicks: " + clickCount[0])  // Reactive!
                     .amount(() -> Math.min(64, clickCount[0] + 1))  // Reactive amount!
@@ -118,11 +119,11 @@ public class SimpleMenuExample {
             .title("Auto-Update Example")
             .rows(3)
             .updateInterval(Duration.ofSeconds(1))  // Update every second
-            .pane("main", StaticPane.builder()
+            .pane("main", staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Clock display - updates automatically
-                .item(1, 1, MenuItem.item()
+                .item(1, 1, item()
                     .material(Material.CLOCK)
                     .name(() -> "Current Time")
                     .lore("""
@@ -134,7 +135,7 @@ public class SimpleMenuExample {
                         ))
                     .build())
                 // Online players count - updates automatically
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.PLAYER_HEAD)
                     .name(() -> "Online Players")
                     .amount(() -> Math.max(1, Bukkit.getOnlinePlayers().size()))  // Min 1 for visibility
@@ -144,7 +145,7 @@ public class SimpleMenuExample {
                         ctx -> Map.of("count", Bukkit.getOnlinePlayers().size()))
                     .build())
                 // Dynamic material - cycles through colors
-                .item(7, 1, MenuItem.item()
+                .item(7, 1, item()
                     .material(() -> {
                         long seconds = Duration.between(startTime, Instant.now()).getSeconds();
                         Material[] materials = {
@@ -164,7 +165,7 @@ public class SimpleMenuExample {
                         &7every second automatically!""")
                     .build())
                 // Close button
-                .item(8, 2, MenuItem.item()
+                .item(8, 2, item()
                     .material(Material.BARRIER)
                     .name("Close")
                     .onClick(ctx -> ctx.closeInventory())

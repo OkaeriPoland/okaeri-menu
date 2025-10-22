@@ -1,8 +1,11 @@
 package eu.okaeri.menu.pane;
 
 import eu.okaeri.menu.MenuContext;
+import eu.okaeri.menu.item.MenuItem;
 import lombok.NonNull;
 import org.bukkit.inventory.Inventory;
+
+import java.util.Map;
 
 /**
  * Represents a region within a menu inventory.
@@ -39,6 +42,17 @@ public interface Pane {
      * marking them for re-evaluation on next render.
      */
     void invalidate();
+
+    /**
+     * Gets all menu items that can contain declarative filters.
+     * For StaticPane: all items (since all items are static).
+     * For PaginatedPane: only static items (navigation buttons, filter buttons, etc).
+     * Excludes dynamically rendered paginated content.
+     *
+     * @return Map of local slot → MenuItem
+     */
+    @NonNull
+    Map<Integer, MenuItem> getFilteringItems();
 
     /**
      * Gets the type of this pane.

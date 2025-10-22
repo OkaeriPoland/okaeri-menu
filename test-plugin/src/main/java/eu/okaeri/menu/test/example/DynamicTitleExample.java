@@ -1,7 +1,6 @@
 package eu.okaeri.menu.test.example;
 
 import eu.okaeri.menu.Menu;
-import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;
@@ -11,6 +10,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static eu.okaeri.menu.item.MenuItem.item;
 
 /**
  * Examples demonstrating dynamic menu titles.
@@ -38,10 +39,10 @@ public class DynamicTitleExample {
             })
             .rows(3)
             .updateInterval(Duration.ofSeconds(1))
-            .pane("main", StaticPane.builder()
+            .pane("main", StaticPane.staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(() -> {
                         int remaining = countdown.get();
                         if (remaining > 10) return Material.LIME_CONCRETE;
@@ -91,10 +92,10 @@ public class DynamicTitleExample {
             })
             .rows(3)
             .updateInterval(Duration.ofMillis(500))
-            .pane("main", StaticPane.builder()
+            .pane("main", StaticPane.staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(3, 1, MenuItem.item()
+                .item(3, 1, item()
                     .material(Material.RED_WOOL)
                     .name("<red><b>Decrease Progress")
                     .lore("""
@@ -107,7 +108,7 @@ public class DynamicTitleExample {
                         ctx.refresh();
                     })
                     .build())
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.PAPER)
                     .name(() -> "<yellow><b>" + progress.get() + "% Complete")
                     .lore("""
@@ -116,7 +117,7 @@ public class DynamicTitleExample {
                         
                         <gray>Use the buttons to change it.""")
                     .build())
-                .item(5, 1, MenuItem.item()
+                .item(5, 1, item()
                     .material(Material.LIME_WOOL)
                     .name("<green><b>Increase Progress")
                     .lore("""
@@ -144,10 +145,10 @@ public class DynamicTitleExample {
             })
             .rows(3)
             .updateInterval(Duration.ofSeconds(1))
-            .pane("main", StaticPane.builder()
+            .pane("main", StaticPane.staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
-                .item(4, 1, MenuItem.item()
+                .item(4, 1, item()
                     .material(Material.CLOCK)
                     .name("<gradient:yellow:gold><b>Current Date & Time")
                     .lore("""

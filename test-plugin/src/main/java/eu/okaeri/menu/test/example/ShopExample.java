@@ -6,7 +6,6 @@ import eu.okaeri.menu.navigation.NavigationUtils;
 import eu.okaeri.menu.pagination.ItemFilter;
 import eu.okaeri.menu.pagination.PaginationUtils;
 import eu.okaeri.menu.pane.PaginatedPane;
-import eu.okaeri.menu.pane.StaticPane;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import org.bukkit.Material;
@@ -15,6 +14,8 @@ import org.bukkit.plugin.Plugin;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 
 /**
  * Shop example with declarative filters.
@@ -38,7 +39,7 @@ public class ShopExample {
             .title("&6&lItem Shop")
             .rows(6)
             // Filter buttons with declarative filters
-            .pane("filters", StaticPane.builder()
+            .pane("filters", staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(1, 0, MenuItem.item()
@@ -146,7 +147,7 @@ public class ShopExample {
                     .build())
                 .build())
             // Navigation
-            .pane("nav", StaticPane.builder()
+            .pane("nav", staticPane()
                 .name("nav")
                 .bounds(0, 5, 9, 1)
                 .item(3, 0, PaginationUtils.previousPageButton("shop").build())

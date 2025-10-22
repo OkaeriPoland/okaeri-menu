@@ -9,6 +9,7 @@ import lombok.NonNull;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,27 +24,26 @@ import java.util.function.Supplier;
  * @param <T> The type of items to paginate
  */
 @Getter
-public class PaginatedPane<T> implements Pane {
+public class PaginatedPane<T> extends AbstractPane {
 
-    private final String name;
-    private final PaneBounds bounds;
     private final Supplier<List<T>> itemsSupplier;
     private final BiFunction<T, Integer, MenuItem> itemRenderer;
     private final int itemsPerPage;
 
-    // Static items that are always rendered (e.g., navigation buttons, decorations)
-    private final Map<Integer, MenuItem> staticItems = new HashMap<>();
-
     // Cache for rendered items
     private boolean dirty = true;
 
-    protected PaginatedPane(Builder<T> builder) {
-        this.name = builder.name;
-        this.bounds = builder.bounds;
+    protected PaginatedPane(@NonNull Builder<T> builder) {
+        super(builder.name, builder.bounds);
         this.itemsSupplier = builder.itemsSupplier;
         this.itemRenderer = builder.itemRenderer;
         this.itemsPerPage = builder.itemsPerPage;
-        this.staticItems.putAll(builder.staticItems);
+        // Convert entries if builder hasn't been through build() yet (for AsyncPaginatedPane)
+        if (builder.staticItems.isEmpty() && !builder.staticItemEntries.isEmpty()) {
+            this.staticItems.putAll(convertEntriesToSlotMap(builder.staticItemEntries, builder.bounds));
+        } else {
+            this.staticItems.putAll(builder.staticItems);
+        }
     }
 
     @Override
@@ -60,14 +60,6 @@ public class PaginatedPane<T> implements Pane {
 
         // Get items for current page
         List<T> pageItems = pagination.getCurrentPageItems();
-
-        // Clear pane area first
-        for (int localY = 0; localY < this.bounds.getHeight(); localY++) {
-            for (int localX = 0; localX < this.bounds.getWidth(); localX++) {
-                int globalSlot = this.bounds.toGlobalSlot(localX, localY);
-                inventory.setItem(globalSlot, null);
-            }
-        }
 
         // Render paginated items
         int index = 0;
@@ -100,19 +92,15 @@ public class PaginatedPane<T> implements Pane {
             index++;
         }
 
-        // Render static items (buttons, decorations, etc.)
-        for (Map.Entry<Integer, MenuItem> entry : this.staticItems.entrySet()) {
-            int localSlot = entry.getKey();
-            int localX = localSlot % this.bounds.getWidth();
-            int localY = localSlot / this.bounds.getWidth();
+        // Clear unfilled slots (slots beyond the last rendered item, but not static items)
+        // This prevents old items from showing when page has fewer items
+        this.bounds.slots()
+            .excludeKeys(this.staticItems)
+            .range(index, this.bounds.getSlotCount())
+            .clear(inventory);
 
-            MenuItem menuItem = entry.getValue();
-            ItemStack itemStack = menuItem.render(context);
-            if (itemStack != null) {
-                int globalSlot = this.bounds.toGlobalSlot(localX, localY);
-                inventory.setItem(globalSlot, itemStack);
-            }
-        }
+        // Render static items (buttons, decorations, etc.)
+        this.renderStaticItems(inventory, context, this.staticItems);
 
         this.dirty = false;
     }
@@ -130,18 +118,10 @@ public class PaginatedPane<T> implements Pane {
         // Clear only declarative filters (ones we manage)
         pagination.clearFiltersWithPrefix("declarative:");
 
-        // Collect all menu items from all panes
+        // Collect filters from all filtering items in all panes
         for (Pane pane : context.getMenu().getPanes().values()) {
-            if (pane instanceof StaticPane staticPane) {
-                // Collect filters from static pane items
-                for (MenuItem menuItem : staticPane.getItems().values()) {
-                    this.applyFiltersFromItem(menuItem, pagination);
-                }
-            } else if (pane instanceof PaginatedPane<?> paginatedPane) {
-                // Collect filters from static items in paginated panes
-                for (MenuItem menuItem : paginatedPane.getStaticItems().values()) {
-                    this.applyFiltersFromItem(menuItem, pagination);
-                }
+            for (MenuItem menuItem : pane.getFilteringItems().values()) {
+                this.applyFiltersFromItem(menuItem, pagination);
             }
         }
     }
@@ -175,30 +155,9 @@ public class PaginatedPane<T> implements Pane {
         this.dirty = true;
     }
 
-    /**
-     * Gets a menu item by global slot (for click handling).
-     *
-     * @param globalSlot The global inventory slot
-     * @return The menu item, or null if not found
-     */
-    public MenuItem getItemByGlobalSlot(int globalSlot) {
-        // Convert to local coordinates
-        int globalX = globalSlot % 9;
-        int globalY = globalSlot / 9;
-
-        // Check if click is within pane bounds
-        if ((globalX < this.bounds.getX()) || (globalX >= (this.bounds.getX() + this.bounds.getWidth()))) {
-            return null;
-        }
-        if ((globalY < this.bounds.getY()) || (globalY >= (this.bounds.getY() + this.bounds.getHeight()))) {
-            return null;
-        }
-
-        int localX = globalX - this.bounds.getX();
-        int localY = globalY - this.bounds.getY();
-        int localSlot = (localY * this.bounds.getWidth()) + localX;
-
-        // Check static items first
+    @Override
+    public MenuItem getItem(int localX, int localY) {
+        int localSlot = this.localCoordinatesToSlot(localX, localY);
         return this.staticItems.get(localSlot);
     }
 
@@ -240,7 +199,8 @@ public class PaginatedPane<T> implements Pane {
         private Supplier<List<T>> itemsSupplier;
         private BiFunction<T, Integer, MenuItem> itemRenderer;
         private int itemsPerPage;
-        private Map<Integer, MenuItem> staticItems = new HashMap<>();
+        private List<AbstractPane.ItemCoordinateEntry> staticItemEntries = new ArrayList<>();
+        private Map<Integer, MenuItem> staticItems = new HashMap<>();  // Populated in build()
 
         /**
          * Sets the pane name (used as pagination context identifier).
@@ -321,16 +281,20 @@ public class PaginatedPane<T> implements Pane {
 
         /**
          * Adds a static item that's always rendered (e.g., navigation buttons).
+         * Coordinates are validated immediately and stored for conversion during build().
          *
-         * @param localX   Local X coordinate
-         * @param localY   Local Y coordinate
+         * @param localX   Local X coordinate (0 to width-1)
+         * @param localY   Local Y coordinate (0 to height-1)
          * @param menuItem The menu item
          * @return This builder
+         * @throws IllegalArgumentException if coordinates are out of bounds
          */
         @NonNull
         public Builder<T> staticItem(int localX, int localY, @NonNull MenuItem menuItem) {
-            int localSlot = (localY * ((this.bounds != null) ? this.bounds.getWidth() : 9)) + localX;
-            this.staticItems.put(localSlot, menuItem);
+            // Validate immediately for better error reporting
+            this.bounds.validate(localX, localY);
+            // Store coordinates for conversion during build()
+            this.staticItemEntries.add(new AbstractPane.ItemCoordinateEntry(localX, localY, menuItem));
             return this;
         }
 
@@ -349,9 +313,12 @@ public class PaginatedPane<T> implements Pane {
                 throw new IllegalStateException("Item renderer is required");
             }
 
+            // Calculate slots from coordinates using final bounds with validation
+            this.staticItems = convertEntriesToSlotMap(this.staticItemEntries, this.bounds);
+
             // Default items per page to pane size if not set
             if (this.itemsPerPage == 0) {
-                this.itemsPerPage = (this.bounds.getWidth() * this.bounds.getHeight()) - this.staticItems.size();
+                this.itemsPerPage = this.bounds.getSlotCount() - this.staticItems.size();
             }
 
             return new PaginatedPane<>(this);

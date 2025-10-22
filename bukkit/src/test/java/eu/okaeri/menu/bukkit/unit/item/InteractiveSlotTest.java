@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static eu.okaeri.menu.item.MenuItem.item;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
@@ -64,7 +65,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Should create non-interactive item by default")
     void testDefaultNonInteractive() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .build();
 
@@ -76,7 +77,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Should create interactive item with allowPickup")
     void testAllowPickup() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPickup(true)
             .build();
 
@@ -88,7 +89,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Should create interactive item with allowPlacement")
     void testAllowPlacement() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPlacement(true)
             .build();
 
@@ -100,7 +101,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Should create fully interactive item with interactive()")
     void testInteractiveShorthand() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .interactive()
             .build();
 
@@ -112,7 +113,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Should create interactive item with both flags")
     void testBothFlags() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPickup(true)
             .allowPlacement(true)
             .build();
@@ -129,7 +130,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Non-interactive items should render")
     void testNonInteractiveShouldRender() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .build();
 
@@ -139,7 +140,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Interactive items should not render")
     void testInteractiveShouldNotRender() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPickup(true)
             .build();
 
@@ -155,7 +156,7 @@ class InteractiveSlotTest {
     void testOnItemChangeHandler() {
         AtomicBoolean changed = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPickup(true)
             .onItemChange(ctx -> changed.set(true))
             .build();
@@ -174,7 +175,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Should not throw if onItemChange handler not set")
     void testNoItemChangeHandler() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPlacement(true)
             .build();
 
@@ -194,7 +195,7 @@ class InteractiveSlotTest {
         AtomicReference<ItemStack> capturedBefore = new AtomicReference<>();
         AtomicReference<ItemStack> capturedAfter = new AtomicReference<>();
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .interactive()
             .onItemChange(ctx -> {
                 capturedBefore.set(ctx.getPreviousItem());
@@ -222,7 +223,7 @@ class InteractiveSlotTest {
     void testItemPlaced() {
         AtomicBoolean wasPlaced = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPlacement(true)
             .onItemChange(ctx -> {
                 if (ctx.wasItemPlaced()) {
@@ -248,7 +249,7 @@ class InteractiveSlotTest {
     void testItemRemoved() {
         AtomicBoolean wasRemoved = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPickup(true)
             .onItemChange(ctx -> {
                 if (ctx.wasItemRemoved()) {
@@ -274,7 +275,7 @@ class InteractiveSlotTest {
     void testItemSwapped() {
         AtomicBoolean wasSwapped = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .interactive()
             .onItemChange(ctx -> {
                 if (ctx.wasItemSwapped()) {
@@ -302,7 +303,7 @@ class InteractiveSlotTest {
         AtomicInteger removedCount = new AtomicInteger(0);
         AtomicInteger swappedCount = new AtomicInteger(0);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .interactive()
             .onItemChange(ctx -> {
                 if (ctx.wasItemPlaced()) placedCount.incrementAndGet();
@@ -341,7 +342,7 @@ class InteractiveSlotTest {
     void testMultipleExecutions() {
         AtomicInteger executionCount = new AtomicInteger(0);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPickup(true)
             .onItemChange(ctx -> executionCount.incrementAndGet())
             .build();
@@ -359,7 +360,7 @@ class InteractiveSlotTest {
     void testSlotAccess() {
         AtomicInteger capturedSlot = new AtomicInteger(-1);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .interactive()
             .onItemChange(ctx -> capturedSlot.set(ctx.getSlot()))
             .build();
@@ -380,7 +381,7 @@ class InteractiveSlotTest {
     void testMenuAccess() {
         AtomicReference<Menu> capturedMenu = new AtomicReference<>();
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .allowPlacement(true)
             .onItemChange(ctx -> capturedMenu.set(ctx.getMenu()))
             .build();
@@ -404,7 +405,7 @@ class InteractiveSlotTest {
     @DisplayName("Should reject interactive item with material")
     void testRejectInteractiveWithMaterial() {
         assertThatThrownBy(() ->
-            MenuItem.item()
+            item()
                 .material(Material.DIAMOND)
                 .allowPickup(true)
                 .build()
@@ -418,7 +419,7 @@ class InteractiveSlotTest {
     @DisplayName("Should reject interactive item with name")
     void testRejectInteractiveWithName() {
         assertThatThrownBy(() ->
-            MenuItem.item()
+            item()
                 .name("Test Item")
                 .allowPlacement(true)
                 .build()
@@ -432,7 +433,7 @@ class InteractiveSlotTest {
     @DisplayName("Should reject interactive item with lore")
     void testRejectInteractiveWithLore() {
         assertThatThrownBy(() ->
-            MenuItem.item()
+            item()
                 .lore("Line 1\nLine 2")
                 .interactive()
                 .build()
@@ -445,7 +446,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Should allow interactive item with AIR material")
     void testAllowInteractiveWithAir() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.AIR)
             .allowPickup(true)
             .build();
@@ -457,7 +458,7 @@ class InteractiveSlotTest {
     @Test
     @DisplayName("Should allow interactive item without display properties")
     void testAllowInteractiveWithoutDisplay() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .interactive()
             .onItemChange(ctx -> {
             })
@@ -476,7 +477,7 @@ class InteractiveSlotTest {
     void testComplexItemChangeLogic() {
         StringBuilder log = new StringBuilder();
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .interactive()
             .onItemChange(ctx -> {
                 if (ctx.wasItemPlaced()) {
@@ -507,7 +508,7 @@ class InteractiveSlotTest {
         AtomicBoolean clicked = new AtomicBoolean(false);
         AtomicBoolean changed = new AtomicBoolean(false);
 
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .interactive()
             .onClick(ctx -> clicked.set(true))
             .onItemChange(ctx -> changed.set(true))

@@ -16,6 +16,7 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -51,17 +52,17 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should create empty pane with default values")
     void testEmptyPane() {
-        StaticPane pane = StaticPane.builder().build();
+        StaticPane pane = staticPane().build();
 
         assertThat(pane.getName()).isEqualTo("unnamed");
         assertThat(pane.getBounds()).isEqualTo(PaneBounds.fullInventory());
-        assertThat(pane.getItems()).isEmpty();
+        assertThat(pane.getStaticItems()).isEmpty();
     }
 
     @Test
     @DisplayName("Should set name via builder")
     void testBuilderName() {
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .name("test-pane")
             .build();
 
@@ -71,7 +72,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should set bounds via builder (int params)")
     void testBuilderBoundsInt() {
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(1, 2, 5, 3)
             .build();
 
@@ -86,7 +87,7 @@ class StaticPaneTest {
     @DisplayName("Should set bounds via builder (PaneBounds object)")
     void testBuilderBoundsObject() {
         PaneBounds customBounds = PaneBounds.of(2, 1, 7, 4);
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(customBounds)
             .build();
 
@@ -100,7 +101,7 @@ class StaticPaneTest {
             .material(Material.DIAMOND)
             .build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(4, 1, item)
             .build();
@@ -115,7 +116,7 @@ class StaticPaneTest {
         MenuItem item2 = MenuItem.item().material(Material.GOLD_INGOT).build();
         MenuItem item3 = MenuItem.item().material(Material.EMERALD).build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(0, 0, item1)
             .item(4, 1, item2)
@@ -130,7 +131,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should throw when adding item outside width bounds")
     void testAddItemOutsideWidthBounds() {
-        StaticPane.Builder builder = StaticPane.builder()
+        StaticPane.Builder builder = staticPane()
             .bounds(0, 0, 5, 3);
 
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
@@ -143,7 +144,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should throw when adding item outside height bounds")
     void testAddItemOutsideHeightBounds() {
-        StaticPane.Builder builder = StaticPane.builder()
+        StaticPane.Builder builder = staticPane()
             .bounds(0, 0, 9, 3);
 
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
@@ -156,7 +157,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should throw when adding item at negative X")
     void testAddItemNegativeX() {
-        StaticPane.Builder builder = StaticPane.builder()
+        StaticPane.Builder builder = staticPane()
             .bounds(0, 0, 9, 3);
 
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
@@ -169,7 +170,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should throw when adding item at negative Y")
     void testAddItemNegativeY() {
-        StaticPane.Builder builder = StaticPane.builder()
+        StaticPane.Builder builder = staticPane()
             .bounds(0, 0, 9, 3);
 
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
@@ -191,7 +192,7 @@ class StaticPaneTest {
             .name("Gold")
             .build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(0, 0, item1)  // Slot 0
             .item(4, 1, item2)  // Slot 13 (9 + 4)
@@ -224,7 +225,7 @@ class StaticPaneTest {
             .material(Material.DIAMOND)
             .build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 2)  // 2 rows
             .item(0, 0, item)
             .build();
@@ -248,7 +249,7 @@ class StaticPaneTest {
             .build();
 
         // Pane starts at (2, 1) with size (3, 2)
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(2, 1, 3, 2)
             .item(1, 0, item)  // Local (1, 0) -> Global (3, 1) -> Slot 12
             .build();
@@ -268,7 +269,7 @@ class StaticPaneTest {
     void testGetItemByLocalCoordinates() {
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(4, 1, item)
             .build();
@@ -283,7 +284,7 @@ class StaticPaneTest {
     void testGetItemByGlobalSlot() {
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(4, 1, item)  // Local (4, 1) -> Global slot 13
             .build();
@@ -298,7 +299,7 @@ class StaticPaneTest {
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
         // Pane covers only rows 0-2
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(0, 0, item)
             .build();
@@ -313,7 +314,7 @@ class StaticPaneTest {
         MenuItem item = MenuItem.item().material(Material.EMERALD).build();
 
         // Pane at (2, 1) with size (5, 2)
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(2, 1, 5, 2)
             .item(1, 0, item)  // Local (1, 0) -> Global (3, 1) -> Slot 12
             .build();
@@ -333,7 +334,7 @@ class StaticPaneTest {
             .material(() -> Material.GOLD_INGOT)
             .build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .item(0, 0, item1)
             .item(1, 0, item2)
             .build();
@@ -355,7 +356,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should handle empty pane rendering")
     void testEmptyPaneRendering() {
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .build();
 
@@ -371,7 +372,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should handle full inventory pane")
     void testFullInventoryPane() {
-        StaticPane.Builder builder = StaticPane.builder()
+        StaticPane.Builder builder = staticPane()
             .bounds(0, 0, 9, 6);
 
         // Fill entire inventory
@@ -407,7 +408,7 @@ class StaticPaneTest {
             .visible(false)
             .build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(0, 0, visibleItem)
             .item(1, 0, invisibleItem)
@@ -431,7 +432,7 @@ class StaticPaneTest {
             .material(Material.DIAMOND)
             .build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(0, 0, airItem)
             .item(1, 0, normalItem)
@@ -451,7 +452,7 @@ class StaticPaneTest {
             .material(Material.DIAMOND)
             .build();
 
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(0, 0, item1)
             .build();
@@ -483,7 +484,7 @@ class StaticPaneTest {
             .build();
 
         // Add two items at same position (second should overwrite)
-        StaticPane pane = StaticPane.builder()
+        StaticPane pane = staticPane()
             .bounds(0, 0, 9, 3)
             .item(0, 0, item1)
             .item(0, 0, item2)

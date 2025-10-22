@@ -14,6 +14,7 @@ import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 
+import static eu.okaeri.menu.item.MenuItem.item;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -60,7 +61,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with material")
     void testRenderMaterial() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .build();
 
@@ -73,7 +74,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with name")
     void testRenderName() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .name("&cTest Item")
             .build();
@@ -91,7 +92,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with lore")
     void testRenderLore() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.IRON_SWORD)
             .lore("&7Line 1\n&7Line 2\n&7Line 3")
             .build();
@@ -109,7 +110,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with amount")
     void testRenderAmount() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.ARROW)
             .amount(32)
             .build();
@@ -123,7 +124,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with enchantments")
     void testRenderEnchantments() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND_SWORD)
             .enchant(Enchantment.SHARPNESS, 5)
             .enchant(Enchantment.UNBREAKING, 3)
@@ -145,7 +146,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with item flags")
     void testRenderItemFlags() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.GOLDEN_SWORD)
             .itemFlag(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES)
             .build();
@@ -163,7 +164,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with glint")
     void testRenderGlint() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STICK)
             .glint(true)
             .build();
@@ -186,7 +187,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should return null for invisible item")
     void testInvisibleItem() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .visible(false)
             .build();
@@ -199,7 +200,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render visible item")
     void testVisibleItem() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.EMERALD)
             .visible(true)
             .build();
@@ -213,7 +214,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should return null for AIR material")
     void testAirMaterial() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.AIR)
             .build();
 
@@ -229,7 +230,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should clamp amount to minimum 1")
     void testAmountMinimum() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .amount(0)
             .build();
@@ -243,7 +244,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should clamp amount to maximum 64")
     void testAmountMaximum() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .amount(100)
             .build();
@@ -257,7 +258,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should clamp negative amount to 1")
     void testNegativeAmount() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .amount(-5)
             .build();
@@ -275,7 +276,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with all properties")
     void testFullyConfiguredItem() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND_SWORD)
             .name("&cPowerful Sword")
             .lore("&7A very powerful weapon\n&7Deals massive damage")
@@ -307,7 +308,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with dynamic material")
     void testDynamicMaterial() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(() -> Material.GOLD_INGOT)
             .build();
 
@@ -320,7 +321,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with dynamic amount")
     void testDynamicAmount() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.ARROW)
             .amount(() -> 16)
             .build();
@@ -334,12 +335,12 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with dynamic visibility")
     void testDynamicVisibility() {
-        MenuItem visibleItem = MenuItem.item()
+        MenuItem visibleItem = item()
             .material(Material.DIAMOND)
             .visible(() -> true)
             .build();
 
-        MenuItem invisibleItem = MenuItem.item()
+        MenuItem invisibleItem = item()
             .material(Material.EMERALD)
             .visible(() -> false)
             .build();
@@ -355,7 +356,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with context-aware material")
     void testContextAwareMaterial() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(ctx -> Material.REDSTONE)
             .build();
 
@@ -368,7 +369,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with context-aware name")
     void testContextAwareName() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .name(ctx -> "&eContext Name")
             .build();
@@ -383,7 +384,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should render item with context-aware visibility")
     void testContextAwareVisibility() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.DIAMOND)
             .visible(ctx -> true)
             .build();
@@ -400,7 +401,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should handle empty name")
     void testEmptyName() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .name("")
             .build();
@@ -416,7 +417,7 @@ class MenuItemRenderTest {
     @Test
     @DisplayName("Should handle empty lore")
     void testEmptyLore() {
-        MenuItem item = MenuItem.item()
+        MenuItem item = item()
             .material(Material.STONE)
             .lore("")
             .build();

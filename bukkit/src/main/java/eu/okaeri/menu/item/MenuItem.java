@@ -3,8 +3,7 @@ package eu.okaeri.menu.item;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.pagination.ItemFilter;
 import eu.okaeri.menu.reactive.ReactiveProperty;
-import lombok.Getter;
-import lombok.NonNull;
+import lombok.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
@@ -13,6 +12,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -509,6 +509,30 @@ public class MenuItem {
         }
 
         /**
+         * Sets the item lore from a reactive supplier.
+         * The supplier is called each time the item is rendered.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .lore(() -> filterActive ?
+         *     "<gray>Status: <green>Active\n<yellow>Click to toggle!" :
+         *     "<gray>Status: <gray>Inactive\n<yellow>Click to toggle!")
+         * }</pre>
+         *
+         * @param supplier Supplier providing the lore template (split on \n)
+         * @return This builder
+         */
+        @NonNull
+        public Builder lore(@NonNull Supplier<String> supplier) {
+            this.lore = ReactiveProperty.of(() -> {
+                String template = supplier.get();
+                return Arrays.asList(template.split("\n"));
+            });
+            this.loreExplicitlySet = true;
+            return this;
+        }
+
+        /**
          * Sets the item lore from a locale-specific map.
          * The menu's MessageProvider selects the appropriate locale for each viewer.
          * The locale-specific template is split into lines on {@code \n} character.
@@ -726,21 +750,21 @@ public class MenuItem {
         @NonNull
         public Builder material(@NonNull Function<MenuContext, Material> function) {
             // Wrap the function to use when reactive context has a menu
-            this.material = ReactiveProperty.ofContext(ctx -> function.apply(ctx));
+            this.material = ReactiveProperty.ofContext(function::apply);
             this.materialExplicitlySet = true;
             return this;
         }
 
         @NonNull
         public Builder name(@NonNull Function<MenuContext, String> function) {
-            this.name = ReactiveProperty.ofContext(ctx -> function.apply(ctx));
+            this.name = ReactiveProperty.ofContext(function::apply);
             this.nameExplicitlySet = true;
             return this;
         }
 
         @NonNull
         public Builder visible(@NonNull Function<MenuContext, Boolean> function) {
-            this.visible = ReactiveProperty.ofContext(ctx -> function.apply(ctx));
+            this.visible = ReactiveProperty.ofContext(function::apply);
             return this;
         }
 
@@ -870,16 +894,12 @@ public class MenuItem {
         /**
          * Helper class to store reactive data source information.
          */
+        @Value
+        @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
         private static class ReactiveDataSource {
-            final String key;
-            final Supplier<?> loader;
-            final java.time.Duration ttl;
-
-            ReactiveDataSource(String key, Supplier<?> loader, java.time.Duration ttl) {
-                this.key = key;
-                this.loader = loader;
-                this.ttl = ttl;
-            }
+            String key;
+            Supplier<?> loader;
+            Duration ttl;
         }
     }
 }
