@@ -431,4 +431,234 @@ class MenuItemRenderTest {
         assertThat(meta.getLore()).hasSize(1);
         assertThat(meta.getLore().get(0)).isEmpty();
     }
+
+    // ========================================
+    // FROM() BASE ITEM TEMPLATE
+    // ========================================
+
+    @Test
+    @DisplayName("Should preserve base material from .from()")
+    void testFromPreservesBaseMaterial() {
+        ItemStack base = new ItemStack(Material.DIAMOND);
+
+        MenuItem item = item()
+            .from(base)
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.getType()).isEqualTo(Material.DIAMOND);
+    }
+
+    @Test
+    @DisplayName("Should preserve base name from .from()")
+    void testFromPreservesBaseName() {
+        ItemStack base = new ItemStack(Material.DIAMOND_SWORD);
+        ItemMeta meta = base.getItemMeta();
+        meta.setDisplayName("&aLegendary Sword");
+        base.setItemMeta(meta);
+
+        MenuItem item = item()
+            .from(base)
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.getItemMeta().getDisplayName()).isEqualTo("&aLegendary Sword");
+    }
+
+    @Test
+    @DisplayName("Should preserve base lore from .from()")
+    void testFromPreservesBaseLore() {
+        ItemStack base = new ItemStack(Material.DIAMOND_SWORD);
+        ItemMeta meta = base.getItemMeta();
+        meta.setLore(java.util.List.of("&7Original Line 1", "&7Original Line 2"));
+        base.setItemMeta(meta);
+
+        MenuItem item = item()
+            .from(base)
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.getItemMeta().getLore())
+            .containsExactly("&7Original Line 1", "&7Original Line 2");
+    }
+
+    @Test
+    @DisplayName("Should override material when explicitly set with .from()")
+    void testFromOverridesMaterial() {
+        ItemStack base = new ItemStack(Material.DIAMOND);
+
+        MenuItem item = item()
+            .from(base)
+            .material(Material.EMERALD)
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.getType()).isEqualTo(Material.EMERALD);
+    }
+
+    @Test
+    @DisplayName("Should override name when explicitly set with .from()")
+    void testFromOverridesName() {
+        ItemStack base = new ItemStack(Material.DIAMOND_SWORD);
+        ItemMeta meta = base.getItemMeta();
+        meta.setDisplayName("&aLegendary Sword");
+        base.setItemMeta(meta);
+
+        MenuItem item = item()
+            .from(base)
+            .name("&cCursed Blade")
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.getItemMeta().getDisplayName()).isEqualTo("§cCursed Blade");
+    }
+
+    @Test
+    @DisplayName("Should override lore when explicitly set with .from()")
+    void testFromOverridesLore() {
+        ItemStack base = new ItemStack(Material.DIAMOND_SWORD);
+        ItemMeta meta = base.getItemMeta();
+        meta.setLore(java.util.List.of("&7Original Line 1", "&7Original Line 2"));
+        base.setItemMeta(meta);
+
+        MenuItem item = item()
+            .from(base)
+            .lore("&eNew Line 1\n&eNew Line 2")
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.getItemMeta().getLore())
+            .containsExactly("§eNew Line 1", "§eNew Line 2");
+    }
+
+    @Test
+    @DisplayName("Should preserve base enchantments with .from()")
+    void testFromPreservesBaseEnchantments() {
+        ItemStack base = new ItemStack(Material.DIAMOND_SWORD);
+        base.addUnsafeEnchantment(Enchantment.SHARPNESS, 5);
+
+        MenuItem item = item()
+            .from(base)
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.containsEnchantment(Enchantment.SHARPNESS)).isTrue();
+        assertThat(rendered.getEnchantmentLevel(Enchantment.SHARPNESS)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Should merge enchantments with .from()")
+    void testFromMergesEnchantments() {
+        ItemStack base = new ItemStack(Material.DIAMOND_SWORD);
+        base.addUnsafeEnchantment(Enchantment.SHARPNESS, 3);
+
+        MenuItem item = item()
+            .from(base)
+            .enchant(Enchantment.FIRE_ASPECT, 2)
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.containsEnchantment(Enchantment.SHARPNESS)).isTrue();
+        assertThat(rendered.containsEnchantment(Enchantment.FIRE_ASPECT)).isTrue();
+        assertThat(rendered.getEnchantmentLevel(Enchantment.SHARPNESS)).isEqualTo(3);
+        assertThat(rendered.getEnchantmentLevel(Enchantment.FIRE_ASPECT)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Should work with context-aware .from() function")
+    void testFromWithContextFunction() {
+        ItemStack baseWithName = new ItemStack(Material.GOLD_INGOT);
+        ItemMeta meta = baseWithName.getItemMeta();
+        meta.setDisplayName("&6Gold");
+        baseWithName.setItemMeta(meta);
+
+        MenuItem item = item()
+            .from(ctx -> baseWithName)
+            .lore("&7Context-aware lore")
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(rendered.getItemMeta().getDisplayName()).isEqualTo("&6Gold");
+        assertThat(rendered.getItemMeta().getLore())
+            .containsExactly("§7Context-aware lore");
+    }
+
+    @Test
+    @DisplayName("Should fall back to material when .from() returns null")
+    void testFromWithNullBaseFallback() {
+        MenuItem item = item()
+            .from(ctx -> null)
+            .material(Material.STONE)
+            .name("&fFallback Item")
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.getType()).isEqualTo(Material.STONE);
+        assertThat(rendered.getItemMeta().getDisplayName()).isEqualTo("§fFallback Item");
+    }
+
+    @Test
+    @DisplayName("Should return null when .from() returns AIR")
+    void testFromWithAirBase() {
+        ItemStack base = new ItemStack(Material.AIR);
+
+        MenuItem item = item()
+            .from(base)
+            .build();
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNull();
+    }
+
+    @Test
+    @DisplayName("Should clone base automatically in .from()")
+    void testFromClonesBase() {
+        ItemStack base = new ItemStack(Material.DIAMOND);
+
+        MenuItem item = item()
+            .from(base)
+            .build();
+
+        // Modify base after building
+        base.setType(Material.STONE);
+
+        ItemStack rendered = item.render(this.context);
+        assertThat(rendered).isNotNull();
+        assertThat(rendered.getType()).isEqualTo(Material.DIAMOND);
+    }
+
+    @Test
+    @DisplayName("Should use reactive overrides with .from()")
+    void testFromWithReactiveOverrides() {
+        ItemStack base = new ItemStack(Material.DIAMOND);
+        ItemMeta meta = base.getItemMeta();
+        meta.setDisplayName("&aOriginal");
+        base.setItemMeta(meta);
+
+        boolean[] state = {false};
+
+        MenuItem item = item()
+            .from(base)
+            .name(() -> state[0] ? "&cEnabled" : "&7Disabled")
+            .build();
+
+        ItemStack rendered1 = item.render(this.context);
+        assertThat(rendered1.getItemMeta().getDisplayName()).isEqualTo("§7Disabled");
+
+        state[0] = true;
+        item.invalidate();
+        ItemStack rendered2 = item.render(this.context);
+        assertThat(rendered2.getItemMeta().getDisplayName()).isEqualTo("§cEnabled");
+    }
 }

@@ -7,6 +7,7 @@ import org.bukkit.entity.HumanEntity;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Manages pagination state for a specific pane and viewer.
@@ -25,8 +26,7 @@ public class PaginationContext<T> {
     private final int itemsPerPage;
 
     private int currentPage = 0;
-    private final Map<String, Predicate<T>> activeFilters = new LinkedHashMap<>();
-    private final Map<String, Object> activeFilterValues = new LinkedHashMap<>();
+    private final Map<String, ItemFilter<T>> filters = new LinkedHashMap<>();
     private FilterStrategy filterStrategy = FilterStrategy.AND;  // Default to AND
 
     /**
@@ -74,35 +74,73 @@ public class PaginationContext<T> {
     // ========================================
 
     /**
-     * Adds or updates a filter with an optional value.
-     * For value-only filters (database-side filtering), predicate can be null.
+     * Sets a filter using an ItemFilter instance.
+     * Provides full programmatic control over filter behavior.
      *
-     * @param filterId  The filter identifier
-     * @param predicate The filter predicate (nullable for value-only filters)
-     * @param value     The filter value for database queries (nullable)
+     * @param filter The filter to add
      */
-    public void addFilter(@NonNull String filterId, Predicate<T> predicate, Object value) {
-        if (predicate != null) {
-            this.activeFilters.put(filterId, predicate);
-        } else {
-            this.activeFilters.remove(filterId);
-        }
-        if (value != null) {
-            this.activeFilterValues.put(filterId, value);
-        } else {
-            this.activeFilterValues.remove(filterId);
-        }
+    @SuppressWarnings("unchecked")
+    public void setFilter(@NonNull ItemFilter<?> filter) {
+        String filterId = (filter.getFilterId() != null)
+            ? filter.getFilterId()
+            : ("filter-" + System.identityHashCode(filter));
+        this.filters.put(filterId, (ItemFilter<T>) filter);
         this.currentPage = 0; // Reset to first page when filters change
     }
 
     /**
-     * Adds or updates a filter (backwards compatibility).
+     * Adds or updates a predicate-only filter for in-memory filtering.
      *
      * @param filterId  The filter identifier
      * @param predicate The filter predicate
      */
     public void addFilter(@NonNull String filterId, @NonNull Predicate<T> predicate) {
-        this.addFilter(filterId, predicate, null);
+        ItemFilter.Builder<T> builder = ItemFilter.<T>builder()
+            .target(this.paneId)
+            .id(filterId)
+            .when(() -> true)  // Always active for programmatic filters
+            .predicate(predicate);
+
+        this.filters.put(filterId, builder.build());
+        this.currentPage = 0; // Reset to first page when filters change
+    }
+
+    /**
+     * Adds or updates a value-only filter for database-side filtering.
+     * Use this for filters that should be extracted in LoaderContext but not applied in-memory.
+     *
+     * @param filterId The filter identifier
+     * @param value    The filter value for database queries
+     */
+    public void addFilterValue(@NonNull String filterId, @NonNull Object value) {
+        ItemFilter.Builder<T> builder = ItemFilter.<T>builder()
+            .target(this.paneId)
+            .id(filterId)
+            .when(() -> true)  // Always active for programmatic filters
+            .value(() -> value);
+
+        this.filters.put(filterId, builder.build());
+        this.currentPage = 0; // Reset to first page when filters change
+    }
+
+    /**
+     * Adds or updates a hybrid filter with both predicate and value.
+     * The predicate is used for in-memory filtering, the value for database queries.
+     *
+     * @param filterId  The filter identifier
+     * @param predicate The filter predicate for in-memory filtering
+     * @param value     The filter value for database queries
+     */
+    public void addFilter(@NonNull String filterId, @NonNull Predicate<T> predicate, @NonNull Object value) {
+        ItemFilter.Builder<T> builder = ItemFilter.<T>builder()
+            .target(this.paneId)
+            .id(filterId)
+            .when(() -> true)  // Always active for programmatic filters
+            .predicate(predicate)
+            .value(() -> value);
+
+        this.filters.put(filterId, builder.build());
+        this.currentPage = 0; // Reset to first page when filters change
     }
 
     /**
@@ -111,8 +149,7 @@ public class PaginationContext<T> {
      * @param filterId The filter identifier
      */
     public void removeFilter(@NonNull String filterId) {
-        this.activeFilters.remove(filterId);
-        this.activeFilterValues.remove(filterId);
+        this.filters.remove(filterId);
         this.currentPage = 0; // Reset to first page when filters change
     }
 
@@ -124,7 +161,7 @@ public class PaginationContext<T> {
      * @return true if filter is now active, false if removed
      */
     public boolean toggleFilter(@NonNull String filterId, @NonNull Predicate<T> predicate) {
-        if (this.activeFilters.containsKey(filterId)) {
+        if (this.filters.containsKey(filterId)) {
             this.removeFilter(filterId);
             return false;
         } else {
@@ -134,24 +171,66 @@ public class PaginationContext<T> {
     }
 
     /**
-     * Checks if a filter is active.
+     * Checks if a filter is active (present and when() returns true).
      *
      * @param filterId The filter identifier
      * @return true if active
      */
     public boolean hasFilter(@NonNull String filterId) {
-        return this.activeFilters.containsKey(filterId);
+        ItemFilter<T> filter = this.filters.get(filterId);
+        return (filter != null) && filter.isActive();
     }
 
     /**
-     * Gets the IDs of all currently active filters.
+     * Gets all filters (for internal/advanced use).
+     * Most code should use getActiveFilterCount() or hasFilter() instead.
+     *
+     * @return Unmodifiable map of all filters
+     */
+    @NonNull
+    public Map<String, ItemFilter<T>> getFilters() {
+        return Collections.unmodifiableMap(this.filters);
+    }
+
+    /**
+     * Gets all currently active filters (when() returns true).
+     * Provides easy iteration over active filters with access to filter metadata.
+     *
+     * <p>Example usage:
+     * <pre>{@code
+     * // Iterate over all active filters
+     * for (ItemFilter<Offer> filter : pagination.getActiveFilters()) {
+     *     String id = filter.getFilterId();
+     *     Object value = filter.extractValue();
+     *     // Use filter...
+     * }
+     *
+     * // Check if any filters have values
+     * boolean hasValueFilters = pagination.getActiveFilters().stream()
+     *     .anyMatch(f -> f.extractValue() != null);
+     * }</pre>
+     *
+     * @return Unmodifiable collection of active filters
+     */
+    @NonNull
+    public Collection<ItemFilter<T>> getActiveFilters() {
+        return this.filters.values().stream()
+            .filter(ItemFilter::isActive)
+            .toList();
+    }
+
+    /**
+     * Gets the IDs of all currently active filters (when() returns true).
      * Useful for displaying filter counts or checking which filters are enabled.
      *
      * @return Unmodifiable set of active filter IDs
      */
     @NonNull
     public Set<String> getActiveFilterIds() {
-        return Collections.unmodifiableSet(this.activeFilters.keySet());
+        return this.filters.entrySet().stream()
+            .filter(entry -> entry.getValue().isActive())
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -160,30 +239,17 @@ public class PaginationContext<T> {
      * @return Count of active filters
      */
     public int getActiveFilterCount() {
-        return this.activeFilters.size();
+        return (int) this.filters.values().stream()
+            .filter(ItemFilter::isActive)
+            .count();
     }
 
     /**
      * Clears all filters.
      */
     public void clearFilters() {
-        this.activeFilters.clear();
-        this.activeFilterValues.clear();
+        this.filters.clear();
         this.currentPage = 0;
-    }
-
-    /**
-     * Clears filters with a specific prefix.
-     * Useful for separating declarative and programmatic filters.
-     *
-     * @param prefix The filter ID prefix
-     */
-    public void clearFiltersWithPrefix(@NonNull String prefix) {
-        this.activeFilters.keySet().removeIf(filterId -> filterId.startsWith(prefix));
-        this.activeFilterValues.keySet().removeIf(filterId -> filterId.startsWith(prefix));
-        if (!this.activeFilters.isEmpty()) {
-            this.currentPage = 0; // Reset to first page if filters were removed
-        }
     }
 
     /**
@@ -205,17 +271,27 @@ public class PaginationContext<T> {
     }
 
     /**
-     * Gets all active filter values.
+     * Gets all active filter values (lazily extracted from active filters).
      * Used for creating LoaderContext for database-side filtering.
      *
      * @return Unmodifiable map of filter IDs to their values
      */
     public @NonNull Map<String, Object> getActiveFilterValues() {
-        return Collections.unmodifiableMap(this.activeFilterValues);
+        Map<String, Object> values = new LinkedHashMap<>();
+        for (Map.Entry<String, ItemFilter<T>> entry : this.filters.entrySet()) {
+            ItemFilter<T> filter = entry.getValue();
+            if (filter.isActive()) {  // Lazy when() check
+                Object value = filter.extractValue();  // Lazy value extraction
+                if (value != null) {
+                    values.put(entry.getKey(), value);
+                }
+            }
+        }
+        return Collections.unmodifiableMap(values);
     }
 
     /**
-     * Gets a specific filter value with type casting.
+     * Gets a specific filter value with type casting (lazily extracted).
      *
      * @param filterId The filter ID
      * @param type     The expected value type
@@ -224,7 +300,15 @@ public class PaginationContext<T> {
      */
     @SuppressWarnings("unchecked")
     public <V> @NonNull Optional<V> getFilterValue(@NonNull String filterId, @NonNull Class<V> type) {
-        Object value = this.activeFilterValues.get(filterId);
+        ItemFilter<T> filter = this.filters.get(filterId);
+        if (filter == null) {
+            return Optional.empty();
+        }
+        if (!filter.isActive()) {  // Lazy when() check
+            return Optional.empty();
+        }
+
+        Object value = filter.extractValue();  // Lazy value extraction
         if (value == null) {
             return Optional.empty();
         }
@@ -237,16 +321,21 @@ public class PaginationContext<T> {
     /**
      * Gets filtered items (all items that pass active filters).
      * Uses the configured filter strategy to combine multiple filters.
+     * Filters are lazily evaluated (when() and predicate() called on each item).
+     *
+     * <p>The strategy is responsible for checking {@link ItemFilter#isActive()}
+     * and combining filters according to its logic.
      *
      * @return List of filtered items
      */
     public @NonNull List<T> getFilteredItems() {
-        if (this.activeFilters.isEmpty()) {
+        if (this.filters.isEmpty()) {
             return new ArrayList<>(this.allItems);
         }
 
-        // Combine all filters using the strategy
-        Predicate<T> combinedFilter = this.filterStrategy.combine(this.activeFilters.values());
+        // Pass ALL filters to strategy - strategy handles isActive() checking
+        // This allows strategies to inspect all filters for metadata-based logic
+        Predicate<T> combinedFilter = this.filterStrategy.combine(this.filters.values());
 
         return this.allItems.stream()
             .filter(combinedFilter)

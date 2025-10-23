@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 @Getter
 public class MenuItem {
 
+    private final ReactiveProperty<ItemStack> baseItem;
     private final ReactiveProperty<Material> material;
     private final ReactiveProperty<String> name;
     private final ReactiveProperty<List<String>> lore;
@@ -50,6 +51,7 @@ public class MenuItem {
     private final List<ItemFilter<?>> filters = new ArrayList<>();
 
     protected MenuItem(Builder builder) {
+        this.baseItem = builder.baseItem;
         this.material = builder.material;
         this.name = builder.name;
         this.lore = builder.lore;
@@ -79,32 +81,49 @@ public class MenuItem {
             return null;
         }
 
-        Material mat = this.material.get(context);
-        if ((mat == null) || (mat == Material.AIR)) {
-            return null;
+        ItemStack base = this.baseItem.get(context);
+        ItemStack stack;
+
+        if (base != null && base.getType() != Material.AIR) {
+            // Start from base ItemStack (preserves NBT, meta, custom model data, etc.)
+            stack = base.clone();
+
+            // Override material if explicitly set
+            Material explicitMaterial = this.material.get(context);
+            if (explicitMaterial != null && explicitMaterial != Material.AIR) {
+                stack.setType(explicitMaterial);
+            }
+        } else {
+            // No base - create from material
+            Material mat = this.material.get(context);
+            if ((mat == null) || (mat == Material.AIR)) {
+                return null;
+            }
+            stack = new ItemStack(mat);
         }
 
-        ItemStack stack = new ItemStack(mat);
         stack.setAmount(Math.max(1, Math.min(64, this.amount.get(context))));
 
         ItemMeta meta = stack.getItemMeta();
         if (meta != null) {
+            // Override name if set (empty string means keep base name)
             String displayName = this.name.get(context);
             if ((displayName != null) && !displayName.isEmpty()) {
                 meta.setDisplayName(displayName);
             }
 
+            // Override lore if set (empty list means keep base lore)
             List<String> loreLines = this.lore.get(context);
             if ((loreLines != null) && !loreLines.isEmpty()) {
                 meta.setLore(loreLines);
             }
 
-            // Apply enchantments
+            // Add enchantments (merge with base enchantments)
             for (Map.Entry<Enchantment, Integer> entry : this.enchantments.entrySet()) {
                 meta.addEnchant(entry.getKey(), entry.getValue(), true);
             }
 
-            // Apply item flags
+            // Add item flags (merge with base flags)
             if (!this.itemFlags.isEmpty()) {
                 meta.addItemFlags(this.itemFlags.toArray(new ItemFlag[0]));
             }
@@ -200,6 +219,7 @@ public class MenuItem {
     public static class Builder {
         private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacySection();
 
+        private ReactiveProperty<ItemStack> baseItem = ReactiveProperty.of((ItemStack) null);
         private ReactiveProperty<Material> material = ReactiveProperty.of(Material.AIR);
         private ReactiveProperty<String> name = ReactiveProperty.of("");
         private ReactiveProperty<List<String>> lore = ReactiveProperty.of(new ArrayList<>());
@@ -263,6 +283,60 @@ public class MenuItem {
             Map<String, Object> merged = new HashMap<>(this.itemLevelVars);
             merged.putAll(methodVars);  // Method-level overrides
             return merged;
+        }
+
+        /**
+         * Sets a base ItemStack to use as a template.
+         * Properties from the base ItemStack (NBT, custom model data, enchantments, etc.) are preserved,
+         * unless explicitly overridden by builder methods.
+         *
+         * <p>Priority order:
+         * <ol>
+         *   <li>Explicit builder calls (.name(), .lore(), .material()) - HIGHEST</li>
+         *   <li>Base ItemStack properties - MEDIUM</li>
+         *   <li>Default values - LOWEST</li>
+         * </ol>
+         *
+         * <p>Example:
+         * <pre>{@code
+         * MenuItem.item()
+         *     .from(offer.getItem().clone())  // Base item with lore, NBT
+         *     .lore("New lore line")          // Override lore
+         *     // name, material, NBT from base are preserved
+         *     .build()
+         * }</pre>
+         *
+         * @param base The base ItemStack to clone (will be cloned automatically)
+         * @return This builder
+         */
+        @NonNull
+        public Builder from(@NonNull ItemStack base) {
+            this.baseItem = ReactiveProperty.of(base.clone());
+            return this;
+        }
+
+        /**
+         * Sets a context-aware base ItemStack to use as a template.
+         * The base ItemStack is resolved dynamically for each render.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * MenuItem.item()
+         *     .from(ctx -> questService.getQuestIcon(questId))
+         *     .name("Quest Name")
+         *     .build()
+         * }</pre>
+         *
+         * @param baseFunction Function to provide base ItemStack based on context
+         * @return This builder
+         */
+        @NonNull
+        public Builder from(@NonNull Function<MenuContext, ItemStack> baseFunction) {
+            this.baseItem = ReactiveProperty.ofContext(ctx -> {
+                ItemStack base = baseFunction.apply(ctx);
+                return (base != null) ? base.clone() : null;
+            });
+            return this;
         }
 
         /**

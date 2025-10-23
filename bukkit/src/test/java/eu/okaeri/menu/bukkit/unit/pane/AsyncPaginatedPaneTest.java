@@ -677,10 +677,10 @@ class AsyncPaginatedPaneTest {
 
         assertThat(capturedContext[0]).isNotNull();
         assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(2);
-        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+        assertThat(capturedContext[0].getFilter("category", String.class))
             .isPresent()
             .contains("WEAPONS");
-        assertThat(capturedContext[0].getFilter("declarative:minPrice", Integer.class))
+        assertThat(capturedContext[0].getFilter("minPrice", Integer.class))
             .isPresent()
             .contains(100);
     }
@@ -724,7 +724,7 @@ class AsyncPaginatedPaneTest {
         testMenu.open(this.player);
         server.getScheduler().performOneTick();
 
-        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+        assertThat(capturedContext[0].getFilter("category", String.class))
             .isPresent()
             .contains("WEAPONS");
 
@@ -740,7 +740,7 @@ class AsyncPaginatedPaneTest {
         testMenu.refresh(this.player);
         server.getScheduler().performOneTick();
 
-        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+        assertThat(capturedContext[0].getFilter("category", String.class))
             .isPresent()
             .contains("ARMOR");
     }
@@ -772,7 +772,7 @@ class AsyncPaginatedPaneTest {
 
         assertThat(capturedContext[0]).isNotNull();
         assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(0);
-        assertThat(capturedContext[0].getActiveFilters()).isEmpty();
+        assertThat(capturedContext[0].getActiveFilterIds()).isEmpty();
     }
 
     @Test
@@ -817,7 +817,7 @@ class AsyncPaginatedPaneTest {
         // Initially on page 0 with filter
         assertThat(capturedContext[0]).isNotNull();
         assertThat(capturedContext[0].getCurrentPage()).isEqualTo(0);
-        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+        assertThat(capturedContext[0].getFilter("category", String.class))
             .isPresent()
             .contains("WEAPONS");
 
@@ -870,7 +870,7 @@ class AsyncPaginatedPaneTest {
         // Filter is inactive, should not be in LoaderContext
         assertThat(capturedContext[0]).isNotNull();
         assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(0);
-        assertThat(capturedContext[0].hasFilter("declarative:category")).isFalse();
+        assertThat(capturedContext[0].hasFilter("category")).isFalse();
 
         // Activate filter
         filterActive[0] = true;
@@ -887,7 +887,7 @@ class AsyncPaginatedPaneTest {
         // Filter is now active, should be in LoaderContext
         assertThat(capturedContext[0]).isNotNull();
         assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(1);
-        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+        assertThat(capturedContext[0].getFilter("category", String.class))
             .isPresent()
             .contains("WEAPONS");
     }
@@ -949,10 +949,10 @@ class AsyncPaginatedPaneTest {
         // Should collect filters from both panes
         assertThat(capturedContext[0]).isNotNull();
         assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(2);
-        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+        assertThat(capturedContext[0].getFilter("category", String.class))
             .isPresent()
             .contains("WEAPONS");
-        assertThat(capturedContext[0].getFilter("declarative:minPrice", Integer.class))
+        assertThat(capturedContext[0].getFilter("minPrice", Integer.class))
             .isPresent()
             .contains(100);
     }
@@ -1006,10 +1006,10 @@ class AsyncPaginatedPaneTest {
 
         assertThat(capturedContext[0]).isNotNull();
         assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(2);
-        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+        assertThat(capturedContext[0].getFilter("category", String.class))
             .isPresent()
             .contains("WEAPONS");
-        assertThat(capturedContext[0].getFilter("declarative:seller", String.class))
+        assertThat(capturedContext[0].getFilter("seller", String.class))
             .isPresent()
             .contains("some-uuid");
     }

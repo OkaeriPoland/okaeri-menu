@@ -148,7 +148,7 @@ public class PaginationUtils {
                 return Map.of(
                     "showing", pagination.getCurrentPageItems().size(),
                     "total_items", pagination.getTotalItems(),
-                    "filters", pagination.getActiveFilters().size()
+                    "filters", pagination.getActiveFilterCount()
                 );
             });
         }
@@ -219,7 +219,7 @@ public class PaginationUtils {
             .name(name)
             .visible(ctx -> {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
-                return !pagination.getActiveFilters().isEmpty();
+                return pagination.getActiveFilterCount() > 0;
             })
             .onClick(ctx -> {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
@@ -231,7 +231,7 @@ public class PaginationUtils {
         if ((lore != null) && !lore.isEmpty()) {
             builder.lore(lore, ctx -> {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
-                return Map.of("count", pagination.getActiveFilters().size());
+                return Map.of("count", pagination.getActiveFilterCount());
             });
         }
 

@@ -55,7 +55,7 @@ class WaitForDataTask extends BukkitRunnable {
             // Timeout - open anyway with whatever state we have
             this.menu.getPlugin().getLogger().log(Level.WARNING,
                 "Menu open timeout for player " + this.player.getName() +
-                " after " + elapsed + "ms (timeout: " + this.timeout.toMillis() + "ms)");
+                    " after " + elapsed + "ms (timeout: " + this.timeout.toMillis() + "ms)");
             this.cancel();
             this.openMenu();
             return;

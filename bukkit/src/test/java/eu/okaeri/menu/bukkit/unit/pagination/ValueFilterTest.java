@@ -14,6 +14,7 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +56,15 @@ class ValueFilterTest {
         int price;
         UUID sellerId;
         String category;
+    }
+
+    // Helper methods to reduce boilerplate
+    private <T> PaginationContext<T> createContext(List<T> items) {
+        return PaginationContext.get(this.menu, "test", this.player, items, 10);
+    }
+
+    private PaginationContext<Offer> createEmptyContext() {
+        return this.createContext(List.of());
     }
 
     // ========================================
@@ -226,11 +236,10 @@ class ValueFilterTest {
     @Test
     @DisplayName("Should store filter values in PaginationContext")
     void testPaginationContextStoreValues() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createEmptyContext();
 
-        ctx.addFilter("category", null, "WEAPONS");
-        ctx.addFilter("minPrice", null, 100);
+        ctx.addFilterValue("category", "WEAPONS");
+        ctx.addFilterValue("minPrice", 100);
 
         Map<String, Object> values = ctx.getActiveFilterValues();
         assertThat(values).hasSize(2);
@@ -241,12 +250,11 @@ class ValueFilterTest {
     @Test
     @DisplayName("Should retrieve typed filter values")
     void testGetFilterValueWithType() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createEmptyContext();
 
         UUID sellerId = UUID.randomUUID();
-        ctx.addFilter("seller", null, sellerId);
-        ctx.addFilter("category", null, "WEAPONS");
+        ctx.addFilterValue("seller", sellerId);
+        ctx.addFilterValue("category", "WEAPONS");
 
         assertThat(ctx.getFilterValue("seller", UUID.class))
             .isPresent()
@@ -260,8 +268,7 @@ class ValueFilterTest {
     @Test
     @DisplayName("Should return empty when filter value not found")
     void testGetFilterValueNotFound() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createEmptyContext();
 
         assertThat(ctx.getFilterValue("nonexistent", String.class))
             .isEmpty();
@@ -270,10 +277,9 @@ class ValueFilterTest {
     @Test
     @DisplayName("Should return empty when filter value type mismatch")
     void testGetFilterValueTypeMismatch() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createEmptyContext();
 
-        ctx.addFilter("category", null, "WEAPONS");
+        ctx.addFilterValue("category", "WEAPONS");
 
         // Try to retrieve as Integer (wrong type)
         assertThat(ctx.getFilterValue("category", Integer.class))
@@ -287,7 +293,7 @@ class ValueFilterTest {
             new Offer("Sword", 100, UUID.randomUUID(), "WEAPONS"),
             new Offer("Shield", 50, UUID.randomUUID(), "ARMOR")
         );
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createContext(items);
 
         String category = "WEAPONS";
         ctx.addFilter("category", item -> category.equals(item.category), category);
@@ -306,10 +312,9 @@ class ValueFilterTest {
     @Test
     @DisplayName("Should remove filter values when filter is removed")
     void testRemoveFilterRemovesValue() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createEmptyContext();
 
-        ctx.addFilter("category", null, "WEAPONS");
+        ctx.addFilterValue("category", "WEAPONS");
         assertThat(ctx.getActiveFilterValues()).hasSize(1);
 
         ctx.removeFilter("category");
@@ -319,11 +324,10 @@ class ValueFilterTest {
     @Test
     @DisplayName("Should clear all filter values when filters are cleared")
     void testClearFiltersClearsValues() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createEmptyContext();
 
-        ctx.addFilter("category", null, "WEAPONS");
-        ctx.addFilter("minPrice", null, 100);
+        ctx.addFilterValue("category", "WEAPONS");
+        ctx.addFilterValue("minPrice", 100);
         assertThat(ctx.getActiveFilterValues()).hasSize(2);
 
         ctx.clearFilters();
@@ -331,29 +335,11 @@ class ValueFilterTest {
     }
 
     @Test
-    @DisplayName("Should clear filter values with prefix")
-    void testClearFiltersWithPrefixClearsValues() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
-
-        ctx.addFilter("declarative:category", null, "WEAPONS");
-        ctx.addFilter("declarative:seller", null, UUID.randomUUID());
-        ctx.addFilter("programmatic:minPrice", null, 100);
-
-        ctx.clearFiltersWithPrefix("declarative:");
-
-        Map<String, Object> values = ctx.getActiveFilterValues();
-        assertThat(values).hasSize(1);
-        assertThat(values).containsKey("programmatic:minPrice");
-    }
-
-    @Test
     @DisplayName("Should return unmodifiable map from getActiveFilterValues")
     void testActiveFilterValuesUnmodifiable() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createEmptyContext();
 
-        ctx.addFilter("category", null, "WEAPONS");
+        ctx.addFilterValue("category", "WEAPONS");
 
         Map<String, Object> values = ctx.getActiveFilterValues();
 
@@ -368,13 +354,18 @@ class ValueFilterTest {
     @Test
     @DisplayName("Should create LoaderContext with pagination state and filter values")
     void testCreateLoaderContext() {
-        // Create LoaderContext directly with filter values
-        Map<String, Object> filterValues = Map.of(
-            "category", "WEAPONS",
-            "minPrice", 100
-        );
+        // Create PaginationContext with enough items for multiple pages
+        List<Offer> items = new ArrayList<>();
+        for (int i = 0; i < 30; i++) {
+            items.add(new Offer("Item" + i, 100, UUID.randomUUID(), "WEAPONS"));
+        }
+        PaginationContext<Offer> ctx = this.createContext(items);
 
-        LoaderContext loaderCtx = new LoaderContext(2, 10, filterValues);
+        ctx.addFilterValue("category", "WEAPONS");
+        ctx.addFilterValue("minPrice", 100);
+        ctx.setPage(2);
+
+        LoaderContext loaderCtx = LoaderContext.from(ctx);
 
         assertThat(loaderCtx.getCurrentPage()).isEqualTo(2);
         assertThat(loaderCtx.getPageSize()).isEqualTo(10);
@@ -385,13 +376,13 @@ class ValueFilterTest {
     @DisplayName("LoaderContext should retrieve typed filter values")
     void testLoaderContextGetFilter() {
         UUID sellerId = UUID.randomUUID();
-        Map<String, Object> filters = Map.of(
-            "seller", sellerId,
-            "category", "WEAPONS",
-            "minPrice", 100
-        );
+        PaginationContext<Offer> pagination = this.createEmptyContext();
 
-        LoaderContext ctx = new LoaderContext(0, 10, filters);
+        pagination.addFilterValue("seller", sellerId);
+        pagination.addFilterValue("category", "WEAPONS");
+        pagination.addFilterValue("minPrice", 100);
+
+        LoaderContext ctx = LoaderContext.from(pagination);
 
         assertThat(ctx.getFilter("seller", UUID.class))
             .isPresent()
@@ -409,7 +400,8 @@ class ValueFilterTest {
     @Test
     @DisplayName("LoaderContext should return empty for missing filter")
     void testLoaderContextGetFilterMissing() {
-        LoaderContext ctx = new LoaderContext(0, 10, Map.of());
+        PaginationContext<Offer> pagination = this.createEmptyContext();
+        LoaderContext ctx = LoaderContext.from(pagination);
 
         assertThat(ctx.getFilter("nonexistent", String.class))
             .isEmpty();
@@ -418,8 +410,9 @@ class ValueFilterTest {
     @Test
     @DisplayName("LoaderContext should return empty on type mismatch")
     void testLoaderContextGetFilterTypeMismatch() {
-        Map<String, Object> filters = Map.of("category", "WEAPONS");
-        LoaderContext ctx = new LoaderContext(0, 10, filters);
+        PaginationContext<Offer> pagination = this.createEmptyContext();
+        pagination.addFilterValue("category", "WEAPONS");
+        LoaderContext ctx = LoaderContext.from(pagination);
 
         assertThat(ctx.getFilter("category", Integer.class))
             .isEmpty();
@@ -428,12 +421,12 @@ class ValueFilterTest {
     @Test
     @DisplayName("LoaderContext should check filter presence")
     void testLoaderContextHasFilter() {
-        Map<String, Object> filters = Map.of(
-            "category", "WEAPONS",
-            "minPrice", 100
-        );
+        PaginationContext<Offer> pagination = this.createEmptyContext();
 
-        LoaderContext ctx = new LoaderContext(0, 10, filters);
+        pagination.addFilterValue("category", "WEAPONS");
+        pagination.addFilterValue("minPrice", 100);
+
+        LoaderContext ctx = LoaderContext.from(pagination);
 
         assertThat(ctx.hasFilter("category")).isTrue();
         assertThat(ctx.hasFilter("minPrice")).isTrue();
@@ -441,12 +434,13 @@ class ValueFilterTest {
     }
 
     @Test
-    @DisplayName("LoaderContext should provide unmodifiable filters map")
-    void testLoaderContextUnmodifiableFilters() {
-        Map<String, Object> filters = Map.of("category", "WEAPONS");
-        LoaderContext ctx = new LoaderContext(0, 10, filters);
+    @DisplayName("LoaderContext should provide unmodifiable filter IDs set")
+    void testLoaderContextUnmodifiableFilterIds() {
+        PaginationContext<Offer> pagination = this.createEmptyContext();
+        pagination.addFilterValue("category", "WEAPONS");
+        LoaderContext ctx = LoaderContext.from(pagination);
 
-        assertThatThrownBy(() -> ctx.getActiveFilters().put("hack", "value"))
+        assertThatThrownBy(() -> ctx.getActiveFilterIds().add("hack"))
             .isInstanceOf(UnsupportedOperationException.class);
     }
 
@@ -455,12 +449,11 @@ class ValueFilterTest {
     // ========================================
 
     @Test
-    @DisplayName("Should support null values in filters")
-    void testNullFilterValue() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+    @DisplayName("Predicate-only filters should not have values")
+    void testPredicateOnlyFilterHasNoValue() {
+        PaginationContext<Offer> ctx = this.createEmptyContext();
 
-        ctx.addFilter("seller", null, null);
+        ctx.addFilter("seller", item -> true);
 
         assertThat(ctx.getActiveFilterValues()).isEmpty();
     }
@@ -468,15 +461,14 @@ class ValueFilterTest {
     @Test
     @DisplayName("Should update filter value when filter is re-added")
     void testUpdateFilterValue() {
-        List<Offer> items = List.of();
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createEmptyContext();
 
-        ctx.addFilter("category", null, "WEAPONS");
+        ctx.addFilterValue("category", "WEAPONS");
         assertThat(ctx.getFilterValue("category", String.class))
             .isPresent()
             .contains("WEAPONS");
 
-        ctx.addFilter("category", null, "ARMOR");
+        ctx.addFilterValue("category", "ARMOR");
         assertThat(ctx.getFilterValue("category", String.class))
             .isPresent()
             .contains("ARMOR");
@@ -490,10 +482,10 @@ class ValueFilterTest {
             new Offer("Bow", 75, UUID.randomUUID(), "WEAPONS"),
             new Offer("Helmet", 100, UUID.randomUUID(), "ARMOR")
         );
-        PaginationContext<Offer> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Offer> ctx = this.createContext(items);
 
         // Value-only filter (for database)
-        ctx.addFilter("category", null, "WEAPONS");
+        ctx.addFilterValue("category", "WEAPONS");
 
         // Predicate filter (for in-memory)
         ctx.addFilter("expensive", item -> item.price >= 100, 100);

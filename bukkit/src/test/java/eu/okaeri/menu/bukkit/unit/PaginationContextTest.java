@@ -201,11 +201,11 @@ class PaginationContextTest {
         ctx.addFilter("filter1", item -> item.contains("A"));
         ctx.addFilter("filter2", item -> item.contains("B"));
 
-        assertEquals(2, ctx.getActiveFilters().size());
+        assertEquals(2, ctx.getActiveFilterCount());
 
         ctx.clearFilters();
 
-        assertEquals(0, ctx.getActiveFilters().size());
+        assertEquals(0, ctx.getActiveFilterCount());
         assertEquals(10, ctx.getTotalItems());
     }
 

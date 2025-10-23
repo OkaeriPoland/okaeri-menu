@@ -71,7 +71,7 @@ public class MenuContext extends BaseMenuContext {
      * <p>
      * This is a convenience method for menu items that execute commands.
      *
-     * @param log whether to log the command execution to server log
+     * @param log     whether to log the command execution to server log
      * @param command the command(s) to execute (without leading slash)
      */
     public void runCommand(boolean log, @NonNull String... command) {

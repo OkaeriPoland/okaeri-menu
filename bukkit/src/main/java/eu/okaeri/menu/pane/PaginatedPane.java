@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -107,18 +106,15 @@ public class PaginatedPane<T> extends AbstractPane {
 
     /**
      * Applies declarative filters from menu items to this pane's pagination context.
-     * Collects all ItemFilters from all menu items that target this pane and are active.
-     * Only manages declarative filters (prefixed with "declarative:"), leaving programmatic filters intact.
+     * Collects all ItemFilters from all menu items that target this pane.
+     * Stores the filters directly so they can be lazily evaluated (when() and value() suppliers).
      *
      * @param context    The reactive context
      * @param pagination The pagination context to apply filters to
      */
     @SuppressWarnings("unchecked")
-    private void applyItemFilters(@NonNull MenuContext context, @NonNull PaginationContext<T> pagination) {
-        // Clear only declarative filters (ones we manage)
-        pagination.clearFiltersWithPrefix("declarative:");
-
-        // Collect filters from all filtering items in all panes
+    protected void applyItemFilters(@NonNull MenuContext context, @NonNull PaginationContext<T> pagination) {
+        // Sync declarative filters from menu items
         for (Pane pane : context.getMenu().getPanes().values()) {
             for (MenuItem menuItem : pane.getFilteringItems().values()) {
                 this.applyFiltersFromItem(menuItem, pagination);
@@ -128,27 +124,22 @@ public class PaginatedPane<T> extends AbstractPane {
 
     /**
      * Applies filters from a single menu item to the pagination context.
-     * Prefixes filter IDs with "declarative:" to distinguish from programmatic filters.
-     * Extracts both predicates (for in-memory filtering) and values (for database filtering).
+     * Stores the filter directly (no prefix needed) for lazy evaluation.
+     * Eagerly validates filter values to catch exceptions early.
      */
     @SuppressWarnings("unchecked")
     protected void applyFiltersFromItem(@NonNull MenuItem menuItem, @NonNull PaginationContext<T> pagination) {
         for (ItemFilter<?> filter : menuItem.getFilters()) {
             // Check if this filter targets this pane
             if (filter.getTargetPane().equals(this.name)) {
-                // Check if the filter is active
+                // Eagerly validate by extracting value (will throw if value() supplier fails)
+                // This ensures exceptions are caught by Menu.render()'s error handling
                 if (filter.isActive()) {
-                    // Apply the filter with "declarative:" prefix (cast is safe because filter targets this pane's item type)
-                    String filterId = (filter.getFilterId() != null)
-                        ? ("declarative:" + filter.getFilterId())
-                        : ("declarative:filter-" + System.identityHashCode(filter));
-
-                    // Extract predicate and value
-                    Predicate<T> predicate = (Predicate<T>) filter.getPredicate();
-                    Object value = filter.extractValue();
-
-                    pagination.addFilter(filterId, predicate, value);
+                    filter.extractValue();  // May throw - that's intentional!
                 }
+
+                // Store the filter directly (lazy when() and value() evaluation)
+                pagination.setFilter(filter);
             }
         }
     }

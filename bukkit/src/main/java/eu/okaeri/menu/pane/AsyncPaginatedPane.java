@@ -116,12 +116,8 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
                 }
             }
 
-            // Create LoaderContext with current pagination state and filter values
-            LoaderContext loaderContext = new LoaderContext(
-                pagination.getCurrentPage(),
-                this.getItemsPerPage(),
-                pagination.getActiveFilterValues()
-            );
+            // Create LoaderContext wrapping the pagination context
+            LoaderContext loaderContext = LoaderContext.from(pagination);
 
             // Start async load (or background reload if stale data exists)
             // Wrap Function<LoaderContext, List<T>> as Supplier<List<T>>

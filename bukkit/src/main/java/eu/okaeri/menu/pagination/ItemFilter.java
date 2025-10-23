@@ -97,7 +97,7 @@ public class ItemFilter<T> {
      * @return The extracted value, or null if no value extractor is set
      */
     public Object extractValue() {
-        return this.valueExtractor != null ? this.valueExtractor.get() : null;
+        return (this.valueExtractor != null) ? this.valueExtractor.get() : null;
     }
 
     public static <T> @NonNull Builder<T> builder() {
