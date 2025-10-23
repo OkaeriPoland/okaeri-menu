@@ -5,6 +5,8 @@ import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.AsyncCache;
 import eu.okaeri.menu.async.AsyncUtils;
 import eu.okaeri.menu.item.MenuItem;
+import eu.okaeri.menu.pagination.LoaderContext;
+import eu.okaeri.menu.pagination.PaginationContext;
 import lombok.Getter;
 import lombok.NonNull;
 import org.bukkit.inventory.Inventory;
@@ -17,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * PaginatedPane with async data loading and suspense states.
@@ -34,7 +36,7 @@ import java.util.function.Supplier;
 @Getter
 public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
-    private final Supplier<List<T>> asyncLoader;
+    private final Function<LoaderContext, List<T>> asyncLoader;
     private final Duration ttl;
     private final MenuItem loadingItem;
     private final MenuItem errorItem;
@@ -97,9 +99,33 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
         // Check if we need to load (first time or expired)
         if ((asyncState == null) || cache.isExpired(cacheKey)) {
+            // Get pagination context to extract filter values
+            // Use dummy page size since we're not using parent's getFilteredItems() for async panes
+            PaginationContext<T> pagination = PaginationContext.get(
+                context.getMenu(),
+                this.getName(),
+                context.getEntity(),
+                Collections.emptyList(),  // Dummy items list
+                this.getItemsPerPage()
+            );
+
+            // Collect filters from all filtering items in all panes
+            for (Pane pane : context.getMenu().getPanes().values()) {
+                for (MenuItem menuItem : pane.getFilteringItems().values()) {
+                    this.applyFiltersFromItem(menuItem, pagination);
+                }
+            }
+
+            // Create LoaderContext with current pagination state and filter values
+            LoaderContext loaderContext = new LoaderContext(
+                pagination.getCurrentPage(),
+                this.getItemsPerPage(),
+                pagination.getActiveFilterValues()
+            );
+
             // Start async load (or background reload if stale data exists)
-            // AsyncCache handles stale-while-revalidate: keeps showing old data during reload
-            context.loadAsync(cacheKey, this.asyncLoader, this.ttl);
+            // Wrap Function<LoaderContext, List<T>> as Supplier<List<T>>
+            context.loadAsync(cacheKey, () -> this.asyncLoader.apply(loaderContext), this.ttl);
             // Re-check state after starting load
             asyncState = cache.getState(cacheKey);
         }
@@ -215,7 +241,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
         private String name;
         private PaneBounds bounds;
-        private Supplier<List<T>> asyncLoader;
+        private Function<LoaderContext, List<T>> asyncLoader;
         private Duration ttl = Duration.ofSeconds(30);  // Default TTL
         private BiFunction<T, Integer, MenuItem> itemRenderer;
         private int itemsPerPage;
@@ -267,13 +293,14 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         }
 
         /**
-         * Sets the async data loader.
+         * Sets the async data loader with LoaderContext.
+         * The loader receives pagination state and filter values for database queries.
          *
-         * @param loader The supplier that loads data asynchronously
+         * @param loader The function that loads data with LoaderContext
          * @return This builder
          */
         @NonNull
-        public Builder<T> loader(@NonNull Supplier<List<T>> loader) {
+        public Builder<T> loader(@NonNull Function<LoaderContext, List<T>> loader) {
             this.asyncLoader = loader;
             return this;
         }

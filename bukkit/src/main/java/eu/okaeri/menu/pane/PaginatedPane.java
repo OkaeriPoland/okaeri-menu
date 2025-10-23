@@ -129,9 +129,10 @@ public class PaginatedPane<T> extends AbstractPane {
     /**
      * Applies filters from a single menu item to the pagination context.
      * Prefixes filter IDs with "declarative:" to distinguish from programmatic filters.
+     * Extracts both predicates (for in-memory filtering) and values (for database filtering).
      */
     @SuppressWarnings("unchecked")
-    private void applyFiltersFromItem(@NonNull MenuItem menuItem, @NonNull PaginationContext<T> pagination) {
+    protected void applyFiltersFromItem(@NonNull MenuItem menuItem, @NonNull PaginationContext<T> pagination) {
         for (ItemFilter<?> filter : menuItem.getFilters()) {
             // Check if this filter targets this pane
             if (filter.getTargetPane().equals(this.name)) {
@@ -141,10 +142,12 @@ public class PaginatedPane<T> extends AbstractPane {
                     String filterId = (filter.getFilterId() != null)
                         ? ("declarative:" + filter.getFilterId())
                         : ("declarative:filter-" + System.identityHashCode(filter));
-                    pagination.addFilter(
-                        filterId,
-                        (Predicate<T>) filter.getPredicate()
-                    );
+
+                    // Extract predicate and value
+                    Predicate<T> predicate = (Predicate<T>) filter.getPredicate();
+                    Object value = filter.extractValue();
+
+                    pagination.addFilter(filterId, predicate, value);
                 }
             }
         }

@@ -496,4 +496,49 @@ class StaticPaneTest {
         // Second item should be rendered (map overwrites)
         assertThat(inventory.getItem(0).getType()).isEqualTo(Material.GOLD_INGOT);
     }
+
+    @Test
+    @DisplayName("Exception in MenuItem render should clear pane but not crash menu")
+    void testMenuItemRenderErrorHandling() {
+        Menu testMenu = Menu.builder(this.plugin)
+            .title("Render Error Test")
+            .rows(3)
+            .pane("failingPane", staticPane()
+                .name("failingPane")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(() -> {
+                        throw new RuntimeException("Material supplier failed!");
+                    })
+                    .build())
+                .build())
+            .pane("workingPane", staticPane()
+                .name("workingPane")
+                .bounds(0, 1, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.EMERALD)
+                    .name("Working Item")
+                    .build())
+                .build())
+            .build();
+
+        // Open menu - should not throw exception
+        testMenu.open(this.player);
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+
+        // Verify failingPane was cleared (slots 0-8, all should be null)
+        for (int slot = 0; slot < 9; slot++) {
+            assertThat(inventory.getItem(slot))
+                .as("Slot %d in failingPane should be cleared after error", slot)
+                .isNull();
+        }
+
+        // Verify workingPane still rendered (slot 9 should have the emerald)
+        assertThat(inventory.getItem(9))
+            .as("Slot 9 in workingPane should have item despite other pane failing")
+            .isNotNull();
+        assertThat(inventory.getItem(9).getType())
+            .isEqualTo(Material.EMERALD);
+    }
 }

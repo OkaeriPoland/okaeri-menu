@@ -248,7 +248,7 @@ public class AsyncShopExample {
             .pane("shop-pane", paneAsync(ShopItem.class)
                 .name("shop-pane")
                 .bounds(0, 1, 9, 3)
-                .loader(() -> {
+                .loader(ctx -> {
                     // Simulate async database query
                     try {
                         Thread.sleep(ThreadLocalRandom.current().nextInt(1000, 2500));

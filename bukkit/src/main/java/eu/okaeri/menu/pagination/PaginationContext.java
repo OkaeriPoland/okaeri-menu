@@ -26,6 +26,7 @@ public class PaginationContext<T> {
 
     private int currentPage = 0;
     private final Map<String, Predicate<T>> activeFilters = new LinkedHashMap<>();
+    private final Map<String, Object> activeFilterValues = new LinkedHashMap<>();
     private FilterStrategy filterStrategy = FilterStrategy.AND;  // Default to AND
 
     /**
@@ -73,14 +74,35 @@ public class PaginationContext<T> {
     // ========================================
 
     /**
-     * Adds or updates a filter.
+     * Adds or updates a filter with an optional value.
+     * For value-only filters (database-side filtering), predicate can be null.
+     *
+     * @param filterId  The filter identifier
+     * @param predicate The filter predicate (nullable for value-only filters)
+     * @param value     The filter value for database queries (nullable)
+     */
+    public void addFilter(@NonNull String filterId, Predicate<T> predicate, Object value) {
+        if (predicate != null) {
+            this.activeFilters.put(filterId, predicate);
+        } else {
+            this.activeFilters.remove(filterId);
+        }
+        if (value != null) {
+            this.activeFilterValues.put(filterId, value);
+        } else {
+            this.activeFilterValues.remove(filterId);
+        }
+        this.currentPage = 0; // Reset to first page when filters change
+    }
+
+    /**
+     * Adds or updates a filter (backwards compatibility).
      *
      * @param filterId  The filter identifier
      * @param predicate The filter predicate
      */
     public void addFilter(@NonNull String filterId, @NonNull Predicate<T> predicate) {
-        this.activeFilters.put(filterId, predicate);
-        this.currentPage = 0; // Reset to first page when filters change
+        this.addFilter(filterId, predicate, null);
     }
 
     /**
@@ -90,6 +112,7 @@ public class PaginationContext<T> {
      */
     public void removeFilter(@NonNull String filterId) {
         this.activeFilters.remove(filterId);
+        this.activeFilterValues.remove(filterId);
         this.currentPage = 0; // Reset to first page when filters change
     }
 
@@ -145,6 +168,7 @@ public class PaginationContext<T> {
      */
     public void clearFilters() {
         this.activeFilters.clear();
+        this.activeFilterValues.clear();
         this.currentPage = 0;
     }
 
@@ -156,6 +180,7 @@ public class PaginationContext<T> {
      */
     public void clearFiltersWithPrefix(@NonNull String prefix) {
         this.activeFilters.keySet().removeIf(filterId -> filterId.startsWith(prefix));
+        this.activeFilterValues.keySet().removeIf(filterId -> filterId.startsWith(prefix));
         if (!this.activeFilters.isEmpty()) {
             this.currentPage = 0; // Reset to first page if filters were removed
         }
@@ -177,6 +202,36 @@ public class PaginationContext<T> {
      */
     public @NonNull FilterStrategy getFilterStrategy() {
         return this.filterStrategy;
+    }
+
+    /**
+     * Gets all active filter values.
+     * Used for creating LoaderContext for database-side filtering.
+     *
+     * @return Unmodifiable map of filter IDs to their values
+     */
+    public @NonNull Map<String, Object> getActiveFilterValues() {
+        return Collections.unmodifiableMap(this.activeFilterValues);
+    }
+
+    /**
+     * Gets a specific filter value with type casting.
+     *
+     * @param filterId The filter ID
+     * @param type     The expected value type
+     * @param <V>      The type to cast to
+     * @return Optional containing the filter value, or empty if not present or wrong type
+     */
+    @SuppressWarnings("unchecked")
+    public <V> @NonNull Optional<V> getFilterValue(@NonNull String filterId, @NonNull Class<V> type) {
+        Object value = this.activeFilterValues.get(filterId);
+        if (value == null) {
+            return Optional.empty();
+        }
+        if (!type.isInstance(value)) {
+            return Optional.empty();
+        }
+        return Optional.of((V) value);
     }
 
     /**

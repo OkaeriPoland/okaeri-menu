@@ -77,13 +77,13 @@ class DeclarativeFilterTest {
     }
 
     @Test
-    @DisplayName("Should throw when predicate is missing")
-    void testItemFilterMissingPredicate() {
+    @DisplayName("Should throw when both predicate and value are missing")
+    void testItemFilterMissingPredicateAndValue() {
         assertThatThrownBy(() -> ItemFilter.<ShopItem>builder()
             .target("items")
             .build())
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("Predicate is required");
+            .hasMessageContaining("Either predicate or value extractor is required");
     }
 
     @Test

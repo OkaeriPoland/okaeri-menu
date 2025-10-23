@@ -4,7 +4,10 @@ import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.bukkit.test.PooledAsyncExecutor;
 import eu.okaeri.menu.bukkit.test.SyncTestExecutor;
 import eu.okaeri.menu.item.MenuItem;
+import eu.okaeri.menu.pagination.ItemFilter;
+import eu.okaeri.menu.pagination.LoaderContext;
 import eu.okaeri.menu.pane.AsyncPaginatedPane;
+import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -87,7 +90,7 @@ class AsyncPaginatedPaneTest {
         AsyncPaginatedPane<String> pane = paneAsync(String.class)
             .name("test-pane")
             .bounds(0, 0, 3, 3)
-            .loader(Collections::emptyList)
+            .loader(ctx -> Collections.emptyList())
             .renderer((item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
 
@@ -100,7 +103,7 @@ class AsyncPaginatedPaneTest {
         AsyncPaginatedPane<String> pane = paneAsync(String.class)
             .name("test-pane")
             .bounds(0, 0, 3, 3)
-            .loader(Collections::emptyList)
+            .loader(ctx -> Collections.emptyList())
             .ttl(Duration.ofMinutes(5))
             .renderer((item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
@@ -124,7 +127,7 @@ class AsyncPaginatedPaneTest {
             .pane("async-pane", paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)  // 3x2 = 6 slots
-                .loader(() -> testData)
+                .loader(ctx -> testData)
                 .renderer((item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .name(item)
@@ -166,7 +169,7 @@ class AsyncPaginatedPaneTest {
             .pane("async-pane", paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)  // 3x3 = 9 slots
-                .loader(Collections::emptyList)
+                .loader(ctx -> Collections.emptyList())
                 .renderer((item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
@@ -213,7 +216,7 @@ class AsyncPaginatedPaneTest {
             .pane("async-pane", paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)  // 3x2 = 6 slots
-                .loader(() -> testData)
+                .loader(ctx -> testData)
                 .renderer((item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .name(item)
@@ -247,7 +250,7 @@ class AsyncPaginatedPaneTest {
             .pane("async-pane", paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)
-                .loader(() -> {
+                .loader(ctx -> {
                     try {
                         Thread.sleep(300);
                     } catch (InterruptedException e) {
@@ -316,7 +319,7 @@ class AsyncPaginatedPaneTest {
         AsyncPaginatedPane<String> pane = paneAsync(String.class)
             .name("my-pane")
             .bounds(0, 0, 3, 3)
-            .loader(() -> Arrays.asList("A", "B", "C"))
+            .loader(ctx -> Arrays.asList("A", "B", "C"))
             .renderer((item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
 
@@ -336,7 +339,7 @@ class AsyncPaginatedPaneTest {
             .pane("async-pane", paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)
-                .loader(() -> {
+                .loader(ctx -> {
                     loadCount[0]++;
                     return List.of("Load " + loadCount[0]);
                 })
@@ -376,7 +379,7 @@ class AsyncPaginatedPaneTest {
             .pane("async-pane", paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)
-                .loader(() -> Collections.singletonList("Only Item"))
+                .loader(ctx -> Collections.singletonList("Only Item"))
                 .renderer((item, index) -> MenuItem.item()
                     .material(Material.EMERALD)
                     .name(item)
@@ -411,7 +414,7 @@ class AsyncPaginatedPaneTest {
                 .name("async-pane")
                 .bounds(0, 0, 7, 2)  // 7x2 = 14 slots
                 .itemsPerPage(10)
-                .loader(() -> largeList)
+                .loader(ctx -> largeList)
                 .renderer((item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item)
@@ -441,7 +444,7 @@ class AsyncPaginatedPaneTest {
         AsyncPaginatedPane<String> pane = paneAsync(String.class)
             .name("test-pane")
             .bounds(0, 0, 3, 3)
-            .loader(() -> Arrays.asList("Item 1", "Item 2"))
+            .loader(ctx -> Arrays.asList("Item 1", "Item 2"))
             .renderer((item, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .name(item)
@@ -473,7 +476,7 @@ class AsyncPaginatedPaneTest {
         AsyncPaginatedPane<String> pane = paneAsync(String.class)
             .name("test-pane")
             .bounds(0, 0, 3, 3)
-            .loader(() -> Arrays.asList("Item 1", "Item 2"))
+            .loader(ctx -> Arrays.asList("Item 1", "Item 2"))
             .renderer((item, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .name(item)
@@ -499,7 +502,7 @@ class AsyncPaginatedPaneTest {
             .pane("async-pane", paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)
-                .loader(() -> {
+                .loader(ctx -> {
                     // Simulate async delay to stay in LOADING state
                     try {
                         Thread.sleep(100);
@@ -537,7 +540,7 @@ class AsyncPaginatedPaneTest {
             .pane("async-pane", paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)
-                .loader(Collections::emptyList)  // Returns empty list
+                .loader(ctx -> Collections.emptyList())  // Returns empty list
                 .renderer((item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item)
@@ -556,5 +559,635 @@ class AsyncPaginatedPaneTest {
         assertThat(emptySlot).isNotNull();
         // Default empty item uses LIGHT_GRAY_STAINED_GLASS_PANE
         assertThat(emptySlot.getType()).isEqualTo(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+    }
+
+    // ========================================
+    // LOADER CONTEXT TESTS
+    // ========================================
+
+    @Test
+    @DisplayName("Loader should receive LoaderContext with pagination state")
+    void testLoaderReceivesContext() {
+        LoaderContext[] capturedContext = {null};
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(3)
+            .pane("async-pane", paneAsync(String.class)
+                .name("async-pane")
+                .bounds(0, 0, 3, 3)
+                .itemsPerPage(5)
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Arrays.asList("A", "B", "C");
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getCurrentPage()).isEqualTo(0);
+        assertThat(capturedContext[0].getPageSize()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("LoaderContext should have correct page size from pane")
+    void testLoaderContextPageSize() {
+        LoaderContext[] capturedContext = {null};
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(3)
+            .pane("async-pane", paneAsync(String.class)
+                .name("async-pane")
+                .bounds(0, 0, 9, 2)  // 9x2 = 18 slots
+                .itemsPerPage(10)
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Collections.emptyList();
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getPageSize()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("LoaderContext should contain filter values from ItemFilters")
+    void testLoaderContextReceivesFilterValues() {
+        LoaderContext[] capturedContext = {null};
+        String[] currentCategory = {"WEAPONS"};
+        Integer[] minPrice = {100};
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(3)
+            .pane("filters", StaticPane.staticPane()
+                .name("filters")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.IRON_SWORD)
+                    .name("Category Filter")
+                    .filter(ItemFilter.builder()
+                        .target("items")
+                        .id("category")
+                        .value(() -> currentCategory[0])
+                        .build())
+                    .build())
+                .item(1, 0, MenuItem.item()
+                    .material(Material.GOLD_INGOT)
+                    .name("Price Filter")
+                    .filter(ItemFilter.builder()
+                        .target("items")
+                        .id("minPrice")
+                        .value(() -> minPrice[0])
+                        .build())
+                    .build())
+                .build())
+            .pane("items", paneAsync(String.class)
+                .name("items")
+                .bounds(0, 1, 9, 2)
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Collections.emptyList();
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(2);
+        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+            .isPresent()
+            .contains("WEAPONS");
+        assertThat(capturedContext[0].getFilter("declarative:minPrice", Integer.class))
+            .isPresent()
+            .contains(100);
+    }
+
+    @Test
+    @DisplayName("LoaderContext should update when filter values change")
+    void testLoaderContextUpdatesWithFilterChanges() {
+        LoaderContext[] capturedContext = {null};
+        String[] currentCategory = {"WEAPONS"};
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(3)
+            .pane("filters", StaticPane.staticPane()
+                .name("filters")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.IRON_SWORD)
+                    .filter(ItemFilter.builder()
+                        .target("items")
+                        .id("category")
+                        .value(() -> currentCategory[0])
+                        .build())
+                    .build())
+                .build())
+            .pane("items", paneAsync(String.class)
+                .name("items")
+                .bounds(0, 1, 9, 2)
+                .ttl(Duration.ofMillis(1))  // Very short TTL for refresh
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Collections.emptyList();
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+            .isPresent()
+            .contains("WEAPONS");
+
+        // Change filter value
+        currentCategory[0] = "ARMOR";
+
+        // Trigger refresh after TTL expires
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        testMenu.refresh(this.player);
+        server.getScheduler().performOneTick();
+
+        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+            .isPresent()
+            .contains("ARMOR");
+    }
+
+    @Test
+    @DisplayName("LoaderContext should be empty when no filters are active")
+    void testLoaderContextEmptyWithoutFilters() {
+        LoaderContext[] capturedContext = {null};
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(3)
+            .pane("items", paneAsync(String.class)
+                .name("items")
+                .bounds(0, 0, 9, 3)
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Arrays.asList("A", "B", "C");
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(0);
+        assertThat(capturedContext[0].getActiveFilters()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("LoaderContext should receive correct page number with active filters")
+    void testLoaderContextWithPaginationAndFilters() {
+        LoaderContext[] capturedContext = {null};
+        String[] category = {"WEAPONS"};
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(3)
+            .pane("filters", StaticPane.staticPane()
+                .name("filters")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.IRON_SWORD)
+                    .filter(ItemFilter.builder()
+                        .target("items")
+                        .id("category")
+                        .value(() -> category[0])
+                        .build())
+                    .build())
+                .build())
+            .pane("items", paneAsync(String.class)
+                .name("items")
+                .bounds(0, 1, 9, 2)
+                .itemsPerPage(5)
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Collections.emptyList();
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        // Initially on page 0 with filter
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getCurrentPage()).isEqualTo(0);
+        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+            .isPresent()
+            .contains("WEAPONS");
+
+        // TODO: Once pagination navigation is wired to AsyncPaginatedPane,
+        // test that navigating to page 2 results in LoaderContext.currentPage=2
+        // For now, this test verifies page 0 + filters work together
+    }
+
+    @Test
+    @DisplayName("Inactive filters should not be included in LoaderContext")
+    void testInactiveFilterNotIncludedInLoaderContext() {
+        LoaderContext[] capturedContext = {null};
+        boolean[] filterActive = {false};
+        String[] category = {"WEAPONS"};
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(3)
+            .pane("filters", StaticPane.staticPane()
+                .name("filters")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.IRON_SWORD)
+                    .filter(ItemFilter.builder()
+                        .target("items")
+                        .id("category")
+                        .when(() -> filterActive[0])  // Conditional activation
+                        .value(() -> category[0])
+                        .build())
+                    .build())
+                .build())
+            .pane("items", paneAsync(String.class)
+                .name("items")
+                .bounds(0, 1, 9, 2)
+                .ttl(Duration.ofMillis(1))  // Very short TTL for refresh
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Collections.emptyList();
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        // Filter is inactive, should not be in LoaderContext
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(0);
+        assertThat(capturedContext[0].hasFilter("declarative:category")).isFalse();
+
+        // Activate filter
+        filterActive[0] = true;
+
+        // Trigger refresh after TTL expires
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        testMenu.refresh(this.player);
+        server.getScheduler().performOneTick();
+
+        // Filter is now active, should be in LoaderContext
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(1);
+        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+            .isPresent()
+            .contains("WEAPONS");
+    }
+
+    @Test
+    @DisplayName("LoaderContext should collect filter values from multiple panes")
+    void testFilterValuesFromMultiplePanes() {
+        LoaderContext[] capturedContext = {null};
+        String[] category = {"WEAPONS"};
+        Integer[] minPrice = {100};
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(4)
+            // First pane with category filter
+            .pane("categoryFilters", StaticPane.staticPane()
+                .name("categoryFilters")
+                .bounds(0, 0, 5, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.IRON_SWORD)
+                    .filter(ItemFilter.builder()
+                        .target("items")
+                        .id("category")
+                        .value(() -> category[0])
+                        .build())
+                    .build())
+                .build())
+            // Second pane with price filter
+            .pane("priceFilters", StaticPane.staticPane()
+                .name("priceFilters")
+                .bounds(5, 0, 4, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.GOLD_INGOT)
+                    .filter(ItemFilter.builder()
+                        .target("items")
+                        .id("minPrice")
+                        .value(() -> minPrice[0])
+                        .build())
+                    .build())
+                .build())
+            // Target async pane
+            .pane("items", paneAsync(String.class)
+                .name("items")
+                .bounds(0, 1, 9, 3)
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Collections.emptyList();
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        // Should collect filters from both panes
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(2);
+        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+            .isPresent()
+            .contains("WEAPONS");
+        assertThat(capturedContext[0].getFilter("declarative:minPrice", Integer.class))
+            .isPresent()
+            .contains(100);
+    }
+
+    @Test
+    @DisplayName("LoaderContext should support mixed predicate and value-only filters")
+    void testLoaderContextMixedFilters() {
+        LoaderContext[] capturedContext = {null};
+        String[] category = {"WEAPONS"};
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(3)
+            .pane("filters", StaticPane.staticPane()
+                .name("filters")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.IRON_SWORD)
+                    .filter(ItemFilter.builder()
+                        .target("items")
+                        .id("category")
+                        .predicate(item -> category[0].equals(item))  // Has predicate
+                        .value(() -> category[0])  // Also has value
+                        .build())
+                    .build())
+                .item(1, 0, MenuItem.item()
+                    .material(Material.GOLD_INGOT)
+                    .filter(ItemFilter.builder()
+                        .target("items")
+                        .id("seller")
+                        .value(() -> "some-uuid")  // Value-only
+                        .build())
+                    .build())
+                .build())
+            .pane("items", paneAsync(String.class)
+                .name("items")
+                .bounds(0, 1, 9, 2)
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Collections.emptyList();
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(2);
+        assertThat(capturedContext[0].getFilter("declarative:category", String.class))
+            .isPresent()
+            .contains("WEAPONS");
+        assertThat(capturedContext[0].getFilter("declarative:seller", String.class))
+            .isPresent()
+            .contains("some-uuid");
+    }
+
+    @Test
+    @DisplayName("Exception in filter value extraction should clear pane but not crash menu")
+    void testFilterValueExtractionErrorHandling() {
+        LoaderContext[] capturedContext = {null};
+
+        // Create a menu with two panes:
+        // 1. Pane with failing filter (should be cleared)
+        // 2. Pane without filters (should render successfully)
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Error Test Menu")
+            .rows(4)
+            .pane("failingFilters", StaticPane.staticPane()
+                .name("failingFilters")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.BARRIER)
+                    .filter(ItemFilter.builder()
+                        .target("failingPane")
+                        .id("broken")
+                        .value(() -> {
+                            throw new RuntimeException("Filter value extraction failed!");
+                        })
+                        .build())
+                    .build())
+                .build())
+            .pane("failingPane", paneAsync(String.class)
+                .name("failingPane")
+                .bounds(0, 1, 9, 1)
+                .loader(ctx -> {
+                    // Should never be called because filter extraction fails first
+                    return Arrays.asList("Should", "Not", "Appear");
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.DIAMOND)
+                    .build())
+                .build())
+            .pane("workingPane", StaticPane.staticPane()
+                .name("workingPane")
+                .bounds(0, 2, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.EMERALD)
+                    .name("Working Item")
+                    .build())
+                .build())
+            .build();
+
+        // Open menu - should not throw exception
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+
+        // Verify failingPane was cleared (slots 9-17, all should be null)
+        for (int slot = 9; slot < 18; slot++) {
+            assertThat(inventory.getItem(slot))
+                .as("Slot %d in failingPane should be cleared after error", slot)
+                .isNull();
+        }
+
+        // Verify workingPane still rendered (slot 18 should have the emerald)
+        assertThat(inventory.getItem(18))
+            .as("Slot 18 in workingPane should have item despite other pane failing")
+            .isNotNull();
+        assertThat(inventory.getItem(18).getType())
+            .isEqualTo(Material.EMERALD);
+
+        // Verify failingFilters pane still rendered (slot 0 should have barrier)
+        // The StaticPane itself renders fine - it's the failingPane that fails during filter extraction
+        assertThat(inventory.getItem(0))
+            .as("Slot 0 in failingFilters should still be rendered (only failingPane failed)")
+            .isNotNull();
+        assertThat(inventory.getItem(0).getType())
+            .isEqualTo(Material.BARRIER);
+    }
+
+    @Test
+    @DisplayName("Async loader exception should trigger ERROR state and render error items")
+    void testLoaderErrorTriggersErrorState() {
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Loader Error Test")
+            .rows(3)
+            .pane("failingPane", paneAsync(String.class)
+                .name("failingPane")
+                .bounds(0, 0, 9, 2)
+                .loader(ctx -> {
+                    throw new RuntimeException("Loader failed!");
+                })
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.DIAMOND)
+                    .build())
+                .error(MenuItem.item()
+                    .material(Material.REDSTONE_BLOCK)
+                    .name("Error!")
+                    .build())
+                .build())
+            .pane("workingPane", StaticPane.staticPane()
+                .name("workingPane")
+                .bounds(0, 2, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.EMERALD)
+                    .name("Working Item")
+                    .build())
+                .build())
+            .build();
+
+        // Open menu - loader will fail async
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+
+        // Verify failingPane filled with error items (slots 0-17)
+        for (int slot = 0; slot < 18; slot++) {
+            assertThat(inventory.getItem(slot))
+                .as("Slot %d should have error item", slot)
+                .isNotNull();
+            assertThat(inventory.getItem(slot).getType())
+                .as("Slot %d should be REDSTONE_BLOCK (error item)", slot)
+                .isEqualTo(Material.REDSTONE_BLOCK);
+        }
+
+        // Verify workingPane still rendered (slot 18 should have the emerald)
+        assertThat(inventory.getItem(18))
+            .as("Slot 18 in workingPane should have item despite other pane failing")
+            .isNotNull();
+        assertThat(inventory.getItem(18).getType())
+            .isEqualTo(Material.EMERALD);
+    }
+
+    @Test
+    @DisplayName("Exception in renderer during SUCCESS state should clear pane")
+    void testRendererErrorDuringSuccessState() {
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Renderer Error Test")
+            .rows(3)
+            .pane("failingPane", paneAsync(String.class)
+                .name("failingPane")
+                .bounds(0, 0, 9, 1)
+                .loader(ctx -> Arrays.asList("A", "B", "C"))  // Loader succeeds
+                .renderer((item, index) -> {
+                    throw new RuntimeException("Renderer failed!");  // Renderer fails
+                })
+                .build())
+            .pane("workingPane", StaticPane.staticPane()
+                .name("workingPane")
+                .bounds(0, 1, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.GOLD_INGOT)
+                    .name("Working Item")
+                    .build())
+                .build())
+            .build();
+
+        // Open menu - loader succeeds but renderer will fail
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+
+        // Verify failingPane was cleared (slots 0-8, all should be null)
+        for (int slot = 0; slot < 9; slot++) {
+            assertThat(inventory.getItem(slot))
+                .as("Slot %d in failingPane should be cleared after error", slot)
+                .isNull();
+        }
+
+        // Verify workingPane still rendered (slot 9 should have the gold ingot)
+        assertThat(inventory.getItem(9))
+            .as("Slot 9 in workingPane should have item despite other pane failing")
+            .isNotNull();
+        assertThat(inventory.getItem(9).getType())
+            .isEqualTo(Material.GOLD_INGOT);
     }
 }

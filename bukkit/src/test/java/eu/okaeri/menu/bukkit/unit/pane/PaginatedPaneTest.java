@@ -3,8 +3,10 @@ package eu.okaeri.menu.bukkit.unit.pane;
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.item.MenuItem;
+import eu.okaeri.menu.pagination.ItemFilter;
 import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -614,5 +616,107 @@ class PaginatedPaneTest {
         MenuContext context = new MenuContext(this.menu, this.player);
         assertThatCode(() -> pane.render(this.inventory, context))
             .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Exception in filter value extraction should clear pane but not crash menu")
+    void testFilterExtractionErrorHandling() {
+        Menu testMenu = Menu.builder(this.plugin)
+            .title("Error Test Menu")
+            .rows(4)
+            .pane("failingFilters", StaticPane.staticPane()
+                .name("failingFilters")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.BARRIER)
+                    .filter(ItemFilter.builder()
+                        .target("failingPane")
+                        .id("broken")
+                        .value(() -> {
+                            throw new RuntimeException("Filter value extraction failed!");
+                        })
+                        .build())
+                    .build())
+                .build())
+            .pane("failingPane", pane(String.class)
+                .name("failingPane")
+                .bounds(0, 1, 9, 1)
+                .items(Arrays.asList("Should", "Not", "Appear"))
+                .renderer((item, index) -> MenuItem.item()
+                    .material(Material.DIAMOND)
+                    .build())
+                .build())
+            .pane("workingPane", StaticPane.staticPane()
+                .name("workingPane")
+                .bounds(0, 2, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.EMERALD)
+                    .name("Working Item")
+                    .build())
+                .build())
+            .build();
+
+        // Open menu - should not throw exception
+        testMenu.open(this.player);
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+
+        // Verify failingPane was cleared (slots 9-17, all should be null)
+        for (int slot = 9; slot < 18; slot++) {
+            assertThat(inventory.getItem(slot))
+                .as("Slot %d in failingPane should be cleared after error", slot)
+                .isNull();
+        }
+
+        // Verify workingPane still rendered (slot 18 should have the emerald)
+        assertThat(inventory.getItem(18))
+            .as("Slot 18 in workingPane should have item despite other pane failing")
+            .isNotNull();
+        assertThat(inventory.getItem(18).getType())
+            .isEqualTo(Material.EMERALD);
+    }
+
+    @Test
+    @DisplayName("Exception in item renderer should clear pane but not crash menu")
+    void testRendererErrorHandling() {
+        Menu testMenu = Menu.builder(this.plugin)
+            .title("Renderer Error Test")
+            .rows(3)
+            .pane("failingPane", pane(String.class)
+                .name("failingPane")
+                .bounds(0, 0, 9, 1)
+                .items(Arrays.asList("A", "B", "C"))
+                .renderer((item, index) -> {
+                    throw new RuntimeException("Renderer failed!");
+                })
+                .build())
+            .pane("workingPane", StaticPane.staticPane()
+                .name("workingPane")
+                .bounds(0, 1, 9, 1)
+                .item(0, 0, MenuItem.item()
+                    .material(Material.GOLD_INGOT)
+                    .name("Working Item")
+                    .build())
+                .build())
+            .build();
+
+        // Open menu - should not throw exception
+        testMenu.open(this.player);
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+
+        // Verify failingPane was cleared (slots 0-8, all should be null)
+        for (int slot = 0; slot < 9; slot++) {
+            assertThat(inventory.getItem(slot))
+                .as("Slot %d in failingPane should be cleared after error", slot)
+                .isNull();
+        }
+
+        // Verify workingPane still rendered (slot 9 should have the gold ingot)
+        assertThat(inventory.getItem(9))
+            .as("Slot 9 in workingPane should have item despite other pane failing")
+            .isNotNull();
+        assertThat(inventory.getItem(9).getType())
+            .isEqualTo(Material.GOLD_INGOT);
     }
 }

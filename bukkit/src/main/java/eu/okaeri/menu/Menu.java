@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 /**
  * Represents a menu with pane-based layout.
@@ -238,13 +239,25 @@ public class Menu implements InventoryHolder {
 
     /**
      * Renders all panes into the inventory.
+     * If a pane fails to render, it's cleared and the error is logged,
+     * but other panes continue rendering normally.
      *
      * @param inventory The inventory to render into
      * @param context   The reactive context
      */
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
         for (Pane pane : this.panes.values()) {
-            pane.render(inventory, context);
+            try {
+                pane.render(inventory, context);
+            } catch (Exception exception) {
+                // Log error with pane name for debugging
+                this.plugin.getLogger().log(Level.WARNING,
+                    "Exception rendering pane '" + pane.getName() + "', clearing pane bounds",
+                    exception);
+
+                // Clear the pane's slots to show empty (safe fallback)
+                pane.getBounds().slots().clear(inventory);
+            }
         }
     }
 
