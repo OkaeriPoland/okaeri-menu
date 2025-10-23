@@ -8,6 +8,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.time.Duration;
+
 /**
  * Test plugin for manual testing of the menu system.
  * Provides commands to open all example menus.
@@ -68,6 +70,8 @@ public class MenuTestPlugin extends JavaPlugin {
             sendColoredMessage(player, "&7  /menu datetime - Date/time title");
             sendColoredMessage(player, "&e&lAsync Examples:");
             sendColoredMessage(player, "&7  /menu async - Async shop with loading states");
+            sendColoredMessage(player, "&7  /menu wait - Wait-for-data mode (legacy behavior)");
+            sendColoredMessage(player, "&7  /menu waitimmediate - Immediate mode comparison");
             return true;
         }
 
@@ -174,6 +178,16 @@ public class MenuTestPlugin extends JavaPlugin {
                     AsyncShopExample.createAsyncShopMenu(this, player).open(player);
                     sendColoredMessage(player, "&aOpened async shop menu");
                     sendColoredMessage(player, "&7Watch the loading states and async balance!");
+                }
+                case "wait" -> {
+                    WaitForDataExample.createAsyncShopMenu(this).open(player, Duration.ofSeconds(3));
+                    sendColoredMessage(player, "&aOpened menu in WAIT mode");
+                    sendColoredMessage(player, "&7Menu opened after data loaded (legacy behavior)");
+                }
+                case "waitimmediate" -> {
+                    WaitForDataExample.createAsyncShopMenu(this).open(player);
+                    sendColoredMessage(player, "&aOpened menu in IMMEDIATE mode");
+                    sendColoredMessage(player, "&7Menu shows loading states (modern behavior)");
                 }
                 default -> {
                     sendColoredMessage(player, "&cUnknown example: " + args[0]);

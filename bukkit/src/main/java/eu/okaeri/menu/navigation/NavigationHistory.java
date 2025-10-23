@@ -4,6 +4,7 @@ import eu.okaeri.menu.Menu;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -68,7 +69,7 @@ public final class NavigationHistory {
         }
 
         // Open the menu
-        menu.open(player);
+        menu.open((Player) player);
     }
 
     /**
@@ -102,7 +103,7 @@ public final class NavigationHistory {
         MenuSnapshot previous = stack.peek();
 
         // Open previous menu (don't add to history again)
-        previous.getMenu().open(player);
+        previous.getMenu().open((Player) player);
         return true;
     }
 

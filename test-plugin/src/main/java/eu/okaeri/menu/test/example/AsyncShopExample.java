@@ -89,7 +89,7 @@ public class AsyncShopExample {
                 .bounds(0, 0, 2, 1)
                 .item(0, 0, AsyncMenuItem.itemAsync()
                     .key("balance-item")
-                    .data(() -> {
+                    .data(ctx -> {
                         // Simulate async balance lookup from database
                         try {
                             Thread.sleep(ThreadLocalRandom.current().nextInt(300, 800));

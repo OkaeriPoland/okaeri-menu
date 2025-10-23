@@ -2,10 +2,14 @@ package eu.okaeri.menu;
 
 import eu.okaeri.menu.async.AsyncCache;
 import eu.okaeri.menu.async.AsyncExecutor;
+import eu.okaeri.menu.item.AsyncMenuItem;
+import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.message.DefaultMessageProvider;
 import eu.okaeri.menu.message.MessageProvider;
 import eu.okaeri.menu.navigation.NavigationHistory;
 import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.pane.AbstractPane;
+import eu.okaeri.menu.pane.AsyncPaginatedPane;
 import eu.okaeri.menu.pane.Pane;
 import eu.okaeri.menu.pane.PaneBounds;
 import eu.okaeri.menu.reactive.ReactiveProperty;
@@ -15,15 +19,13 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.plugin.Plugin;
 
 import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -112,11 +114,43 @@ public class Menu implements InventoryHolder {
     }
 
     /**
-     * Opens this menu for a player.
+     * Opens this menu for a player immediately.
+     * Async data will show loading states and load in the background.
      *
      * @param player The player to open the menu for
      */
-    public void open(@NonNull HumanEntity player) {
+    public void open(@NonNull Player player) {
+        this.openImmediate(player);
+    }
+
+    /**
+     * Opens this menu for a player after waiting for async data to load.
+     * Waits until all AsyncPaginatedPane and AsyncMenuItem instances are SUCCESS or ERROR,
+     * or until timeout expires.
+     * <p>
+     * This is useful for backwards compatibility with legacy code that expects
+     * data to be loaded before the inventory opens.
+     *
+     * @param player  The player to open the menu for
+     * @param timeout Maximum time to wait for data (e.g., Duration.ofSeconds(3))
+     */
+    public void open(@NonNull Player player, @NonNull Duration timeout) {
+        // Collect all async cache keys
+        List<String> asyncCacheKeys = this.collectAsyncCacheKeys();
+
+        if (asyncCacheKeys.isEmpty()) {
+            // No async components - just open immediately
+            this.openImmediate(player);
+            return;
+        }
+
+        this.openWithWait(player, asyncCacheKeys, timeout);
+    }
+
+    /**
+     * Opens menu immediately (current behavior).
+     */
+    private void openImmediate(@NonNull Player player) {
         MenuContext context = new MenuContext(this, player);
 
         // Start update task if this is the first viewer
@@ -145,6 +179,61 @@ public class Menu implements InventoryHolder {
         if (isFirstViewer && (this.updateTask != null) && !this.updateTask.isRunning()) {
             this.updateTask.start();
         }
+    }
+
+    /**
+     * Collects all async cache keys from AsyncPaginatedPane and AsyncMenuItem instances.
+     *
+     * @return List of cache keys to wait for
+     */
+    @NonNull
+    private List<String> collectAsyncCacheKeys() {
+        List<String> cacheKeys = new ArrayList<>();
+
+        for (Pane pane : this.panes.values()) {
+            // Check if pane itself is async
+            if (pane instanceof AsyncPaginatedPane<?> asyncPane) {
+                cacheKeys.add(asyncPane.getName());
+            }
+
+            // Check for AsyncMenuItem in static items
+            if (pane instanceof AbstractPane abstractPane) {
+                for (MenuItem menuItem : abstractPane.getFilteringItems().values()) {
+                    if (menuItem instanceof AsyncMenuItem asyncItem) {
+                        cacheKeys.add(asyncItem.getCacheKey());
+                    }
+                }
+            }
+        }
+
+        return cacheKeys;
+    }
+
+    /**
+     * Opens menu after waiting for async data to load.
+     * Polls using scheduler until all async components are ready or timeout.
+     */
+    private void openWithWait(@NonNull Player player, @NonNull List<String> asyncCacheKeys, @NonNull Duration timeout) {
+        MenuContext context = new MenuContext(this, player);
+
+        // Create viewer state (but don't open inventory yet)
+        ViewerState state = this.viewerStates.computeIfAbsent(player.getUniqueId(), uuid -> {
+            String titleTemplate = this.title.get(context);
+            // Process title through MessageProvider for color support
+            Component titleComponent = this.messageProvider.resolve(player, titleTemplate, Map.of());
+            String invTitle = LegacyComponentSerializer.legacySection().serialize(titleComponent);
+            Inventory inv = Bukkit.createInventory(this, this.rows * 9, invTitle);
+            return new ViewerState(inv, this.asyncExecutor);
+        });
+
+        // Trigger initial render to start async loads
+        // This will call AsyncPaginatedPane.render() and AsyncMenuItem.render()
+        // which internally call context.loadAsync() if data not cached
+        Inventory inventory = state.getInventory();
+        this.render(inventory, context);
+
+        // Schedule polling task to check for completion
+        new WaitForDataTask(this, player, asyncCacheKeys, timeout, state).start();
     }
 
     /**

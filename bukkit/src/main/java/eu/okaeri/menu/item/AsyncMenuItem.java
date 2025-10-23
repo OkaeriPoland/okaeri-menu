@@ -9,7 +9,6 @@ import org.bukkit.inventory.ItemStack;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * MenuItem with async data loading and suspense states.
@@ -19,7 +18,7 @@ import java.util.function.Supplier;
  * <pre>{@code
  * MenuItem.async()
  *     .key("player-stats")  // Optional, auto-generated if not set
- *     .data(() -> database.getPlayerStats(player))
+ *     .data(ctx -> database.getPlayerStats(ctx.getEntity().getName()))
  *     .ttl(Duration.ofSeconds(30))
  *     .loading(MenuItem.builder()
  *         .material(Material.GRAY_STAINED_GLASS_PANE)
@@ -41,7 +40,7 @@ import java.util.function.Supplier;
 public class AsyncMenuItem extends MenuItem {
 
     private final String cacheKey;
-    private final Supplier<?> asyncLoader;
+    private final Function<MenuContext, ?> asyncLoader;
     private final Duration ttl;
     private final MenuItem loadingState;
     private final Function<Throwable, MenuItem> errorStateFactory;
@@ -58,6 +57,16 @@ public class AsyncMenuItem extends MenuItem {
         this.loadingState = builder.loadingState;
         this.errorStateFactory = builder.errorStateFactory;
         this.successStateFactory = builder.successStateFactory;
+    }
+
+    /**
+     * Gets the cache key for this async menu item.
+     *
+     * @return The cache key
+     */
+    @NonNull
+    public String getCacheKey() {
+        return this.cacheKey;
     }
 
     /**
@@ -81,7 +90,8 @@ public class AsyncMenuItem extends MenuItem {
         if ((asyncState == null) || cache.isExpired(this.cacheKey)) {
             // Start async load (or background reload if stale data exists)
             // AsyncCache handles stale-while-revalidate: keeps showing old data during reload
-            context.loadAsync(this.cacheKey, this.asyncLoader, this.ttl);
+            // Wrap Function<MenuContext, ?> as Supplier<?> by applying context
+            context.loadAsync(this.cacheKey, () -> this.asyncLoader.apply(context), this.ttl);
             // Re-check state after starting load
             asyncState = cache.getState(this.cacheKey);
         }
@@ -155,7 +165,7 @@ public class AsyncMenuItem extends MenuItem {
 
     public static class Builder {
         private String cacheKey = "async-item-" + UUID.randomUUID();  // Auto-generate
-        private Supplier<?> asyncLoader;
+        private Function<MenuContext, ?> asyncLoader;
         private Duration ttl = Duration.ofSeconds(30);  // Default TTL
         private MenuItem loadingState;
         private Function<Throwable, MenuItem> errorStateFactory;
@@ -175,14 +185,14 @@ public class AsyncMenuItem extends MenuItem {
         }
 
         /**
-         * Sets the async data loader.
+         * Sets the async data loader with context.
          *
-         * @param loader The supplier that loads data asynchronously
+         * @param loader The function that loads data asynchronously using MenuContext
          * @param <T>    The data type
          * @return This builder
          */
         @NonNull
-        public <T> Builder data(@NonNull Supplier<T> loader) {
+        public <T> Builder data(@NonNull Function<MenuContext, T> loader) {
             this.asyncLoader = loader;
             return this;
         }
