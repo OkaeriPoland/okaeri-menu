@@ -43,6 +43,7 @@ import java.util.function.Predicate;
  * }
  * }</pre>
  */
+@SuppressWarnings("FieldNamingConvention")
 @FunctionalInterface
 public interface FilterStrategy {
 
@@ -64,6 +65,11 @@ public interface FilterStrategy {
                 }
                 return true;  // All active filters passed
             };
+        }
+
+        @Override
+        public @NonNull String getName() {
+            return "AND";
         }
     };
 
@@ -90,6 +96,11 @@ public interface FilterStrategy {
                 return !hasActiveFilters;  // No active filters = pass all
             };
         }
+
+        @Override
+        public @NonNull String getName() {
+            return "OR";
+        }
     };
 
     /**
@@ -107,4 +118,14 @@ public interface FilterStrategy {
      * @return Combined predicate that tests items against active filters
      */
     <T> @NonNull Predicate<T> combine(@NonNull Collection<ItemFilter<T>> filters);
+
+    /**
+     * Gets the name of this filter strategy.
+     * Used for display purposes in UIs and debugging.
+     *
+     * @return The strategy name (e.g., "AND", "OR", or custom name)
+     */
+    default @NonNull String getName() {
+        return "CUSTOM";
+    }
 }

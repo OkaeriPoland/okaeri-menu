@@ -147,7 +147,7 @@ public class AsyncShopExample {
                                 "filtered_items", state.filtered().size(),
                                 "showing_items", state.currentPage().size(),
                                 "active_filters", ctx.pagination("shop-pane").getActiveFilterCount(),
-                                "strategy", ctx.pagination("shop-pane").getFilterStrategy().name()
+                                "strategy", ctx.pagination("shop-pane").getFilterStrategy().getName()
                             ))
                             .orElse(Map.of(
                                 "total_items", "?",
@@ -354,7 +354,7 @@ public class AsyncShopExample {
                             <gray>OR: Any filter can match
                             
                             <yellow>Click to toggle!""",
-                        ctx -> Map.of("strategy", ctx.pagination("shop-pane").getFilterStrategy().name()))
+                        ctx -> Map.of("strategy", ctx.pagination("shop-pane").getFilterStrategy().getName()))
                     .onClick(ctx -> {
                         PaginationContext<ShopItem> pagination = ctx.pagination("shop-pane");
 
@@ -364,7 +364,7 @@ public class AsyncShopExample {
                             : FilterStrategy.AND;
                         pagination.setFilterStrategy(newStrategy);
 
-                        ctx.sendMessage("<yellow>Filter strategy changed to: <white>" + newStrategy.name());
+                        ctx.sendMessage("<yellow>Filter strategy changed to: <white>" + newStrategy.getName());
                         ctx.playSound(Sound.BLOCK_NOTE_BLOCK_BELL, 0.5f, 1.0f);
                         ctx.refresh();
                     })
