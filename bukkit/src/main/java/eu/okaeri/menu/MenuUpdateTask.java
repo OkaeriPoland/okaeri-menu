@@ -1,8 +1,9 @@
 package eu.okaeri.menu;
 
+import eu.okaeri.menu.state.ViewerState;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.Synchronized;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -15,14 +16,22 @@ import java.util.logging.Level;
 
 /**
  * Handles automatic periodic updates for menus with reactive properties.
- * Refreshes the menu at the specified interval for all viewers.
+ * Runs every tick and refreshes viewers if any of:
+ * 1. State changed (dirty flag)
+ * 2. Update interval elapsed since last refresh
+ * 3. Async cache has expired entries (for reactive TTL polling)
  */
-@RequiredArgsConstructor
 public class MenuUpdateTask {
 
-    private final @NonNull Menu menu;
-    private final @NonNull Plugin plugin;
-    private final @NonNull Duration updateInterval;
+    private final Menu menu;
+    private final Plugin plugin;
+    private final Duration updateInterval;
+
+    public MenuUpdateTask(@NonNull Menu menu) {
+        this.menu = menu;
+        this.plugin = menu.getPlugin();
+        this.updateInterval = menu.getUpdateInterval();
+    }
 
     @Getter
     private BukkitTask task;
@@ -30,18 +39,13 @@ public class MenuUpdateTask {
 
     /**
      * Starts the update task.
+     * Task runs every tick and checks both dirty flag and interval elapsed.
      */
+    @Synchronized
     public void start() {
-        if (this.running || (this.updateInterval == null)) {
+        if (this.running) {
             return;
         }
-
-        long ticks = this.updateInterval.toMillis() / 50; // Convert milliseconds to ticks (50ms = 1 tick)
-        if (ticks <= 0) {
-            ticks = 1; // Minimum 1 tick
-        }
-
-        long intervalTicks = ticks;
 
         this.task = new BukkitRunnable() {
             @Override
@@ -53,7 +57,7 @@ public class MenuUpdateTask {
                     MenuUpdateTask.this.plugin.getLogger().log(Level.WARNING, "Exception during menu auto-update", exception);
                 }
             }
-        }.runTaskTimer(this.plugin, intervalTicks, intervalTicks);
+        }.runTaskTimer(this.plugin, 1L, 1L);  // Run every tick
 
         this.running = true;
         this.plugin.getLogger().fine("Started menu update task with interval: " + this.updateInterval);
@@ -78,6 +82,7 @@ public class MenuUpdateTask {
 
     /**
      * Updates the menu for all current viewers.
+     * Refreshes viewers if any condition is met: dirty, interval elapsed, or expired async cache.
      */
     private void updateMenu() {
         // Get all viewers (copy to avoid concurrent modification)
@@ -89,12 +94,27 @@ public class MenuUpdateTask {
             return;
         }
 
-        // Refresh for each viewer
+        // Refresh viewers based on three conditions
         for (UUID viewerId : viewerIds) {
             Player player = Bukkit.getPlayer(viewerId);
             if ((player != null) && player.isOnline()) {
                 try {
-                    this.menu.refresh(player);
+                    ViewerState state = this.menu.getViewerState(viewerId);
+                    if (state == null) {
+                        continue;
+                    }
+
+                    // Check three conditions for refresh:
+                    // 1. State changed (dirty flag)
+                    // 2. Update interval elapsed (if configured)
+                    // 3. Async cache has expired entries (for reactive TTL polling)
+                    boolean dirty = state.isDirtyAndClear();
+                    boolean intervalElapsed = (this.updateInterval != null) && state.isIntervalElapsed(this.updateInterval);
+                    boolean hasExpiredAsync = state.hasExpiredAsyncData();
+
+                    if (dirty || intervalElapsed || hasExpiredAsync) {
+                        this.menu.refresh(player);
+                    }
                 } catch (Exception exception) {
                     this.plugin.getLogger().log(Level.WARNING, "Exception refreshing menu for player " + player.getName(), exception);
                 }

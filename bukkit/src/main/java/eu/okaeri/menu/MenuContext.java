@@ -77,12 +77,7 @@ public class MenuContext {
      */
     public void refresh() {
         Plugin plugin = this.menu.getPlugin();
-        if (plugin != null) {
-            Bukkit.getScheduler().runTask(plugin, () -> this.menu.refresh(this.entity));
-        } else {
-            // Fallback: immediate refresh (may cause issues with interactive slots)
-            this.menu.refresh(this.entity);
-        }
+        Bukkit.getScheduler().runTask(plugin, () -> this.menu.refresh(this.entity));
     }
 
     /**
@@ -92,12 +87,7 @@ public class MenuContext {
      */
     public void refreshPane(@NonNull String paneName) {
         Plugin plugin = this.menu.getPlugin();
-        if (plugin != null) {
-            Bukkit.getScheduler().runTask(plugin, () -> this.menu.refreshPane(this.entity, paneName));
-        } else {
-            // Fallback: immediate refresh (may cause issues with interactive slots)
-            this.menu.refreshPane(this.entity, paneName);
-        }
+        Bukkit.getScheduler().runTask(plugin, () -> this.menu.refreshPane(this.entity, paneName));
     }
 
     /**
@@ -410,31 +400,7 @@ public class MenuContext {
         if (state == null) {
             return CompletableFuture.failedFuture(new IllegalStateException("ViewerState not found"));
         }
-
-        AsyncCache cache = state.getAsyncCache();
-
-        // Get or start load (prevents duplicate loads)
-        CompletableFuture<T> future = cache.getOrStartLoad(key, loader, ttl);
-
-        // On completion, refresh menu on server thread
-        future.whenComplete((value, error) -> {
-            if (error != null) {
-                cache.setError(key, error);
-            } else {
-                cache.put(key, value, ttl);
-            }
-
-            // Schedule refresh on server thread
-            Plugin plugin = this.menu.getPlugin();
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                // Only refresh if player still viewing this menu
-                if (this.menu.getViewerState(this.entity.getUniqueId()) != null) {
-                    this.menu.refresh(this.entity);
-                }
-            });
-        });
-
-        return future;
+        return state.getAsyncCache().getOrStartLoad(key, loader, ttl);
     }
 
     // ========================================

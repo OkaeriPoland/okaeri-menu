@@ -71,6 +71,20 @@ public class PaginationContext<T> {
     }
 
     /**
+     * Marks the viewer's state as dirty for update interval refresh.
+     * Called automatically when pagination state changes.
+     */
+    private void invalidate() {
+        if (this.context != null) {
+            ViewerState state = this.context.getMenu().getViewerState(this.context.getEntity().getUniqueId());
+            if (state == null) {
+                return;
+            }
+            state.invalidate();
+        }
+    }
+
+    /**
      * Gets all items (reactive - reads from pane on-demand).
      * For AsyncPaginatedPane, this reads from the current AtomicReference value.
      *
@@ -165,6 +179,7 @@ public class PaginationContext<T> {
             : ("filter-" + System.identityHashCode(filter));
         this.filters.put(filterId, (ItemFilter<T>) filter);
         this.currentPage = 0; // Reset to first page when filters change
+        this.invalidate();
     }
 
     /**
@@ -182,6 +197,7 @@ public class PaginationContext<T> {
 
         this.filters.put(filterId, builder.build());
         this.currentPage = 0; // Reset to first page when filters change
+        this.invalidate();
     }
 
     /**
@@ -200,6 +216,7 @@ public class PaginationContext<T> {
 
         this.filters.put(filterId, builder.build());
         this.currentPage = 0; // Reset to first page when filters change
+        this.invalidate();
     }
 
     /**
@@ -220,6 +237,7 @@ public class PaginationContext<T> {
 
         this.filters.put(filterId, builder.build());
         this.currentPage = 0; // Reset to first page when filters change
+        this.invalidate();
     }
 
     /**
@@ -230,6 +248,7 @@ public class PaginationContext<T> {
     public void removeFilter(@NonNull String filterId) {
         this.filters.remove(filterId);
         this.currentPage = 0; // Reset to first page when filters change
+        this.invalidate();
     }
 
     /**
@@ -329,6 +348,7 @@ public class PaginationContext<T> {
     public void clearFilters() {
         this.filters.clear();
         this.currentPage = 0;
+        this.invalidate();
     }
 
     /**
@@ -338,6 +358,7 @@ public class PaginationContext<T> {
      */
     public void setFilterStrategy(FilterStrategy strategy) {
         this.filterStrategy = (strategy != null) ? strategy : FilterStrategy.AND;
+        this.invalidate();
     }
 
     /**
@@ -477,6 +498,7 @@ public class PaginationContext<T> {
             return false;
         }
         this.currentPage = page;
+        this.invalidate();
         return true;
     }
 
@@ -503,6 +525,7 @@ public class PaginationContext<T> {
      */
     public void firstPage() {
         this.currentPage = 0;
+        this.invalidate();
     }
 
     /**
@@ -510,6 +533,7 @@ public class PaginationContext<T> {
      */
     public void lastPage() {
         this.currentPage = Math.max(0, this.getTotalPages() - 1);
+        this.invalidate();
     }
 
     /**

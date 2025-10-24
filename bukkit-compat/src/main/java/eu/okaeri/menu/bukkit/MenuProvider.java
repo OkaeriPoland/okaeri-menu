@@ -1,7 +1,6 @@
 package eu.okaeri.menu.bukkit;
 
 import eu.okaeri.menu.Menu;
-import eu.okaeri.menu.MenuListener;
 import eu.okaeri.menu.bukkit.display.DisplayProvider;
 import eu.okaeri.menu.bukkit.meta.MenuInputMeta;
 import eu.okaeri.menu.bukkit.meta.MenuItemMeta;
@@ -10,20 +9,18 @@ import eu.okaeri.menu.item.AsyncMenuItem;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.pane.PaneBounds;
 import eu.okaeri.menu.pane.StaticPane;
+import eu.okaeri.menu.state.ViewerState;
 import lombok.*;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static eu.okaeri.menu.pane.StaticPane.staticPane;
 
@@ -47,7 +44,6 @@ import static eu.okaeri.menu.pane.StaticPane.staticPane;
 public class MenuProvider {
 
     private final Plugin plugin;
-    // knownMenuMap removed - v2 uses inventory holder for tracking
     private @Getter @Setter boolean warnUnoptimizedRender = false;
 
     /**
@@ -74,123 +70,27 @@ public class MenuProvider {
      * @return a new MenuProvider
      */
     public static MenuProvider create(@NonNull Plugin plugin, int updateTicks) {
-        MenuProvider provider = new MenuProvider(plugin);
-
-        // Register v2 MenuListener to handle events for v2 menus
-        MenuListener.register(plugin);
-
-        return provider;
-    }
-
-    /**
-     * Tracks a menu instance.
-     * <p>
-     * In v2 translation layer, this is a no-op. v2 uses inventory holders for tracking.
-     *
-     * @param inventory the inventory to track (ignored)
-     * @param menuInstance the menu instance to associate with the inventory (ignored)
-     * @deprecated No longer needed in v2 - inventory holder is used for tracking
-     */
-    @Deprecated
-    public void trackInstance(@NonNull Inventory inventory, @NonNull MenuInstance menuInstance) {
-        // No-op - v2 uses inventory holder for tracking
-    }
-
-    /**
-     * Checks if an inventory is a tracked menu instance.
-     * <p>
-     * In v2 translation layer, checks if inventory holder is a Menu instance.
-     *
-     * @param inventory the inventory to check
-     * @return true if this inventory is a v2 menu, false otherwise
-     */
-    public boolean knowsInstance(@NonNull Inventory inventory) {
-        return inventory.getHolder() instanceof Menu;
-    }
-
-    /**
-     * Finds the menu instance associated with an inventory.
-     * <p>
-     * In v2 translation layer, always returns empty as MenuInstance wrappers
-     * are not tracked. Use the inventory holder (Menu) directly instead.
-     *
-     * @param inventory the inventory to look up
-     * @return always empty in v2 translation layer
-     * @deprecated v2 uses inventory holder (Menu) directly
-     */
-    @Deprecated
-    public Optional<MenuInstance> findInstance(@NonNull Inventory inventory) {
-        return Optional.empty(); // v2 doesn't track MenuInstance wrappers
-    }
-
-    /**
-     * Removes and closes a menu instance.
-     * <p>
-     * In v2 translation layer, this simply closes the menu for all viewers.
-     * No tracking removal needed as v2 doesn't track instances.
-     *
-     * @param instance the menu instance to remove
-     */
-    public void removeInstance(@NonNull MenuInstance instance) {
-        this.close(instance);
-        // No tracking removal - v2 uses inventory holder
-    }
-
-    /**
-     * Removes a menu instance by its inventory.
-     * <p>
-     * In v2 translation layer, this is a no-op as instances are not tracked.
-     *
-     * @param inventory the inventory to remove (ignored)
-     * @return always null in v2 translation layer
-     * @deprecated v2 doesn't track MenuInstance wrappers
-     */
-    @Deprecated
-    @Nullable
-    public MenuInstance removeInstance(@NonNull Inventory inventory) {
-        return null; // v2 doesn't track instances
-    }
-
-    /**
-     * Schedules an update for all menu instances.
-     * <p>
-     * In v2 translation layer, this is a no-op. v2 Menu handles update intervals natively.
-     *
-     * @deprecated v2 handles menu updates automatically via update intervals
-     */
-    @Deprecated
-    public void update() {
-        // No-op - v2 handles updates via Menu.updateInterval()
-    }
-
-    /**
-     * Updates all menu instances based on their update intervals.
-     * <p>
-     * In v2 translation layer, this is a no-op. v2 Menu handles update intervals natively.
-     *
-     * @param lastRenderAsync whether this update is running asynchronously (ignored)
-     * @deprecated v2 handles menu updates automatically via update intervals
-     */
-    @Deprecated
-    public void update(boolean lastRenderAsync) {
-        // No-op - v2 handles updates via Menu.updateInterval()
+        return new MenuProvider(plugin);
     }
 
     /**
      * Renders the currently open menu for a viewer.
      * <p>
-     * In the v2 translation layer, this delegates to Menu.refresh() for any v2 menu
-     * the viewer currently has open.
+     * In v1, render() forced fresh data (no caching). This clears the async cache
+     * before refreshing to match v1 behavior.
      *
      * @param viewer the entity whose menu should be rendered
      */
     public void render(@NonNull HumanEntity viewer) {
         Inventory topInventory = viewer.getOpenInventory().getTopInventory();
-        if (topInventory.getHolder() instanceof Menu) {
-            ((Menu) topInventory.getHolder()).refresh(viewer);
-        } else {
-            // Fallback for v1 menus still using old system
-            this.findInstance(topInventory).ifPresent(instance -> instance.render(viewer));
+        if (topInventory.getHolder() instanceof Menu menu) {
+            // Clear async cache to force fresh data (v1 render() behavior)
+            ViewerState state = menu.getViewerState(viewer.getUniqueId());
+            if (state != null) {
+                state.getAsyncCache().clear();
+            }
+            // Refresh menu (will reload all async data)
+            menu.refresh(viewer);
         }
     }
 
@@ -284,7 +184,7 @@ public class MenuProvider {
 
         // Create v2 Menu.Builder
         Menu.Builder menuBuilder = Menu.builder(this.plugin)
-            .title(menu.getName() != null ? menu.getName() : "Menu")
+            .title((menu.getName() != null) ? menu.getName() : "Menu")
             .rows(rows);
 
         // Set update interval if present
@@ -407,45 +307,22 @@ public class MenuProvider {
             // Context provides access to the viewer, allowing viewer-specific rendering
             .data(ctx -> provider.displayFor(ctx.getEntity(), itemMeta))
 
-            // Loading state (hopper like v2 convention)
+            // Loading state - use Material.AIR to be invisible during load
             .loading(MenuItem.item()
-                .material(Material.LIGHT_GRAY_STAINED_GLASS)
+                .material(Material.GRAY_STAINED_GLASS_PANE)
                 .name(" ")
                 .build())
 
-            // Loaded state - extract all ItemStack properties
-            .loaded(data -> {
-                // Cast to ItemStack (DisplayProvider returns ItemStack)
-                ItemStack itemStack = (ItemStack) data;
-
-                if (itemStack == null) {
-                    return MenuItem.item()
-                        .material(Material.STONE)
-                        .build();
+            // Loaded state - use ItemStack directly (already formatted by v1 DisplayProvider)
+            .<ItemStack>loaded(stack -> {
+                if (stack == null) {
+                    return MenuItem.item().material(Material.AIR).build();
                 }
 
-                MenuItem.Builder builder = MenuItem.item()
-                    .material(itemStack.getType())
-                    .amount(itemStack.getAmount());
+                // This preserves the exact ItemStack from v1 DisplayProvider without re-processing
+                MenuItem.Builder builder = MenuItem.item().from(ctx -> stack);
 
-                // Extract name and lore if present
-                if (itemStack.hasItemMeta()) {
-                    ItemMeta meta = itemStack.getItemMeta();
-
-                    if (meta.hasDisplayName()) {
-                        builder.name(meta.getDisplayName());
-                    }
-
-                    if (meta.getLore() != null) {
-                        // Join lore lines with newlines (MenuItem.lore expects String template)
-                        String loreSingle = String.join("\n", meta.getLore());
-                        builder.lore(loreSingle);
-                    }
-
-                    // TODO: NBT extraction if needed in the future
-                }
-
-                // Add click handler to the loaded MenuItem
+                // Add click handler
                 if (itemMeta.getClickHandler() != null) {
                     builder.onClick(ctx -> {
                         // Create v1 MenuContext for backwards compatibility
@@ -467,17 +344,14 @@ public class MenuProvider {
                 return builder.build();
             })
 
-            // Error state
+            // Error state - v1 had no error states, would just crash
             .error(ex -> MenuItem.item()
-                .material(Material.BARRIER)
-                .name("&cError loading item")
-                .lore("&7" + ex.getMessage())
+                .material(Material.RED_STAINED_GLASS_PANE)
+                .name(" ")
                 .build())
 
-            // Cache for 10ms (v1 compatibility - effectively no caching)
             // v1 called DisplayProvider fresh every render
-            // 10ms allows async execution but expires by next tick
-            .ttl(Duration.ofMillis(10));
+            .ttl(Duration.ofMillis(200));
 
         // Click handler is added to the MenuItem returned from loaded() factory above
         return asyncBuilder.build();

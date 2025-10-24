@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.bukkit.inventory.Inventory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,10 +29,68 @@ public class ViewerState {
     private @NonNull final Map<String, PaginationContext<?>> paginationContexts = new ConcurrentHashMap<>();
     private @NonNull final Map<String, Optional<Object>> customState = new ConcurrentHashMap<>();
 
+    // Dirty flag for tracking state changes (used by MenuUpdateTask)
+    private volatile boolean dirty = false;
+
+    // Last refresh timestamp for interval-based updates
+    private volatile Instant lastRefreshTime = null;
+
     public ViewerState(@NonNull MenuContext context, @NonNull Inventory inventory, @NonNull AsyncExecutor asyncExecutor) {
         this.context = context;
         this.inventory = inventory;
-        this.asyncCache = new AsyncCache(asyncExecutor);
+        this.asyncCache = new AsyncCache(asyncExecutor, this);  // Pass reference for invalidation
+    }
+
+    /**
+     * Marks this viewer's state as dirty (needing refresh).
+     * Called automatically when async cache, pagination, or custom state changes.
+     */
+    public void invalidate() {
+        this.dirty = true;
+    }
+
+    /**
+     * Checks if dirty and clears the flag atomically.
+     * Used by MenuUpdateTask to determine if refresh is needed.
+     *
+     * @return true if was dirty (needs refresh)
+     */
+    public boolean isDirtyAndClear() {
+        boolean wasDirty = this.dirty;
+        this.dirty = false;
+        return wasDirty;
+    }
+
+    /**
+     * Checks if update interval has elapsed since last refresh.
+     *
+     * @param interval The update interval duration
+     * @return true if interval has passed
+     */
+    public boolean isIntervalElapsed(@NonNull Duration interval) {
+        if (this.lastRefreshTime == null) {
+            return true;  // Never refreshed
+        }
+        Instant nextRefreshTime = this.lastRefreshTime.plus(interval);
+        return Instant.now().isAfter(nextRefreshTime);
+    }
+
+    /**
+     * Records the current time as last refresh timestamp.
+     * Called by MenuUpdateTask after refreshing.
+     */
+    public void recordRefresh() {
+        this.lastRefreshTime = Instant.now();
+    }
+
+    /**
+     * Checks if any async cache entries have expired TTLs.
+     * Used by MenuUpdateTask to trigger refreshes for reactive data.
+     *
+     * @return true if any cached async data is expired
+     */
+    public boolean hasExpiredAsyncData() {
+        return this.asyncCache.hasExpiredEntries();
     }
 
     /**
@@ -133,9 +193,11 @@ public class ViewerState {
 
     /**
      * Sets state (supports null values).
+     * Marks viewer as dirty for update interval refresh.
      */
     public void setState(@NonNull String key, Object value) {
         this.customState.put(key, Optional.ofNullable(value));
+        this.invalidate(); // Mark dirty when state changes
     }
 
     /**

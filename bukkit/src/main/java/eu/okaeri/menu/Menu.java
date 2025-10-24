@@ -41,6 +41,9 @@ import java.util.logging.Level;
 @Getter
 public class Menu implements InventoryHolder {
 
+    // Per-viewer state (inventory + pagination contexts)
+    private final Map<UUID, ViewerState> viewerStates = new ConcurrentHashMap<>();
+
     private @NonNull final ReactiveProperty<String> title;
     private final int rows;
     private @NonNull final Map<String, Pane> panes = new LinkedHashMap<>();
@@ -50,14 +53,9 @@ public class Menu implements InventoryHolder {
     private @NonNull final MessageProvider messageProvider;
     private @NonNull final Map<String, Object> stateDefaults;
     private @NonNull final AsyncLoader asyncLoader;
+    private @NonNull final MenuUpdateTask updateTask;
 
-    // Per-viewer state (inventory + pagination contexts)
-    private final Map<UUID, ViewerState> viewerStates = new ConcurrentHashMap<>();
-
-    // Update task for automatic refresh
-    private MenuUpdateTask updateTask;
-
-    private Menu(Builder builder) {
+    private Menu(@NonNull Builder builder) {
         this.title = builder.title;
         this.rows = builder.rows;
         this.panes.putAll(builder.panes);
@@ -67,17 +65,13 @@ public class Menu implements InventoryHolder {
         this.messageProvider = (builder.messageProvider != null) ? builder.messageProvider : new DefaultMessageProvider();
         this.stateDefaults = builder.stateDefaults.isEmpty() ? Map.of() : Map.copyOf(builder.stateDefaults);
         this.asyncLoader = builder.asyncLoader;
+        this.updateTask = new MenuUpdateTask(this);
 
         // Auto-register MenuListener (idempotent - safe to call multiple times)
         MenuListener.register(this.plugin);
 
         // Start navigation history cleanup task (idempotent - safe to call multiple times)
         NavigationHistory.startCleanupTask(this.plugin);
-
-        // Create update task if interval is set
-        if (this.updateInterval != null) {
-            this.updateTask = new MenuUpdateTask(this, this.plugin, this.updateInterval);
-        }
     }
 
     /**
@@ -134,9 +128,6 @@ public class Menu implements InventoryHolder {
     private void openImmediate(@NonNull Player player) {
         MenuContext context = new MenuContext(this, player);
 
-        // Start update task if this is the first viewer
-        boolean isFirstViewer = this.viewerStates.isEmpty();
-
         // Create or get viewer state for this player
         ViewerState state = this.getOrCreateViewerState(player, context);
         Inventory inventory = state.getInventory();
@@ -150,9 +141,7 @@ public class Menu implements InventoryHolder {
         }
 
         // Start update task after opening (so it doesn't refresh before first render)
-        if (isFirstViewer && (this.updateTask != null) && !this.updateTask.isRunning()) {
-            this.updateTask.start();
-        }
+        this.updateTask.start();
     }
 
     /**
@@ -291,6 +280,9 @@ public class Menu implements InventoryHolder {
 
             // Re-render (use current inventory from state)
             this.render(state.getInventory(), context);
+
+            // Record refresh timestamp for interval tracking
+            state.recordRefresh();
         }
     }
 
@@ -422,6 +414,25 @@ public class Menu implements InventoryHolder {
         @NonNull
         public Builder title(@NonNull Function<MenuContext, String> function) {
             this.title = ReactiveProperty.ofContext(function);
+            return this;
+        }
+
+        /**
+         * Sets a localized title map that uses MessageProvider for locale lookup.
+         *
+         * @param localizedTitles Map of locale to title template
+         * @return This builder
+         * @throws IllegalArgumentException if map is empty
+         */
+        @NonNull
+        public Builder title(@NonNull Map<Locale, String> localizedTitles) {
+            if (localizedTitles.isEmpty()) {
+                throw new IllegalArgumentException("Localized titles map cannot be empty");
+            }
+            this.title = ReactiveProperty.ofContext(ctx -> {
+                Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), localizedTitles, Map.of());
+                return LegacyComponentSerializer.legacySection().serialize(component);
+            });
             return this;
         }
 

@@ -2,7 +2,6 @@ package eu.okaeri.menu.async;
 
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -16,11 +15,21 @@ import java.util.function.Supplier;
  * Per-viewer cache for async data with TTL support.
  * Thread-safe for concurrent access from async threads and server thread.
  */
-@RequiredArgsConstructor
 public class AsyncCache {
 
     private @NonNull final AsyncExecutor executor;
+    private final eu.okaeri.menu.state.ViewerState viewerState;  // Optional - for invalidation tracking
     private final Map<String, CacheEntry<?>> cache = new ConcurrentHashMap<>();
+
+    public AsyncCache(@NonNull AsyncExecutor executor) {
+        this.executor = executor;
+        this.viewerState = null;
+    }
+
+    public AsyncCache(@NonNull AsyncExecutor executor, eu.okaeri.menu.state.ViewerState viewerState) {
+        this.executor = executor;
+        this.viewerState = viewerState;
+    }
 
     /**
      * Gets cached value if available.
@@ -102,6 +111,7 @@ public class AsyncCache {
     /**
      * Puts a value into the cache with TTL.
      * Clears any background reload future since fresh data is now available.
+     * Marks ViewerState as dirty for menus with update intervals.
      *
      * @param key   The cache key
      * @param value The value to cache
@@ -116,10 +126,16 @@ public class AsyncCache {
         entry.state = AsyncState.SUCCESS;
         entry.loadingFuture = null;  // Clear reload future - fresh data now available
         this.cache.put(key, entry);
+
+        // Mark viewer dirty for update interval refresh
+        if (this.viewerState != null) {
+            this.viewerState.invalidate();
+        }
     }
 
     /**
      * Sets an error state for a cache key.
+     * Marks ViewerState as dirty for menus with update intervals.
      *
      * @param key   The cache key
      * @param error The error that occurred
@@ -129,6 +145,11 @@ public class AsyncCache {
         entry.error = error;
         entry.state = AsyncState.ERROR;
         this.cache.put(key, entry);
+
+        // Mark viewer dirty for update interval refresh
+        if (this.viewerState != null) {
+            this.viewerState.invalidate();
+        }
     }
 
     /**
@@ -171,8 +192,7 @@ public class AsyncCache {
                 // STALE-WHILE-REVALIDATE: Keep existing value, start background reload
                 @SuppressWarnings("unchecked")
                 CacheEntry<T> existingTyped = (CacheEntry<T>) existing;
-                CompletableFuture<T> future = this.executor.execute(loader);
-                existingTyped.loadingFuture = future;  // Attach reload future
+                existingTyped.loadingFuture = this.executor.execute(loader); // Attach reload future
                 // Keep state as SUCCESS and keep existing value
                 return existingTyped;
             }
@@ -185,6 +205,18 @@ public class AsyncCache {
             entry.ttl = ttl;
             return entry;
         });
+
+        // Attach completion handler AFTER compute() to avoid deadlock
+        // Only attach for actual loads (has loadingFuture), not cache hits
+        if (resultEntry.loadingFuture != null) {
+            resultEntry.loadingFuture.whenComplete((value, error) -> {
+                if (error != null) {
+                    this.setError(key, error);
+                } else {
+                    this.put(key, value, ttl);
+                }
+            });
+        }
 
         // Return appropriate future based on state
         if ((resultEntry.state == AsyncState.SUCCESS) && (resultEntry.loadingFuture == null)) {
@@ -204,6 +236,17 @@ public class AsyncCache {
             CompletableFuture<T> future = resultEntry.loadingFuture;
             return future;
         }
+    }
+
+    /**
+     * Checks if any cached entries have expired TTLs.
+     * Used by MenuUpdateTask to trigger refreshes for reactive data.
+     *
+     * @return true if any SUCCESS entries are expired
+     */
+    public boolean hasExpiredEntries() {
+        return this.cache.values().stream()
+            .anyMatch(entry -> (entry.state == AsyncState.SUCCESS) && this.isExpired(entry));
     }
 
     /**

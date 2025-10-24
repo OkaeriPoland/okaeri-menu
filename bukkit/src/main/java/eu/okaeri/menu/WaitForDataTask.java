@@ -127,10 +127,7 @@ class WaitForDataTask extends BukkitRunnable {
             this.player.openInventory(inventory);
         }
 
-        // Start update task if this is the first viewer
-        boolean isFirstViewer = this.menu.getViewerStates().size() == 1;
-        if (isFirstViewer && (this.menu.getUpdateTask() != null) && !this.menu.getUpdateTask().isRunning()) {
-            this.menu.getUpdateTask().start();
-        }
+        // Start update task (idempotent)
+        this.menu.getUpdateTask().start();
     }
 }

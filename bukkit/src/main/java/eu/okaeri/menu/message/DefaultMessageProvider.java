@@ -69,6 +69,7 @@ import java.util.regex.Pattern;
 public class DefaultMessageProvider implements MessageProvider {
 
     private static final Pattern SECTION_COLOR_PATTERN = Pattern.compile("§([0-9A-Fa-fK-Ok-oRrXx])");
+    private static final Pattern POST_PROCESS_PATTERN = Pattern.compile(".++", Pattern.DOTALL);
     private static final LegacyComponentSerializer SECTION_SERIALIZER = LegacyComponentSerializer.legacySection();
     private static final LegacyComponentSerializer AMPERSAND_SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
 
@@ -83,7 +84,7 @@ public class DefaultMessageProvider implements MessageProvider {
             .preProcessor(text -> SECTION_COLOR_PATTERN.matcher(text).replaceAll("&$1"))
             // Post-process to deserialize & codes after MiniMessage parsing
             .postProcessor(component -> component.replaceText(config -> config
-                .match(".*")
+                .match(POST_PROCESS_PATTERN)
                 .replacement((result, input) -> AMPERSAND_SERIALIZER.deserialize(result.group()))
             ))
             .build()
