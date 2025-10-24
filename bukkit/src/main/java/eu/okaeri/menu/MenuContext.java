@@ -13,7 +13,6 @@ import eu.okaeri.menu.state.ViewerState;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.HumanEntity;
@@ -120,8 +119,7 @@ public class MenuContext {
      * @param message The message template
      */
     public void sendMessage(@NonNull String message) {
-        Component component = this.menu.getMessageProvider().resolve(this.entity, message, Map.of());
-        this.entity.sendMessage(component);
+        this.sendMessage(message, Map.of());
     }
 
     /**
@@ -133,8 +131,7 @@ public class MenuContext {
      * @param vars    Variables for placeholder replacement
      */
     public void sendMessage(@NonNull String message, @NonNull Map<String, Object> vars) {
-        Component component = this.menu.getMessageProvider().resolve(this.entity, message, vars);
-        this.entity.sendMessage(component);
+        this.entity.sendMessage(this.menu.getMessageProvider().resolveSingle(this.entity, message, vars));
     }
 
     /**

@@ -481,7 +481,7 @@ public class MessageExample {
         }
 
         @Override
-        public @NonNull Component resolve(@NonNull HumanEntity viewer, @NonNull String template, @NonNull Map<String, Object> vars) {
+        public @NonNull List<Component> resolve(@NonNull HumanEntity viewer, @NonNull String template, @NonNull Map<String, Object> vars) {
             // Get player's locale (simplified - in real use, get from player settings)
             Locale locale = Locale.ENGLISH;
 

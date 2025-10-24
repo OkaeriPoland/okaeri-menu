@@ -4,8 +4,10 @@ import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.AsyncLoader;
 import eu.okaeri.menu.pagination.ItemFilter;
 import eu.okaeri.menu.reactive.ReactiveProperty;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -18,7 +20,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Represents a menu item with reactive properties.
@@ -29,8 +30,8 @@ public class MenuItem {
 
     private final ReactiveProperty<ItemStack> baseItem;
     private final ReactiveProperty<Material> material;
-    private final ReactiveProperty<String> name;
-    private final ReactiveProperty<List<String>> lore;
+    private final ReactiveProperty<Component> name;
+    private final ReactiveProperty<List<Component>> lore;
     private final ReactiveProperty<Integer> amount;
     private final ReactiveProperty<Boolean> visible;
     private final ReactiveProperty<Boolean> glint;
@@ -109,16 +110,16 @@ public class MenuItem {
 
         ItemMeta meta = stack.getItemMeta();
         if (meta != null) {
-            // Override name if set (empty string means keep base name)
-            String displayName = this.name.get(context);
-            if ((displayName != null) && !displayName.isEmpty()) {
-                meta.setDisplayName(displayName);
+            // Override name if set (Component.empty() means keep base name)
+            Component displayName = this.name.get(context);
+            if ((displayName != null) && !displayName.equals(Component.empty())) {
+                meta.displayName(displayName);
             }
 
             // Override lore if set (empty list means keep base lore)
-            List<String> loreLines = this.lore.get(context);
+            List<Component> loreLines = this.lore.get(context);
             if ((loreLines != null) && !loreLines.isEmpty()) {
-                meta.setLore(loreLines);
+                meta.lore(loreLines);
             }
 
             // Add enchantments (merge with base enchantments)
@@ -216,6 +217,17 @@ public class MenuItem {
     }
 
     /**
+     * Creates an empty placeholder item (AIR material).
+     * Useful for empty slots in menus where no item should be displayed.
+     *
+     * @return An empty MenuItem with AIR material
+     */
+    @NonNull
+    public static MenuItem empty() {
+        return new Builder().material(Material.AIR).build();
+    }
+
+    /**
      * Creates a builder for AsyncMenuItem with async data loading and suspense states.
      * Convenient shorthand for AsyncMenuItem.async().
      *
@@ -231,8 +243,8 @@ public class MenuItem {
 
         private ReactiveProperty<ItemStack> baseItem = ReactiveProperty.of((ItemStack) null);
         private ReactiveProperty<Material> material = ReactiveProperty.of(Material.AIR);
-        private ReactiveProperty<String> name = ReactiveProperty.of("");
-        private ReactiveProperty<List<String>> lore = ReactiveProperty.of(new ArrayList<>());
+        private ReactiveProperty<Component> name = ReactiveProperty.of(Component.empty());
+        private ReactiveProperty<List<Component>> lore = ReactiveProperty.of(new ArrayList<>());
         private ReactiveProperty<Integer> amount = ReactiveProperty.of(1);
         private ReactiveProperty<Boolean> visible = ReactiveProperty.of(true);
         private ReactiveProperty<Boolean> glint = ReactiveProperty.of(false);
@@ -290,45 +302,44 @@ public class MenuItem {
         }
 
         /**
-         * Helper method to resolve a name template using the menu's MessageProvider.
+         * Helper method to resolve a template using the menu's MessageProvider.
+         *
+         * @param ctx        The menu context
+         * @param template   The template string to resolve
+         * @param methodVars Optional method-level variables (can be null)
+         * @return List of resolved Components
          */
         @NonNull
-        private String resolveName(@NonNull MenuContext ctx, @NonNull String template, Map<String, Object> methodVars) {
+        private List<Component> resolve(@NonNull MenuContext ctx, @NonNull String template, Map<String, Object> methodVars) {
             Map<String, Object> vars = this.mergeVars(ctx, methodVars);
-            Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), template, vars);
-            return SERIALIZER.serialize(component);
+            return ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), template, vars);
         }
 
         /**
-         * Helper method to resolve a multiline lore template using the menu's MessageProvider.
+         * Helper method to resolve a locale map using the menu's MessageProvider.
+         *
+         * @param ctx        The menu context
+         * @param localeMap  The locale-to-template map
+         * @param methodVars Optional method-level variables (can be null)
+         * @return List of resolved Components
          */
         @NonNull
-        private List<String> resolveLore(@NonNull MenuContext ctx, @NonNull String template, Map<String, Object> methodVars) {
+        private List<Component> resolve(@NonNull MenuContext ctx, @NonNull Map<Locale, String> localeMap, Map<String, Object> methodVars) {
             Map<String, Object> vars = this.mergeVars(ctx, methodVars);
-            List<String> lines = List.of(template.split("\n"));
-            List<Component> components = ctx.getMenu().getMessageProvider().resolveList(ctx.getEntity(), lines, vars);
-            return components.stream()
-                .map(SERIALIZER::serialize)
-                .collect(Collectors.toList());
+            return ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), localeMap, vars);
         }
 
         /**
-         * Helper method to resolve a name from a locale map using the menu's MessageProvider.
+         * Helper method to join multiple Components into a single Component.
+         * If there's only one Component, returns it directly.
+         * Otherwise, joins with newlines.
+         *
+         * @param components The list of components to join
+         * @return A single Component
          */
         @NonNull
-        private String resolveNameFromLocaleMap(@NonNull MenuContext ctx, @NonNull Map<Locale, String> localeMap, Map<String, Object> methodVars) {
-            Map<String, Object> vars = this.mergeVars(ctx, methodVars);
-            Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), localeMap, vars);
-            return SERIALIZER.serialize(component);
-        }
-
-        /**
-         * Helper method to resolve lore from a locale map using the menu's MessageProvider.
-         * The locale-specific template is split into lines on {@code \n} character.
-         */
-        @NonNull
-        private List<String> resolveLoreFromLocaleMap(@NonNull MenuContext ctx, @NonNull Map<Locale, String> localeMap, Map<String, Object> methodVars) {
-            return List.of(this.resolveNameFromLocaleMap(ctx, localeMap, methodVars).split("\n"));
+        private Component joinComponents(@NonNull List<Component> components) {
+            return components.size() == 1 ? components.get(0) : Component.join(JoinConfiguration.newlines(), components);
         }
 
         // ========================================
@@ -456,7 +467,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull String template) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.resolveName(ctx, template, null));
+            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, template, null)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -471,7 +482,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull String template, Map<String, Object> vars) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.resolveName(ctx, template, vars));
+            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, template, vars)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -488,7 +499,7 @@ public class MenuItem {
         public Builder name(@NonNull String template, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
             this.name = ReactiveProperty.ofContext(ctx -> {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
-                return this.resolveName(ctx, template, vars);
+                return this.joinComponents(this.resolve(ctx, template, vars));
             });
             this.nameExplicitlySet = true;
             return this;
@@ -506,9 +517,9 @@ public class MenuItem {
             this.name = ReactiveProperty.ofContext(ctx -> {
                 String template = supplier.get();
                 if ((template == null) || template.isEmpty()) {
-                    return "";
+                    return Component.empty();
                 }
-                return this.resolveName(ctx, template, null);
+                return this.joinComponents(this.resolve(ctx, template, null));
             });
             this.nameExplicitlySet = true;
             return this;
@@ -523,7 +534,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull Function<MenuContext, String> function) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.resolveName(ctx, function.apply(ctx), null));
+            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, function.apply(ctx), null)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -546,7 +557,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull Map<Locale, String> localeMap) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.resolveNameFromLocaleMap(ctx, localeMap, null));
+            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, localeMap, null)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -569,7 +580,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull Map<Locale, String> localeMap, Map<String, Object> vars) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.resolveNameFromLocaleMap(ctx, localeMap, vars));
+            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, localeMap, vars)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -586,7 +597,7 @@ public class MenuItem {
         public Builder name(@NonNull Map<Locale, String> localeMap, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
             this.name = ReactiveProperty.ofContext(ctx -> {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
-                return this.resolveNameFromLocaleMap(ctx, localeMap, vars);
+                return this.joinComponents(this.resolve(ctx, localeMap, vars));
             });
             this.nameExplicitlySet = true;
             return this;
@@ -607,7 +618,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull String template) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLore(ctx, template, null));
+            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, template, null));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -622,7 +633,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull String template, Map<String, Object> vars) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLore(ctx, template, vars));
+            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, template, vars));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -639,7 +650,7 @@ public class MenuItem {
         public Builder lore(@NonNull String template, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
             this.lore = ReactiveProperty.ofContext(ctx -> {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
-                return this.resolveLore(ctx, template, vars);
+                return this.resolve(ctx, template, vars);
             });
             this.loreExplicitlySet = true;
             return this;
@@ -661,9 +672,9 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Supplier<String> supplier) {
-            this.lore = ReactiveProperty.of(() -> {
+            this.lore = ReactiveProperty.ofContext(ctx -> {
                 String template = supplier.get();
-                return Arrays.asList(template.split("\n"));
+                return this.resolve(ctx, template, null);
             });
             this.loreExplicitlySet = true;
             return this;
@@ -679,7 +690,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Function<MenuContext, String> function) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLore(ctx, function.apply(ctx), null));
+            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, function.apply(ctx), null));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -711,7 +722,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Map<Locale, String> localeMap) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLoreFromLocaleMap(ctx, localeMap, null));
+            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, localeMap, null));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -742,7 +753,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Map<Locale, String> localeMap, Map<String, Object> vars) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolveLoreFromLocaleMap(ctx, localeMap, vars));
+            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, localeMap, vars));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -759,7 +770,7 @@ public class MenuItem {
         public Builder lore(@NonNull Map<Locale, String> localeMap, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
             this.lore = ReactiveProperty.ofContext(ctx -> {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
-                return this.resolveLoreFromLocaleMap(ctx, localeMap, vars);
+                return this.resolve(ctx, localeMap, vars);
             });
             this.loreExplicitlySet = true;
             return this;

@@ -116,7 +116,7 @@ public class Menu implements InventoryHolder {
     private ViewerState getOrCreateViewerState(@NonNull Player player, @NonNull MenuContext context) {
         return this.viewerStates.computeIfAbsent(player.getUniqueId(), uuid -> {
             String titleTemplate = this.title.get(context);
-            Component titleComponent = this.messageProvider.resolve(player, titleTemplate, Map.of());
+            Component titleComponent = this.messageProvider.resolveSingle(player, titleTemplate, Map.of());
             Inventory inv = Bukkit.createInventory(this, this.rows * 9, titleComponent);
             return new ViewerState(context, inv, this.asyncExecutor);
         });
@@ -244,7 +244,7 @@ public class Menu implements InventoryHolder {
 
             // Check if title has changed (compare serialized strings, not Component objects)
             String newTitleTemplate = this.title.get(context);
-            Component newTitleComponent = this.messageProvider.resolve(player, newTitleTemplate, Map.of());
+            Component newTitleComponent = this.messageProvider.resolveSingle(player, newTitleTemplate, Map.of());
             Component currentTitle = player.getOpenInventory().title();
 
             // Serialize both to legacy strings for accurate comparison
@@ -430,7 +430,7 @@ public class Menu implements InventoryHolder {
                 throw new IllegalArgumentException("Localized titles map cannot be empty");
             }
             this.title = ReactiveProperty.ofContext(ctx -> {
-                Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), localizedTitles, Map.of());
+                Component component = ctx.getMenu().getMessageProvider().resolveSingle(ctx.getEntity(), localizedTitles, Map.of());
                 return LegacyComponentSerializer.legacySection().serialize(component);
             });
             return this;

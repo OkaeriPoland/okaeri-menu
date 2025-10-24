@@ -103,9 +103,19 @@ public class DefaultMessageProvider implements MessageProvider {
 
     @Override
     @NonNull
-    public Component resolve(@NonNull HumanEntity viewer, @NonNull String template, @NonNull Map<String, Object> vars) {
+    public List<Component> resolve(@NonNull HumanEntity viewer, @NonNull String template, @NonNull Map<String, Object> vars) {
         if (template.isEmpty()) {
-            return Component.empty();
+            return List.of(Component.empty());
+        }
+
+        // Split on newlines for multiline support
+        if (template.contains("\n")) {
+            List<String> lines = List.of(template.split("\n"));
+            List<Component> components = new ArrayList<>();
+            for (String line : lines) {
+                components.addAll(this.resolve(viewer, line, vars));
+            }
+            return components;
         }
 
         // Optimization: Only use MiniMessage if template contains < and >
@@ -113,7 +123,7 @@ public class DefaultMessageProvider implements MessageProvider {
         if (!template.contains("<") || !template.contains(">")) {
             // Convert § to & for uniform handling, then deserialize
             String normalized = SECTION_COLOR_PATTERN.matcher(template).replaceAll("&$1");
-            return AMPERSAND_SERIALIZER.deserialize(normalized);
+            return List.of(AMPERSAND_SERIALIZER.deserialize(normalized));
         }
 
         // Build resolvers for placeholders
@@ -123,14 +133,14 @@ public class DefaultMessageProvider implements MessageProvider {
             : TagResolver.resolver(resolvers);
 
         // Parse with MiniMessage (handles §, &, and MiniMessage tags)
-        return this.miniMessage.deserialize(template, resolver);
+        return List.of(this.miniMessage.deserialize(template, resolver));
     }
 
     @Override
     @NonNull
-    public Component resolve(@NonNull HumanEntity viewer, @NonNull Map<Locale, String> localeMap, @NonNull Map<String, Object> vars) {
+    public List<Component> resolve(@NonNull HumanEntity viewer, @NonNull Map<Locale, String> localeMap, @NonNull Map<String, Object> vars) {
         if (localeMap.isEmpty()) {
-            return Component.empty();
+            return List.of(Component.empty());
         }
 
         // Get viewer's locale using extensible method

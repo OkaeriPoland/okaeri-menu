@@ -32,7 +32,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should parse simple text")
     void testSimpleText() {
-        Component result = this.provider.resolve(this.player, "Hello World", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "Hello World", Map.of());
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("Hello World");
@@ -41,7 +41,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should support § color codes")
     void testSectionColorCodes() {
-        Component result = this.provider.resolve(this.player, "§cRed §bBlue §aGreen", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "§cRed §bBlue §aGreen", Map.of());
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("Red Blue Green");
@@ -51,7 +51,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should support & color codes")
     void testAmpersandColorCodes() {
-        Component result = this.provider.resolve(this.player, "&cRed &bBlue &aGreen", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "&cRed &bBlue &aGreen", Map.of());
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("Red Blue Green");
@@ -60,7 +60,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should support MiniMessage tags")
     void testMiniMessageTags() {
-        Component result = this.provider.resolve(this.player, "<red>Red <blue>Blue <green>Green", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "<red>Red <blue>Blue <green>Green", Map.of());
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("Red Blue Green");
@@ -69,7 +69,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should mix § and & codes")
     void testMixedLegacyCodes() {
-        Component result = this.provider.resolve(this.player, "§cSection &bAmpersand", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "§cSection &bAmpersand", Map.of());
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("Section Ampersand");
@@ -78,7 +78,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should mix legacy codes and MiniMessage tags")
     void testMixedFormats() {
-        Component result = this.provider.resolve(this.player, "§cLegacy <gradient:red:blue>MiniMessage</gradient> &aMore", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "§cLegacy <gradient:red:blue>MiniMessage</gradient> &aMore", Map.of());
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("Legacy MiniMessage More");
@@ -88,7 +88,7 @@ class DefaultMessageProviderTest {
     @DisplayName("Should optimize pure legacy messages (no MiniMessage)")
     void testLegacyOptimization() {
         // Pure legacy message without < or > should use fast path
-        Component result = this.provider.resolve(this.player, "§cRed &bBlue", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "§cRed &bBlue", Map.of());
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("Red Blue");
@@ -97,7 +97,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should replace placeholders")
     void testPlaceholderReplacement() {
-        Component result = this.provider.resolve(this.player, "Hello <name>!", Map.of("name", "Steve"));
+        Component result = this.provider.resolveSingle(this.player, "Hello <name>!", Map.of("name", "Steve"));
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("Hello Steve!");
@@ -106,7 +106,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should replace multiple placeholders")
     void testMultiplePlaceholders() {
-        Component result = this.provider.resolve(this.player,
+        Component result = this.provider.resolveSingle(this.player,
             "Player <name> has <coins> coins",
             Map.of("name", "Steve", "coins", 100)
         );
@@ -118,7 +118,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should keep placeholder if no value provided")
     void testMissingPlaceholder() {
-        Component result = this.provider.resolve(this.player, "Hello <name>!", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "Hello <name>!", Map.of());
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("Hello <name>!");
@@ -127,7 +127,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should handle empty template")
     void testEmptyTemplate() {
-        Component result = this.provider.resolve(this.player, "", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "", Map.of());
 
         assertThat(result).isEqualTo(Component.empty());
     }
@@ -135,7 +135,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should NOT resolve i18n keys")
     void testI18nNotResolved() {
-        Component result = this.provider.resolve(this.player, "${some.key}", Map.of());
+        Component result = this.provider.resolveSingle(this.player, "${some.key}", Map.of());
 
         String plain = PlainTextComponentSerializer.plainText().serialize(result);
         assertThat(plain).isEqualTo("${some.key}");
@@ -144,9 +144,9 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should resolve list of templates")
     void testResolveList() {
-        List<Component> result = this.provider.resolveList(
+        List<Component> result = this.provider.resolve(
             this.player,
-            List.of("Line 1: <value>", "Line 2: <value>"),
+            "Line 1: <value>\nLine 2: <value>",
             Map.of("value", "test")
         );
 
@@ -163,7 +163,7 @@ class DefaultMessageProviderTest {
     @DisplayName("Should escape MiniMessage tags in placeholder values")
     void testPlaceholderEscaping() {
         // Placeholder value contains MiniMessage tag - should be escaped
-        Component result = this.provider.resolve(this.player,
+        Component result = this.provider.resolveSingle(this.player,
             "Message: <msg>",
             Map.of("msg", "<red>Dangerous</red>")
         );
@@ -176,7 +176,7 @@ class DefaultMessageProviderTest {
     @Test
     @DisplayName("Should handle numeric placeholder values")
     void testNumericPlaceholders() {
-        Component result = this.provider.resolve(this.player,
+        Component result = this.provider.resolveSingle(this.player,
             "You have <coins> coins and <level> level",
             Map.of("coins", 100, "level", 5)
         );

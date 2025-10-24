@@ -16,6 +16,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static eu.okaeri.menu.item.MenuItem.item;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +61,7 @@ class ItemLevelVarsTest {
             .name("Price: <price> coins")
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name).contains("100");
     }
 
@@ -75,7 +76,8 @@ class ItemLevelVarsTest {
 
         var lore = item.getLore().get(this.context);
         assertThat(lore).hasSize(1);
-        assertThat(lore.get(0)).contains("50");
+        String loreLine = this.plainSerializer.serialize(lore.get(0));
+        assertThat(loreLine).contains("50");
     }
 
     @Test
@@ -91,11 +93,12 @@ class ItemLevelVarsTest {
             .lore("Buy for <price> <currency>")
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         var lore = item.getLore().get(this.context);
 
         assertThat(name).contains("250").contains("gold");
-        assertThat(lore.get(0)).contains("250").contains("gold");
+        String loreLine = this.plainSerializer.serialize(lore.get(0));
+        assertThat(loreLine).contains("250").contains("gold");
     }
 
     @Test
@@ -110,7 +113,7 @@ class ItemLevelVarsTest {
             .build();
 
         // First render
-        String name1 = item.getName().get(this.context);
+        String name1 = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name1).contains("0");
 
         // Change value
@@ -118,7 +121,7 @@ class ItemLevelVarsTest {
         item.invalidate();
 
         // Second render
-        String name2 = item.getName().get(this.context);
+        String name2 = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name2).contains("42");
     }
 
@@ -132,11 +135,12 @@ class ItemLevelVarsTest {
             .lore("Lore price: <price>", Map.of("price", 200))  // Method-level override: 200
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         var lore = item.getLore().get(this.context);
 
         assertThat(name).contains("100");  // Uses item-level
-        assertThat(lore.get(0)).contains("200");  // Uses method-level override
+        String loreLine = this.plainSerializer.serialize(lore.get(0));
+        assertThat(loreLine).contains("200");  // Uses method-level override
     }
 
     @Test
@@ -154,7 +158,7 @@ class ItemLevelVarsTest {
         var lore = item.getLore().get(this.context);
 
         // Should have both item-level vars (price, currency) and method-level var (stock)
-        String loreText = String.join(" ", lore);
+        String loreText = lore.stream().map(this.plainSerializer::serialize).collect(Collectors.joining(" "));
         assertThat(loreText).contains("100").contains("coins").contains("50");
     }
 
@@ -166,7 +170,7 @@ class ItemLevelVarsTest {
             .name("Price: <price>", Map.of("price", 50))  // Only method-level vars
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name).contains("50");
     }
 
@@ -179,7 +183,7 @@ class ItemLevelVarsTest {
             .name("Price: <price>")  // Only item-level vars
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name).contains("75");
     }
 
@@ -200,11 +204,11 @@ class ItemLevelVarsTest {
                 """)
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         var lore = item.getLore().get(this.context);
 
         assertThat(name).contains("Excalibur");
-        String loreText = String.join(" ", lore);
+        String loreText = lore.stream().map(this.plainSerializer::serialize).collect(Collectors.joining(" "));
         assertThat(loreText).contains("10").contains("100");
     }
 
@@ -217,7 +221,7 @@ class ItemLevelVarsTest {
             .name("<gold>Balance: <amount> coins</gold>")
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name).contains("1000");
         // Note: MiniMessage formatting is processed, so we just verify the placeholder works
     }
@@ -231,7 +235,7 @@ class ItemLevelVarsTest {
             .name("Price: <price>", (Map<String, Object>) null)  // Explicitly null
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name).contains("100");  // Should still use item-level vars
     }
 
@@ -247,13 +251,15 @@ class ItemLevelVarsTest {
             .build();
 
         var lore1 = item.getLore().get(this.context);
-        assertThat(lore1.get(0)).contains("10");
+        String loreLine1 = this.plainSerializer.serialize(lore1.get(0));
+        assertThat(loreLine1).contains("10");
 
         stock[0] = 5;
         item.invalidate();
 
         var lore2 = item.getLore().get(this.context);
-        assertThat(lore2.get(0)).contains("5");
+        String loreLine2 = this.plainSerializer.serialize(lore2.get(0));
+        assertThat(loreLine2).contains("5");
     }
 
     // ========================================
@@ -272,7 +278,7 @@ class ItemLevelVarsTest {
             ))
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         // Default locale should be English (or fallback)
         assertThat(name).isNotEmpty();
     }
@@ -309,7 +315,7 @@ class ItemLevelVarsTest {
             ))
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name).contains("100");
     }
 
@@ -329,11 +335,12 @@ class ItemLevelVarsTest {
             ), Map.of("price", 75))  // Method-level override: 75
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         var lore = item.getLore().get(this.context);
 
         assertThat(name).contains("50");  // Uses item-level
-        assertThat(lore.get(0)).contains("75");  // Uses method-level override
+        String loreLine = this.plainSerializer.serialize(lore.get(0));
+        assertThat(loreLine).contains("75");  // Uses method-level override
     }
 
     @Test
@@ -350,7 +357,7 @@ class ItemLevelVarsTest {
             .build();
 
         // First render
-        String name1 = item.getName().get(this.context);
+        String name1 = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name1).contains("100");
 
         // Change value
@@ -358,7 +365,7 @@ class ItemLevelVarsTest {
         item.invalidate();
 
         // Second render
-        String name2 = item.getName().get(this.context);
+        String name2 = this.plainSerializer.serialize(item.getName().get(this.context));
         assertThat(name2).contains("50");
     }
 
@@ -388,7 +395,9 @@ class ItemLevelVarsTest {
         var lore = item.getLore().get(this.context);
         assertThat(lore).hasSizeGreaterThan(2);
 
-        String loreText = String.join(" ", lore);
+        String loreText = lore.stream()
+            .map(this.plainSerializer::serialize)
+            .collect(Collectors.joining(" "));
         assertThat(loreText).contains("10").contains("100");
     }
 
@@ -400,7 +409,7 @@ class ItemLevelVarsTest {
             .name(Map.of())  // Empty locale map
             .build();
 
-        String name = item.getName().get(this.context);
+        String name = this.plainSerializer.serialize(item.getName().get(this.context));
         // Should return empty or fallback, not crash
         assertThat(name).isNotNull();
     }
@@ -427,7 +436,7 @@ class ItemLevelVarsTest {
             .build();
 
         var lore = item.getLore().get(this.context);
-        String loreText = String.join(" ", lore);
+        String loreText = lore.stream().map(this.plainSerializer::serialize).collect(Collectors.joining(" "));
 
         // Should have all vars: item-level (damage, durability) + method-level (stock)
         assertThat(loreText).contains("5").contains("250").contains("20");
