@@ -19,24 +19,21 @@ import java.util.Map;
 public class StaticPane extends AbstractPane {
 
     private final MenuItem fillerItem;  // Optional filler for empty slots
+    private final List<MenuItem> autoItems;  // Auto-positioned items that reflow based on visibility
 
     private StaticPane(Builder builder) {
         super(builder.name, builder.bounds);
         this.staticItems.putAll(builder.items);
         this.fillerItem = builder.fillerItem;
+        this.autoItems = new ArrayList<>(builder.autoItems);
     }
 
     @Override
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
-        // Render filler items in empty slots first (as base layer)
-        if (this.fillerItem != null) {
-            ItemStack fillerItemStack = this.fillerItem.render(context);
-            this.bounds.slots()
-                .excludeKeys(this.staticItems)
-                .fill(inventory, fillerItemStack);
-        }
+        // Track which slots are occupied (for filler/clearing at the end)
+        Map<Integer, Boolean> occupiedSlots = new HashMap<>();
 
-        // Render items (overwrites filler where items exist)
+        // Step 1: Render static positioned items
         this.bounds.slots().forEachMap(this.staticItems, (localSlot, globalSlot, menuItem) -> {
             // Skip re-rendering interactive items - they manage their own state
             if (!menuItem.shouldRender()) {
@@ -46,13 +43,51 @@ public class StaticPane extends AbstractPane {
             if (globalSlot < inventory.getSize()) {
                 ItemStack rendered = menuItem.render(context);
                 inventory.setItem(globalSlot, rendered);
+                occupiedSlots.put(localSlot, true);
             }
         });
 
-        // Clear empty slots (no item and no filler)
-        if (this.fillerItem == null) {
+        // Step 2: Render auto-positioned items (reflow based on visibility)
+        int slotIndex = 0;
+        for (MenuItem item : this.autoItems) {
+            if (slotIndex >= this.bounds.getSlotCount()) {
+                break;
+            }
+
+            // Find next free slot (skip slots occupied by static items)
+            while ((slotIndex < this.bounds.getSlotCount()) && occupiedSlots.containsKey(slotIndex)) {
+                slotIndex++;
+            }
+            if (slotIndex >= this.bounds.getSlotCount()) {
+                break;
+            }
+
+            // Render item - returns null if visible=false
+            ItemStack rendered = item.render(context);
+            if (rendered != null) {
+                // Calculate position from slot index
+                int localX = slotIndex % this.bounds.getWidth();
+                int localY = slotIndex / this.bounds.getWidth();
+                int globalSlot = this.bounds.toGlobalSlot(localX, localY);
+
+                if (globalSlot < inventory.getSize()) {
+                    inventory.setItem(globalSlot, rendered);
+                    occupiedSlots.put(slotIndex, true);
+                }
+                slotIndex++;  // Move to next slot after rendering
+            }
+            // If null (invisible), don't increment - next item takes this slot
+        }
+
+        // Step 3: Fill or clear remaining empty slots
+        if (this.fillerItem != null) {
+            ItemStack fillerItemStack = this.fillerItem.render(context);
             this.bounds.slots()
-                .excludeKeys(this.staticItems)
+                .excludeKeys(occupiedSlots)
+                .fill(inventory, fillerItemStack);
+        } else {
+            this.bounds.slots()
+                .excludeKeys(occupiedSlots)
                 .clear(inventory);
         }
     }
@@ -60,6 +95,9 @@ public class StaticPane extends AbstractPane {
     @Override
     public void invalidate() {
         for (MenuItem item : this.staticItems.values()) {
+            item.invalidate();
+        }
+        for (MenuItem item : this.autoItems) {
             item.invalidate();
         }
         if (this.fillerItem != null) {
@@ -90,6 +128,7 @@ public class StaticPane extends AbstractPane {
         private PaneBounds bounds = PaneBounds.fullInventory();
         private List<AbstractPane.ItemCoordinateEntry> itemEntries = new ArrayList<>();
         private Map<Integer, MenuItem> items = new HashMap<>();  // Populated in build()
+        private List<MenuItem> autoItems = new ArrayList<>();  // Auto-positioned items
         private MenuItem fillerItem = null;
 
         @NonNull
@@ -139,6 +178,23 @@ public class StaticPane extends AbstractPane {
             this.bounds.validate(localX, localY);
             // Store coordinates for conversion during build()
             this.itemEntries.add(new AbstractPane.ItemCoordinateEntry(localX, localY, item));
+            return this;
+        }
+
+        /**
+         * Adds an auto-positioned item that fills the first available slot.
+         * Auto-positioned items automatically reflow when visibility changes - when an item
+         * becomes invisible (visible=false), it's completely skipped and the next item takes its place.
+         *
+         * <p>Auto-positioned items are rendered after static positioned items and filler,
+         * filling slots left-to-right, top-to-bottom within the pane bounds.
+         *
+         * @param item The menu item to auto-position
+         * @return This builder
+         */
+        @NonNull
+        public Builder item(@NonNull MenuItem item) {
+            this.autoItems.add(item);
             return this;
         }
 
