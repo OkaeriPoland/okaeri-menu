@@ -13,7 +13,7 @@ import java.util.function.Function;
  * Manages reactive data sources and triggers async loads.
  * Used by both Menu and MenuItem to deduplicate reactive loading logic.
  */
-public class ReactiveLoader {
+public class AsyncLoader {
 
     private final Map<String, ReactiveDataSource> sources = new LinkedHashMap<>();
 

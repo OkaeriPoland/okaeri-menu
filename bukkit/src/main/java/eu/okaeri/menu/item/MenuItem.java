@@ -1,7 +1,7 @@
 package eu.okaeri.menu.item;
 
 import eu.okaeri.menu.MenuContext;
-import eu.okaeri.menu.async.ReactiveLoader;
+import eu.okaeri.menu.async.AsyncLoader;
 import eu.okaeri.menu.pagination.ItemFilter;
 import eu.okaeri.menu.reactive.ReactiveProperty;
 import lombok.*;
@@ -251,7 +251,7 @@ public class MenuItem {
         private boolean loreExplicitlySet = false;
 
         // Reactive data sources for async loading
-        private final ReactiveLoader reactiveLoader = new ReactiveLoader();
+        private final AsyncLoader asyncLoader = new AsyncLoader();
 
         // ========================================
         // HELPER METHODS (INTERNAL)
@@ -1123,7 +1123,7 @@ public class MenuItem {
         @NonNull
         public Builder reactive(@NonNull String key, @NonNull Supplier<?> loader, @NonNull Duration ttl) {
             // Convert Supplier to Function for ReactiveLoader
-            this.reactiveLoader.register(key, ctx -> loader.get(), ttl);
+            this.asyncLoader.register(key, ctx -> loader.get(), ttl);
             return this;
         }
 
@@ -1146,12 +1146,12 @@ public class MenuItem {
         @NonNull
         public MenuItem build() {
             // Start async loads for all reactive sources on first render
-            if (!this.reactiveLoader.isEmpty()) {
+            if (!this.asyncLoader.isEmpty()) {
                 // Wrap material property to trigger async loads on first access
                 ReactiveProperty<Material> originalMaterial = this.material;
                 this.material = ReactiveProperty.ofContext(ctx -> {
                     // Trigger all reactive data sources
-                    this.reactiveLoader.trigger(ctx);
+                    this.asyncLoader.trigger(ctx);
                     return originalMaterial.get(ctx);
                 });
             }
