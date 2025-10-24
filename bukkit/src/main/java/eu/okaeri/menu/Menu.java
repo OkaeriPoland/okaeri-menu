@@ -1,6 +1,7 @@
 package eu.okaeri.menu;
 
 import eu.okaeri.menu.async.AsyncExecutor;
+import eu.okaeri.menu.async.ReactiveLoader;
 import eu.okaeri.menu.item.AsyncMenuItem;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.message.DefaultMessageProvider;
@@ -29,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
@@ -47,6 +49,7 @@ public class Menu implements InventoryHolder {
     private @NonNull final AsyncExecutor asyncExecutor;
     private @NonNull final MessageProvider messageProvider;
     private @NonNull final Map<String, Object> stateDefaults;
+    private @NonNull final ReactiveLoader reactiveLoader;
 
     // Per-viewer state (inventory + pagination contexts)
     private final Map<UUID, ViewerState> viewerStates = new ConcurrentHashMap<>();
@@ -63,6 +66,7 @@ public class Menu implements InventoryHolder {
         this.asyncExecutor = (builder.asyncExecutor != null) ? builder.asyncExecutor : AsyncExecutor.bukkit(this.plugin);
         this.messageProvider = (builder.messageProvider != null) ? builder.messageProvider : new DefaultMessageProvider();
         this.stateDefaults = builder.stateDefaults.isEmpty() ? Map.of() : Map.copyOf(builder.stateDefaults);
+        this.reactiveLoader = builder.reactiveLoader;
 
         // Auto-register MenuListener (idempotent - safe to call multiple times)
         MenuListener.register(this.plugin);
@@ -152,13 +156,17 @@ public class Menu implements InventoryHolder {
     }
 
     /**
-     * Collects all async cache keys from AsyncPaginatedPane and AsyncMenuItem instances.
+     * Collects all async cache keys from menu-level reactive sources,
+     * AsyncPaginatedPane instances, and AsyncMenuItem instances.
      *
      * @return List of cache keys to wait for
      */
     @NonNull
     private List<String> collectAsyncCacheKeys() {
         List<String> cacheKeys = new ArrayList<>();
+
+        // Add menu-level reactive source keys
+        cacheKeys.addAll(this.reactiveLoader.getKeys());
 
         for (Pane pane : this.panes.values()) {
             // Check if pane itself is async
@@ -208,6 +216,10 @@ public class Menu implements InventoryHolder {
      * @param context   The reactive context
      */
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
+        // Trigger all menu-level reactive loads before rendering panes
+        // loadAsync() is idempotent - respects TTL and won't reload if cached
+        this.reactiveLoader.trigger(context);
+
         for (Pane pane : this.panes.values()) {
             try {
                 pane.render(inventory, context);
@@ -389,6 +401,7 @@ public class Menu implements InventoryHolder {
         private AsyncExecutor asyncExecutor = null;
         private MessageProvider messageProvider = null;
         private @NonNull final Map<String, Object> stateDefaults = new HashMap<>();
+        private @NonNull final ReactiveLoader reactiveLoader = new ReactiveLoader();
 
         private Builder(@NonNull Plugin plugin) {
             this.plugin = plugin;
@@ -407,7 +420,7 @@ public class Menu implements InventoryHolder {
         }
 
         @NonNull
-        public Builder title(@NonNull java.util.function.Function<MenuContext, String> function) {
+        public Builder title(@NonNull Function<MenuContext, String> function) {
             this.title = ReactiveProperty.ofContext(function);
             return this;
         }
@@ -516,6 +529,50 @@ public class Menu implements InventoryHolder {
             StateDefaults defaults = new StateDefaults(this.stateDefaults);
             configurator.accept(defaults);
             return this;
+        }
+
+        /**
+         * Declares a menu-level reactive data source.
+         * Data is loaded asynchronously, cached per-viewer, and shared across all menu items.
+         * Use {@link MenuContext#computed(String)} to access the loaded data from any item.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * Menu.builder(plugin)
+         *     .reactive("playerStats", ctx -> database.getStats(ctx.getEntity()), Duration.ofSeconds(30))
+         *     .pane("main", staticPane()
+         *         .item(0, 0, item()
+         *             .name(ctx -> ctx.computed("playerStats")
+         *                 .map(stats -> "Level: " + stats.getLevel())
+         *                 .loading("Loading...")
+         *                 .orElse("Unknown"))
+         *             .build())
+         *         .build())
+         *     .build();
+         * }</pre>
+         *
+         * @param key    Unique identifier for this data source
+         * @param loader Function that loads the data (receives MenuContext)
+         * @param ttl    Time-to-live for cached data
+         * @return This builder
+         */
+        @NonNull
+        public Builder reactive(@NonNull String key, @NonNull Function<MenuContext, ?> loader, @NonNull Duration ttl) {
+            this.reactiveLoader.register(key, loader, ttl);
+            return this;
+        }
+
+        /**
+         * Declares a menu-level reactive data source with default TTL of 1 second.
+         * Convenience method for {@link #reactive(String, Function, Duration)}.
+         *
+         * @param key    Unique identifier for this data source
+         * @param loader Function that loads the data (receives MenuContext)
+         * @return This builder
+         */
+        @NonNull
+        public Builder reactive(@NonNull String key, @NonNull Function<MenuContext, ?> loader) {
+            return this.reactive(key, loader, Duration.ofSeconds(1));
         }
 
         @NonNull

@@ -35,7 +35,6 @@ public class DynamicTitleExample {
                     return "<red><b>TIME'S UP!";
                 }
             })
-            .rows(3)
             .updateInterval(Duration.ofSeconds(1))
             .pane("main", StaticPane.staticPane()
                 .name("main")
