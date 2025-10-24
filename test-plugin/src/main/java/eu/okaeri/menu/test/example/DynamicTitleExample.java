@@ -9,7 +9,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static eu.okaeri.menu.item.MenuItem.item;
 
@@ -26,11 +25,10 @@ public class DynamicTitleExample {
      * Demonstrates stateful dynamic titles.
      */
     public static Menu createCountdownMenu(Plugin plugin, int startSeconds) {
-        AtomicInteger countdown = new AtomicInteger(startSeconds);
-
         return Menu.builder(plugin)
-            .title(() -> {
-                int remaining = countdown.get();
+            .state(defaults -> defaults.define("countdown", startSeconds))
+            .title(ctx -> {
+                int remaining = ctx.getInt("countdown");
                 if (remaining > 0) {
                     return "<yellow>Time Remaining: <red>" + remaining + "s";
                 } else {
@@ -43,15 +41,16 @@ public class DynamicTitleExample {
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 .item(4, 1, item()
-                    .material(() -> {
-                        int remaining = countdown.get();
+                    .material(ctx -> {
+                        int remaining = ctx.getInt("countdown");
                         if (remaining > 10) return Material.LIME_CONCRETE;
                         if (remaining > 5) return Material.YELLOW_CONCRETE;
                         if (remaining > 0) return Material.ORANGE_CONCRETE;
                         return Material.RED_CONCRETE;
                     })
-                    .name(() -> {
-                        int remaining = countdown.getAndUpdate(n -> Math.max(0, n - 1));
+                    .name(ctx -> {
+                        int remaining = ctx.getInt("countdown");
+                        ctx.set("countdown", Math.max(0, remaining - 1));
                         if (remaining > 10) return "<green><b>" + remaining + " seconds";
                         if (remaining > 5) return "<yellow><b>" + remaining + " seconds";
                         if (remaining > 0) return "<red><b>" + remaining + " seconds";
@@ -60,7 +59,7 @@ public class DynamicTitleExample {
                     .lore("""
                         <gray>Watch the countdown in the title
                         <gray>and in this item!
-                        
+
                         <yellow>The color changes as time runs out.""")
                     .build())
                 .build())
@@ -72,11 +71,9 @@ public class DynamicTitleExample {
      * Useful for tasks like downloads, processing, etc.
      */
     public static Menu createProgressBarMenu(Plugin plugin) {
-        AtomicInteger progress = new AtomicInteger(0);
-
         return Menu.builder(plugin)
-            .title(() -> {
-                int percent = progress.get();
+            .title(ctx -> {
+                int percent = ctx.getInt("progress");
                 int bars = percent / 10;  // 10 bars total
                 StringBuilder bar = new StringBuilder("<yellow>Progress: <white>[");
 
@@ -101,20 +98,20 @@ public class DynamicTitleExample {
                     .lore("""
                         <gray>Click to decrease progress
                         <gray>by 10%
-                        
+
                         <yellow>Click me!""")
                     .onClick(ctx -> {
-                        progress.updateAndGet(n -> Math.max(0, n - 10));
+                        ctx.set("progress", Math.max(0, ctx.getInt("progress") - 10));
                         ctx.refresh();
                     })
                     .build())
                 .item(4, 1, item()
                     .material(Material.PAPER)
-                    .name(() -> "<yellow><b>" + progress.get() + "% Complete")
+                    .name(ctx -> "<yellow><b>" + ctx.getInt("progress") + "% Complete")
                     .lore("""
                         <gray>Watch the progress bar
                         <gray>in the title update!
-                        
+
                         <gray>Use the buttons to change it.""")
                     .build())
                 .item(5, 1, item()
@@ -123,10 +120,10 @@ public class DynamicTitleExample {
                     .lore("""
                         <gray>Click to increase progress
                         <gray>by 10%
-                        
+
                         <yellow>Click me!""")
                     .onClick(ctx -> {
-                        progress.updateAndGet(n -> Math.min(100, n + 10));
+                        ctx.set("progress", Math.min(100, ctx.getInt("progress") + 10));
                         ctx.refresh();
                     })
                     .build())

@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
  * Provides information about items being placed or removed.
  */
 @Getter
-public class MenuItemChangeContext extends BaseMenuItemContext {
+public class MenuItemChangeContext extends MenuItemContext {
 
     private final ItemStack previousItem;
     private final ItemStack newItem;

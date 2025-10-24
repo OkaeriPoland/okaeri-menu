@@ -1,8 +1,8 @@
 package eu.okaeri.menu.item;
 
-import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.AsyncCache;
+import eu.okaeri.menu.state.ViewerState;
 import lombok.NonNull;
 import org.bukkit.inventory.ItemStack;
 
@@ -78,7 +78,7 @@ public class AsyncMenuItem extends MenuItem {
      */
     @Override
     public ItemStack render(@NonNull MenuContext context) {
-        Menu.ViewerState state = context.getMenu().getViewerState(context.getEntity().getUniqueId());
+        ViewerState state = context.getMenu().getViewerState(context.getEntity().getUniqueId());
         if (state == null) {
             return this.loadingState.render(context);
         }
@@ -127,7 +127,7 @@ public class AsyncMenuItem extends MenuItem {
     @Override
     public void handleClick(@NonNull MenuItemClickContext context) {
         // Determine current state and delegate click to appropriate item
-        Menu.ViewerState state = context.getMenu().getViewerState(context.getEntity().getUniqueId());
+        ViewerState state = context.getMenu().getViewerState(context.getEntity().getUniqueId());
         if (state == null) {
             this.loadingState.handleClick(context);
             return;

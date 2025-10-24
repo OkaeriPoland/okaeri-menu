@@ -81,8 +81,6 @@ public class InteractiveSlotExample {
      * Creates a trading/shop menu where player places items to sell.
      */
     public static Menu createSellShopMenu(Plugin plugin) {
-        int[] totalValue = {0};
-
         return Menu.builder(plugin)
             .title("<green>Sell Items")
             .rows(4)
@@ -97,7 +95,7 @@ public class InteractiveSlotExample {
                     .lore("""
                         <gray>Place items in the
                         <gray>empty slots to sell
-                        
+
                         <green>Item Values:
                         <aqua>Diamond: <yellow>100 coins
                         <aqua>Emerald: <yellow>75 coins
@@ -105,24 +103,24 @@ public class InteractiveSlotExample {
                         <aqua>Iron Ingot: <yellow>25 coins
                         <aqua>Coal: <yellow>10 coins
                         <aqua>Other: <yellow>5 coins
-                        
+
                         <gray>Click the Sell button!""")
                     .build())
                 // Input slots (placement only)
-                .item(1, 1, createSellSlot(totalValue))
-                .item(2, 1, createSellSlot(totalValue))
-                .item(3, 1, createSellSlot(totalValue))
-                .item(4, 1, createSellSlot(totalValue))
-                .item(5, 1, createSellSlot(totalValue))
+                .item(1, 1, createSellSlot())
+                .item(2, 1, createSellSlot())
+                .item(3, 1, createSellSlot())
+                .item(4, 1, createSellSlot())
+                .item(5, 1, createSellSlot())
                 // Value display
                 .item(7, 1, item()
                     .material(Material.EMERALD)
                     .name("<green>Total Value")
                     .lore("""
                             <gray>Coins: <yellow><value>
-                            
+
                             <gray>Place items to see value""",
-                        ctx -> Map.of("value", totalValue[0]))
+                        ctx -> Map.of("value", ctx.getInt("totalValue")))
                     .build())
                 // Sell button
                 .item(7, 2, item()
@@ -130,15 +128,16 @@ public class InteractiveSlotExample {
                     .name("<green><b>Sell All Items")
                     .lore("""
                             <gray>Total: <yellow><value> coins
-                            
+
                             <yellow>Click to confirm sale!""",
-                        ctx -> Map.of("value", totalValue[0]))
+                        ctx -> Map.of("value", ctx.getInt("totalValue")))
                     .onClick(ctx -> {
-                        if (totalValue[0] > 0) {
-                            ctx.sendMessage("<green>Sold items for " + totalValue[0] + " coins!");
+                        int totalValue = ctx.getInt("totalValue");
+                        if (totalValue > 0) {
+                            ctx.sendMessage("<green>Sold items for " + totalValue + " coins!");
                             ctx.playSound(Sound.ENTITY_PLAYER_LEVELUP);
                             // Clear slots and reset value
-                            totalValue[0] = 0;
+                            ctx.set("totalValue", 0);
                             ctx.refresh();
                         } else {
                             ctx.sendMessage("<red>No items to sell!");
@@ -150,7 +149,7 @@ public class InteractiveSlotExample {
             .build();
     }
 
-    private static MenuItem createSellSlot(int[] totalValue) {
+    private static MenuItem createSellSlot() {
         return item()
             .allowPlacement(true)  // Can only place, not take back
             .onItemChange(ctx -> {
@@ -159,7 +158,7 @@ public class InteractiveSlotExample {
                 if (ctx.getNewItem() != null) {
                     value += calculateItemValue(ctx.getNewItem());
                 }
-                totalValue[0] = value * 10; // Simplified calculation
+                ctx.set("totalValue", value * 10); // Simplified calculation
                 ctx.sendMessage("<yellow>Item value: " + value + " coins");
                 ctx.refresh();  // Update value display
             })

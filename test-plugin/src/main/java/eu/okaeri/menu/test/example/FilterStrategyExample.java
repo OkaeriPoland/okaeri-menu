@@ -3,7 +3,7 @@ package eu.okaeri.menu.test.example;
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.navigation.NavigationUtils;
 import eu.okaeri.menu.pagination.FilterStrategy;
-import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.pagination.ItemFilter;
 import eu.okaeri.menu.pagination.PaginationUtils;
 import eu.okaeri.menu.pane.PaginatedPane;
 import eu.okaeri.menu.pane.StaticPane;
@@ -27,6 +27,7 @@ public class FilterStrategyExample {
     /**
      * Filter strategies (AND vs OR) demonstration.
      * Shows how multiple filters combine with different strategies.
+     * Uses state API and declarative filters for clean, reactive code.
      */
     public static Menu createFilterStrategyMenu(Plugin plugin) {
         List<ShopItem> items = createShopItems();
@@ -34,41 +35,43 @@ public class FilterStrategyExample {
         return Menu.builder(plugin)
             .title("&6Filter Strategies Demo")
             .rows(6)
+            // Default state values
+            .state(defaults -> defaults
+                .define("strategy", FilterStrategy.AND)
+            )
             // Strategy selector (top row)
             .pane("strategy", StaticPane.staticPane()
                 .name("strategy")
                 .bounds(0, 0, 9, 1)
                 .item(1, 0, item()
-                    .material(ctx -> {
-                        PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
-                        return pagination.getFilterStrategy() == FilterStrategy.AND ? Material.LIME_WOOL : Material.GRAY_WOOL;
-                    })
+                    .material(ctx -> (ctx.get("strategy", FilterStrategy.class) == FilterStrategy.AND)
+                        ? Material.LIME_WOOL
+                        : Material.GRAY_WOOL)
                     .name("&aAND Strategy")
                     .lore("""
                         &7Combines filters with AND logic
                         &7All filters must match
-                        
+
                         &eClick to activate!""")
                     .onClick(ctx -> {
-                        PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
-                        pagination.setFilterStrategy(FilterStrategy.AND);
+                        ctx.set("strategy", FilterStrategy.AND);
+                        ctx.pagination("shop").setFilterStrategy(FilterStrategy.AND);
                         ctx.refresh();
                     })
                     .build())
                 .item(3, 0, item()
-                    .material(ctx -> {
-                        PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
-                        return pagination.getFilterStrategy() == FilterStrategy.OR ? Material.LIME_WOOL : Material.GRAY_WOOL;
-                    })
+                    .material(ctx -> (ctx.get("strategy", FilterStrategy.class) == FilterStrategy.OR)
+                        ? Material.LIME_WOOL
+                        : Material.GRAY_WOOL)
                     .name("&bOR Strategy")
                     .lore("""
                         &7Combines filters with OR logic
                         &7Any filter can match
-                        
+
                         &eClick to activate!""")
                     .onClick(ctx -> {
-                        PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
-                        pagination.setFilterStrategy(FilterStrategy.OR);
+                        ctx.set("strategy", FilterStrategy.OR);
+                        ctx.pagination("shop").setFilterStrategy(FilterStrategy.OR);
                         ctx.refresh();
                     })
                     .build())
@@ -76,8 +79,8 @@ public class FilterStrategyExample {
                     .material(Material.BARRIER)
                     .name("&cClear Filters")
                     .onClick(ctx -> {
-                        PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
-                        pagination.clearFilters();
+                        // Clear all filter states
+                        ctx.clearState();
                         ctx.refresh();
                     })
                     .build())
@@ -87,70 +90,90 @@ public class FilterStrategyExample {
                 .name("filters")
                 .bounds(0, 1, 9, 1)
                 .item(1, 0, item()
-                    .material(Material.DIAMOND_SWORD)
-                    .name("&bWeapons Only")
+                    .filter(ItemFilter.<ShopItem>builder()
+                        .target("shop")
+                        .id("weapon")
+                        .when(ctx -> ctx.getBool("filter:weapon"))
+                        .predicate(item -> "weapon".equals(item.category()))
+                        .build())
+                    .material(ctx -> ctx.getBool("filter:weapon")
+                        ? Material.LIME_STAINED_GLASS_PANE
+                        : Material.DIAMOND_SWORD)
+                    .name(ctx -> ctx.getBool("filter:weapon")
+                        ? "&a✓ Weapons Only"
+                        : "&bWeapons Only")
                     .lore("""
                         &7Filter by category
-                        
+
                         &eTry with AND and OR!""")
                     .onClick(ctx -> {
-                        PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
-                        if (pagination.hasFilter("weapon")) {
-                            pagination.removeFilter("weapon");
-                        } else {
-                            pagination.addFilter("weapon", item -> item.category().equals("weapon"));
-                        }
+                        ctx.set("filter:weapon", !ctx.getBool("filter:weapon"));
                         ctx.refresh();
                     })
                     .build())
                 .item(3, 0, item()
-                    .material(Material.DIAMOND_CHESTPLATE)
-                    .name("&9Armor Only")
+                    .filter(ItemFilter.<ShopItem>builder()
+                        .target("shop")
+                        .id("armor")
+                        .when(ctx -> ctx.getBool("filter:armor"))
+                        .predicate(item -> "armor".equals(item.category()))
+                        .build())
+                    .material(ctx -> ctx.getBool("filter:armor")
+                        ? Material.LIME_STAINED_GLASS_PANE
+                        : Material.DIAMOND_CHESTPLATE)
+                    .name(ctx -> ctx.getBool("filter:armor")
+                        ? "&a✓ Armor Only"
+                        : "&9Armor Only")
                     .lore("""
                         &7Filter by category
-                        
+
                         &eTry with AND and OR!""")
                     .onClick(ctx -> {
-                        PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
-                        if (pagination.hasFilter("armor")) {
-                            pagination.removeFilter("armor");
-                        } else {
-                            pagination.addFilter("armor", item -> item.category().equals("armor"));
-                        }
+                        ctx.set("filter:armor", !ctx.getBool("filter:armor"));
                         ctx.refresh();
                     })
                     .build())
                 .item(5, 0, item()
-                    .material(Material.GOLD_INGOT)
-                    .name("&6Expensive (>100)")
+                    .filter(ItemFilter.<ShopItem>builder()
+                        .target("shop")
+                        .id("expensive")
+                        .when(ctx -> ctx.getBool("filter:expensive"))
+                        .predicate(item -> item.price() > 100)
+                        .build())
+                    .material(ctx -> ctx.getBool("filter:expensive")
+                        ? Material.LIME_STAINED_GLASS_PANE
+                        : Material.GOLD_INGOT)
+                    .name(ctx -> ctx.getBool("filter:expensive")
+                        ? "&a✓ Expensive (>100)"
+                        : "&6Expensive (>100)")
                     .lore("""
                         &7Filter by price
-                        
+
                         &eTry with AND and OR!""")
                     .onClick(ctx -> {
-                        PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
-                        if (pagination.hasFilter("expensive")) {
-                            pagination.removeFilter("expensive");
-                        } else {
-                            pagination.addFilter("expensive", item -> item.price() > 100);
-                        }
+                        ctx.set("filter:expensive", !ctx.getBool("filter:expensive"));
                         ctx.refresh();
                     })
                     .build())
                 .item(7, 0, item()
-                    .material(Material.EMERALD)
-                    .name("&aAffordable (<100)")
+                    .filter(ItemFilter.<ShopItem>builder()
+                        .target("shop")
+                        .id("affordable")
+                        .when(ctx -> ctx.getBool("filter:affordable"))
+                        .predicate(item -> item.price() < 100)
+                        .build())
+                    .material(ctx -> ctx.getBool("filter:affordable")
+                        ? Material.LIME_STAINED_GLASS_PANE
+                        : Material.EMERALD)
+                    .name(ctx -> ctx.getBool("filter:affordable")
+                        ? "&a✓ Affordable (<100)"
+                        : "&aAffordable (<100)")
                     .lore("""
                         &7Filter by price
-                        
+
                         &eTry with AND and OR!""")
                     .onClick(ctx -> {
-                        PaginationContext<ShopItem> pagination = PaginationContext.get(ctx.getMenu(), "shop", ctx.getEntity(), items, 36);
-                        if (pagination.hasFilter("affordable")) {
-                            pagination.removeFilter("affordable");
-                        } else {
-                            pagination.addFilter("affordable", item -> item.price() < 100);
-                        }
+                        ctx.set("filter:affordable", !ctx.getBool("filter:affordable"));
                         ctx.refresh();
                     })
                     .build())

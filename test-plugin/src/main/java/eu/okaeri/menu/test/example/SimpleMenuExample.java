@@ -86,9 +86,6 @@ public class SimpleMenuExample {
      * Example with reactive properties.
      */
     public static Menu createReactiveExample(Plugin plugin, Player player) {
-        // Some reactive state
-        final int[] clickCount = {0};
-
         return Menu.builder(plugin)
             .title("Reactive Example")
             .rows(3)
@@ -97,10 +94,10 @@ public class SimpleMenuExample {
                 .bounds(0, 0, 9, 3)
                 .item(4, 1, item()
                     .material(Material.DIAMOND)
-                    .name(() -> "Clicks: " + clickCount[0])  // Reactive!
-                    .amount(() -> Math.min(64, clickCount[0] + 1))  // Reactive amount!
+                    .name(ctx -> "Clicks: " + ctx.getInt("clickCount"))  // Reactive!
+                    .amount(ctx -> Math.min(64, ctx.getInt("clickCount") + 1))  // Reactive amount!
                     .onClick(ctx -> {
-                        clickCount[0]++;
+                        ctx.set("clickCount", ctx.getInt("clickCount") + 1);
                         ctx.refresh();  // Re-evaluate reactive properties
                     })
                     .build())

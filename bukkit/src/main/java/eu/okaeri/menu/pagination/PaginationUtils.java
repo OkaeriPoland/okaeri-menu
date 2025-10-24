@@ -16,7 +16,7 @@ import java.util.function.Predicate;
  * <p>Core i18n-aware methods accept Map&lt;Locale, String&gt; for full localization support.
  * Convenience methods provide English defaults by calling the i18n versions.
  */
-public class PaginationUtils {
+public final class PaginationUtils {
 
     // ========================================
     // I18N-AWARE METHODS (Core API)

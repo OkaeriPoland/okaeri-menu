@@ -2,7 +2,7 @@ package eu.okaeri.menu.bukkit.integration;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuListener;
-import eu.okaeri.menu.item.BaseMenuItemContext;
+import eu.okaeri.menu.item.MenuItemContext;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -946,7 +946,7 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, item()
                     .interactive()
-                    .onItemChange(BaseMenuItemContext::cancel)
+                    .onItemChange(MenuItemContext::cancel)
                     .build())
                 .build())
             .build();

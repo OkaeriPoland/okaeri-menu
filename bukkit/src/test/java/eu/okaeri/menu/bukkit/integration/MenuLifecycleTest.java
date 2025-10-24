@@ -2,6 +2,8 @@ package eu.okaeri.menu.bukkit.integration;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.state.ViewerState;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -66,7 +68,7 @@ class MenuLifecycleTest {
         menu.open(this.player1);
 
         // ViewerState should be created
-        Menu.ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
         assertThat(state).isNotNull();
         assertThat(state.getInventory()).isNotNull();
         assertThat(state.getAsyncCache()).isNotNull();
@@ -82,11 +84,11 @@ class MenuLifecycleTest {
 
         // Open menu first time
         menu.open(this.player1);
-        Menu.ViewerState state1 = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state1 = menu.getViewerState(this.player1.getUniqueId());
 
         // Open menu again
         menu.open(this.player1);
-        Menu.ViewerState state2 = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state2 = menu.getViewerState(this.player1.getUniqueId());
 
         // Should be the same ViewerState instance
         assertThat(state2).isSameAs(state1);
@@ -102,7 +104,7 @@ class MenuLifecycleTest {
 
         menu.open(this.player1);
 
-        Menu.ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
         Inventory inventory = state.getInventory();
 
         assertThat(inventory).isNotNull();
@@ -119,7 +121,7 @@ class MenuLifecycleTest {
 
         menu.open(this.player1);
 
-        Menu.ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
         Inventory inventory = state.getInventory();
 
         assertThat(inventory.getSize()).isEqualTo(54); // 6 rows * 9 slots
@@ -173,14 +175,18 @@ class MenuLifecycleTest {
         menu.open(this.player1);
 
         // Create pagination context
-        Menu.ViewerState state = menu.getViewerState(this.player1.getUniqueId());
-        PaginationContext<String> paginationContext = state.getPaginationContext(
-            "test_pane",
-            this.player1.getUniqueId(),
-            List.of("Item1", "Item2", "Item3"),
-            5
-        );
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
 
+        // Create a test pane for pagination
+        PaginatedPane<String> testPane = PaginatedPane.<String>pane()
+            .name("test_pane")
+            .bounds(0, 0, 9, 1)
+            .items(List.of("Item1", "Item2", "Item3"))
+            .itemsPerPage(5)
+            .renderer((item, i) -> null)
+            .build();
+
+        PaginationContext<String> paginationContext = state.getPagination(testPane);
         assertThat(paginationContext).isNotNull();
 
         // Close menu
@@ -207,8 +213,8 @@ class MenuLifecycleTest {
         menu.open(this.player2);
 
         // Each player should have their own ViewerState
-        Menu.ViewerState state1 = menu.getViewerState(this.player1.getUniqueId());
-        Menu.ViewerState state2 = menu.getViewerState(this.player2.getUniqueId());
+        ViewerState state1 = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state2 = menu.getViewerState(this.player2.getUniqueId());
 
         assertThat(state1).isNotNull();
         assertThat(state2).isNotNull();
@@ -228,22 +234,28 @@ class MenuLifecycleTest {
         menu.open(this.player2);
 
         // Create pagination contexts
-        Menu.ViewerState state1 = menu.getViewerState(this.player1.getUniqueId());
-        Menu.ViewerState state2 = menu.getViewerState(this.player2.getUniqueId());
+        ViewerState state1 = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state2 = menu.getViewerState(this.player2.getUniqueId());
 
-        PaginationContext<String> context1 = state1.getPaginationContext(
-            "pane1",
-            this.player1.getUniqueId(),
-            List.of("A", "B", "C"),
-            5
-        );
+        // Create test panes for each player
+        PaginatedPane<String> pane1 = PaginatedPane.<String>pane()
+            .name("pane1")
+            .bounds(0, 0, 9, 1)
+            .items(List.of("A", "B", "C"))
+            .itemsPerPage(5)
+            .renderer((item, i) -> null)
+            .build();
 
-        PaginationContext<String> context2 = state2.getPaginationContext(
-            "pane1",
-            this.player2.getUniqueId(),
-            List.of("X", "Y", "Z"),
-            5
-        );
+        PaginatedPane<String> pane2 = PaginatedPane.<String>pane()
+            .name("pane1")
+            .bounds(0, 0, 9, 1)
+            .items(List.of("X", "Y", "Z"))
+            .itemsPerPage(5)
+            .renderer((item, i) -> null)
+            .build();
+
+        PaginationContext<String> context1 = state1.getPagination(pane1);
+        PaginationContext<String> context2 = state2.getPagination(pane2);
 
         assertThat(context1).isNotSameAs(context2);
         assertThat(context1.getCurrentPage()).isEqualTo(0);
@@ -365,7 +377,7 @@ class MenuLifecycleTest {
 
         menu.open(this.player1);
 
-        Menu.ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
         assertThat(state).isNotNull();
     }
 
@@ -383,13 +395,18 @@ class MenuLifecycleTest {
 
         menu.open(this.player1);
 
-        Menu.ViewerState state = menu.getViewerState(this.player1.getUniqueId());
-        PaginationContext<String> context = state.getPaginationContext(
-            "test_pane",
-            this.player1.getUniqueId(),
-            List.of("Item1", "Item2"),
-            5
-        );
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+
+        // Create test pane
+        PaginatedPane<String> testPane = PaginatedPane.<String>pane()
+            .name("test_pane")
+            .bounds(0, 0, 9, 1)
+            .items(List.of("Item1", "Item2"))
+            .itemsPerPage(5)
+            .renderer((item, i) -> null)
+            .build();
+
+        PaginationContext<String> context = state.getPagination(testPane);
 
         assertThat(context).isNotNull();
         assertThat(context.getPaneId()).isEqualTo("test_pane");
@@ -405,22 +422,28 @@ class MenuLifecycleTest {
 
         menu.open(this.player1);
 
-        Menu.ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+
+        // Create test panes
+        PaginatedPane<String> pane1 = PaginatedPane.<String>pane()
+            .name("test_pane")
+            .bounds(0, 0, 9, 1)
+            .items(List.of("Item1", "Item2"))
+            .itemsPerPage(5)
+            .renderer((item, i) -> null)
+            .build();
+
+        PaginatedPane<String> pane2 = PaginatedPane.<String>pane()
+            .name("test_pane")
+            .bounds(0, 0, 9, 1)
+            .items(List.of("Item3", "Item4"))
+            .itemsPerPage(3)
+            .renderer((item, i) -> null)
+            .build();
 
         // Get context twice
-        PaginationContext<String> context1 = state.getPaginationContext(
-            "test_pane",
-            this.player1.getUniqueId(),
-            List.of("Item1", "Item2"),
-            5
-        );
-
-        PaginationContext<String> context2 = state.getPaginationContext(
-            "test_pane",
-            this.player1.getUniqueId(),
-            List.of("Item3", "Item4"),  // Different items
-            3  // Different items per page
-        );
+        PaginationContext<String> context1 = state.getPagination(pane1);
+        PaginationContext<String> context2 = state.getPagination(pane2);
 
         // Should be the same instance (cached)
         assertThat(context2).isSameAs(context1);
@@ -436,21 +459,27 @@ class MenuLifecycleTest {
 
         menu.open(this.player1);
 
-        Menu.ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
 
-        PaginationContext<String> context1 = state.getPaginationContext(
-            "pane1",
-            this.player1.getUniqueId(),
-            List.of("Item1", "Item2"),
-            5
-        );
+        // Create test panes
+        PaginatedPane<String> pane1 = PaginatedPane.<String>pane()
+            .name("pane1")
+            .bounds(0, 0, 9, 1)
+            .items(List.of("Item1", "Item2"))
+            .itemsPerPage(5)
+            .renderer((item, i) -> null)
+            .build();
 
-        PaginationContext<String> context2 = state.getPaginationContext(
-            "pane2",
-            this.player1.getUniqueId(),
-            List.of("Item3", "Item4"),
-            5
-        );
+        PaginatedPane<String> pane2 = PaginatedPane.<String>pane()
+            .name("pane2")
+            .bounds(0, 0, 9, 1)
+            .items(List.of("Item3", "Item4"))
+            .itemsPerPage(5)
+            .renderer((item, i) -> null)
+            .build();
+
+        PaginationContext<String> context1 = state.getPagination(pane1);
+        PaginationContext<String> context2 = state.getPagination(pane2);
 
         // Should be different instances
         assertThat(context2).isNotSameAs(context1);
@@ -476,7 +505,7 @@ class MenuLifecycleTest {
         menu.open(this.player1);
 
         // Should still have only one ViewerState
-        Menu.ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
         assertThat(state).isNotNull();
     }
 

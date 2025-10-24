@@ -21,8 +21,6 @@ public class ItemVarsExample {
      * Variables defined once with .vars() are automatically available in name(), lore(), etc.
      */
     public static Menu createItemVarsMenu(Plugin plugin) {
-        int[] counter = {0};
-
         return Menu.builder(plugin)
             .title("&6Item-Level Variables")
             .rows(3)
@@ -42,19 +40,17 @@ public class ItemVarsExample {
                         &7Click to purchase!""")
                     .onClick(ctx -> ctx.sendMessage("&aPurchased for " + 100 + " coins!"))
                     .build())
-                // Example 2: Reactive vars with Suppliers
+                // Example 2: Reactive vars with context-aware vars
                 .item(3, 1, item()
                     .material(Material.CLOCK)
-                    .vars(Map.of(
-                        "count", (java.util.function.Supplier<Integer>) () -> counter[0]
-                    ))
+                    .vars(ctx -> Map.of("count", ctx.getInt("counter")))  // Context-aware vars!
                     .name("&eCounter: <count>")
                     .lore("""
                         &7Current count: &f<count>
-                        
+
                         &eClick to increment!""")
                     .onClick(ctx -> {
-                        counter[0]++;
+                        ctx.set("counter", ctx.getInt("counter") + 1);
                         ctx.refresh();
                     })
                     .build())

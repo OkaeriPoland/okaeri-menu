@@ -1,8 +1,10 @@
 package eu.okaeri.menu.bukkit.unit.pagination;
 
 import eu.okaeri.menu.Menu;
+import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.pagination.FilterStrategy;
 import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.pane.PaginatedPane;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +28,7 @@ class FilterStrategyTest {
     private org.bukkit.plugin.java.JavaPlugin plugin;
     private PlayerMock player;
     private Menu menu;
+    private MenuContext context;
 
     @BeforeEach
     void setUp() {
@@ -36,6 +39,9 @@ class FilterStrategyTest {
         // Create menu and open for player to establish ViewerState
         this.menu = Menu.builder(this.plugin).rows(3).build();
         this.menu.open(this.player);
+
+        // Create MenuContext for pagination tests
+        this.context = new MenuContext(this.menu, this.player);
     }
 
     @AfterEach
@@ -52,6 +58,19 @@ class FilterStrategyTest {
         String category;
     }
 
+    // Helper method to create pagination context
+    private PaginationContext<Item> createContext(List<Item> items) {
+        PaginatedPane<Item> testPane = PaginatedPane.<Item>pane()
+            .name("test")
+            .bounds(0, 0, 9, 1)
+            .items(items)
+            .itemsPerPage(10)
+            .renderer((item, i) -> null)
+            .build();
+
+        return PaginationContext.get(this.context, testPane);
+    }
+
     @Test
     @DisplayName("Default strategy should be AND")
     void testDefaultStrategy() {
@@ -60,7 +79,7 @@ class FilterStrategyTest {
             new Item("Emerald", 150, "gem")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
 
         assertThat(ctx.getFilterStrategy()).isEqualTo(FilterStrategy.AND);
     }
@@ -75,7 +94,7 @@ class FilterStrategyTest {
             new Item("Gold Ring", 200, "jewelry")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.AND);
 
         // Add two filters
@@ -100,7 +119,7 @@ class FilterStrategyTest {
             new Item("Copper Coin", 5, "currency")    // Matches neither
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.OR);
 
         // Add two filters
@@ -126,7 +145,7 @@ class FilterStrategyTest {
             new Item("Iron Sword", 50, "weapon")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.AND);
 
         ctx.addFilter("category", item -> "gem".equals(item.category));
@@ -147,7 +166,7 @@ class FilterStrategyTest {
             new Item("Iron Sword", 50, "weapon")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.OR);
 
         ctx.addFilter("category", item -> "gem".equals(item.category));
@@ -167,7 +186,7 @@ class FilterStrategyTest {
             new Item("Emerald", 150, "gem")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.AND);
 
         // Impossible combination: gem AND weapon
@@ -187,7 +206,7 @@ class FilterStrategyTest {
             new Item("Iron Sword", 50, "weapon")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.OR);
 
         List<Item> filtered = ctx.getFilteredItems();
@@ -204,7 +223,7 @@ class FilterStrategyTest {
             new Item("Iron Sword", 200, "weapon")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
 
         ctx.addFilter("category", item -> "gem".equals(item.category));
         ctx.addFilter("price", item -> item.price >= 200);
@@ -228,7 +247,7 @@ class FilterStrategyTest {
             new Item("Diamond", 100, "gem")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(null);
 
         assertThat(ctx.getFilterStrategy()).isEqualTo(FilterStrategy.AND);
@@ -241,7 +260,7 @@ class FilterStrategyTest {
             new Item("Diamond", 100, "gem")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.AND);
 
         boolean[] secondFilterCalled = {false};
@@ -265,7 +284,7 @@ class FilterStrategyTest {
             new Item("Diamond", 100, "gem")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.OR);
 
         boolean[] secondFilterCalled = {false};
@@ -292,7 +311,7 @@ class FilterStrategyTest {
             new Item("Rare Diamond", 300, "gem")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.AND);
 
         ctx.addFilter("weapon", item -> "weapon".equals(item.category));
@@ -315,7 +334,7 @@ class FilterStrategyTest {
             new Item("Emerald", 300, "gem")
         );
 
-        PaginationContext<Item> ctx = PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginationContext<Item> ctx = this.createContext(items);
         ctx.setFilterStrategy(FilterStrategy.OR);
 
         ctx.addFilter("cheap", item -> item.price < 100);

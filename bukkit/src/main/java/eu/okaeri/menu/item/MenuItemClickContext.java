@@ -12,7 +12,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
  * Provides access to the menu and helper methods for common operations.
  */
 @Getter
-public class MenuItemClickContext extends BaseMenuItemContext {
+public class MenuItemClickContext extends MenuItemContext {
 
     private final ClickType clickType;
 

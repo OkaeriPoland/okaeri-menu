@@ -239,7 +239,7 @@ public class MenuItem {
         private Consumer<MenuItemChangeContext> itemChangeHandler;
 
         // Item-level variables shared across name, lore, etc.
-        private Map<String, Object> itemLevelVars = new HashMap<>();
+        private ReactiveProperty<Map<String, Object>> itemLevelVars = ReactiveProperty.of(Map.of());
 
         // Declarative filters
         private List<ItemFilter<?>> filters = new ArrayList<>();
@@ -261,7 +261,24 @@ public class MenuItem {
          */
         @NonNull
         public Builder vars(@NonNull Map<String, Object> vars) {
-            this.itemLevelVars.putAll(vars);
+            // For static vars, we need to merge with existing vars
+            Map<String, Object> currentVars = this.itemLevelVars.get(null);
+            Map<String, Object> merged = new HashMap<>(currentVars);
+            merged.putAll(vars);
+            this.itemLevelVars = ReactiveProperty.of(merged);
+            return this;
+        }
+
+        /**
+         * Sets item-level variables with context-aware function.
+         * Useful for dynamic variables based on player state that are shared across name/lore.
+         *
+         * @param varsFunction Function that receives MenuContext and returns variables map
+         * @return This builder
+         */
+        @NonNull
+        public Builder vars(@NonNull Function<MenuContext, Map<String, Object>> varsFunction) {
+            this.itemLevelVars = ReactiveProperty.ofContext(varsFunction);
             return this;
         }
 
@@ -269,18 +286,20 @@ public class MenuItem {
          * Merges item-level variables with method-level variables.
          * Method-level variables override item-level variables if keys conflict.
          *
+         * @param ctx        The menu context for evaluating reactive vars
          * @param methodVars Method-level variables (can be null or empty)
          * @return Merged variables map
          */
         @NonNull
-        private Map<String, Object> mergeVars(Map<String, Object> methodVars) {
-            if (this.itemLevelVars.isEmpty()) {
+        private Map<String, Object> mergeVars(@NonNull MenuContext ctx, Map<String, Object> methodVars) {
+            Map<String, Object> itemVars = this.itemLevelVars.get(ctx);
+            if (itemVars.isEmpty()) {
                 return (methodVars != null) ? methodVars : Map.of();
             }
             if ((methodVars == null) || methodVars.isEmpty()) {
-                return this.itemLevelVars;
+                return itemVars;
             }
-            Map<String, Object> merged = new HashMap<>(this.itemLevelVars);
+            Map<String, Object> merged = new HashMap<>(itemVars);
             merged.putAll(methodVars);  // Method-level overrides
             return merged;
         }
@@ -344,7 +363,7 @@ public class MenuItem {
          */
         @NonNull
         private String resolveName(@NonNull MenuContext ctx, @NonNull String template, Map<String, Object> methodVars) {
-            Map<String, Object> vars = this.mergeVars(methodVars);
+            Map<String, Object> vars = this.mergeVars(ctx, methodVars);
             Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), template, vars);
             return SERIALIZER.serialize(component);
         }
@@ -354,7 +373,7 @@ public class MenuItem {
          */
         @NonNull
         private List<String> resolveLore(@NonNull MenuContext ctx, @NonNull String template, Map<String, Object> methodVars) {
-            Map<String, Object> vars = this.mergeVars(methodVars);
+            Map<String, Object> vars = this.mergeVars(ctx, methodVars);
             List<String> lines = List.of(template.split("\n"));
             List<Component> components = ctx.getMenu().getMessageProvider().resolveList(ctx.getEntity(), lines, vars);
             return components.stream()
@@ -367,7 +386,7 @@ public class MenuItem {
          */
         @NonNull
         private String resolveNameFromLocaleMap(@NonNull MenuContext ctx, @NonNull Map<Locale, String> localeMap, Map<String, Object> methodVars) {
-            Map<String, Object> vars = this.mergeVars(methodVars);
+            Map<String, Object> vars = this.mergeVars(ctx, methodVars);
             Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), localeMap, vars);
             return SERIALIZER.serialize(component);
         }
@@ -378,7 +397,7 @@ public class MenuItem {
          */
         @NonNull
         private List<String> resolveLoreFromLocaleMap(@NonNull MenuContext ctx, @NonNull Map<Locale, String> localeMap, Map<String, Object> methodVars) {
-            Map<String, Object> vars = this.mergeVars(methodVars);
+            Map<String, Object> vars = this.mergeVars(ctx, methodVars);
             Component component = ctx.getMenu().getMessageProvider().resolve(ctx.getEntity(), localeMap, vars);
             String fullText = SERIALIZER.serialize(component);
             return List.of(fullText.split("\n"));
@@ -699,6 +718,19 @@ public class MenuItem {
             return this;
         }
 
+        /**
+         * Sets the amount with context-aware function.
+         * Useful for dynamic amounts based on player state.
+         *
+         * @param amountFunction Function that receives MenuContext and returns the amount
+         * @return This builder
+         */
+        @NonNull
+        public Builder amount(@NonNull Function<MenuContext, Integer> amountFunction) {
+            this.amount = ReactiveProperty.ofContext(amountFunction);
+            return this;
+        }
+
         @NonNull
         public Builder visible(boolean visible) {
             this.visible = ReactiveProperty.of(visible);
@@ -711,15 +743,35 @@ public class MenuItem {
             return this;
         }
 
+        /**
+         * Sets the glint (enchantment glow) to a static value.
+         *
+         * @param glint Whether to show glint
+         * @return This builder
+         */
         @NonNull
         public Builder glint(boolean glint) {
             this.glint = ReactiveProperty.of(glint);
             return this;
         }
 
+        /**
+         * Sets the glint (enchantment glow) with context-aware function.
+         * Useful for dynamic glint based on player state, permissions, or conditions.
+         *
+         * <p>Example usage:
+         * <pre>{@code
+         * .glint(ctx -> ctx.getBool("isSelected"))
+         * .glint(ctx -> ctx.getEntity().hasPermission("vip.glint"))
+         * .glint(ctx -> ctx.getInt("level") >= 10)
+         * }</pre>
+         *
+         * @param glintFunction Function that receives MenuContext and returns whether to show glint
+         * @return This builder
+         */
         @NonNull
-        public Builder glint(@NonNull Supplier<Boolean> supplier) {
-            this.glint = ReactiveProperty.of(supplier);
+        public Builder glint(@NonNull Function<MenuContext, Boolean> glintFunction) {
+            this.glint = ReactiveProperty.ofContext(glintFunction);
             return this;
         }
 
@@ -850,7 +902,7 @@ public class MenuItem {
          * <pre>{@code
          * .filter(ItemFilter.builder()
          *     .target("items")
-         *     .when(() -> filterActive)
+         *     .when(ctx -> filterActive)
          *     .predicate(item -> item.getRarity() == Rarity.EPIC)
          *     .build())
          * }</pre>

@@ -1,9 +1,11 @@
 package eu.okaeri.menu.bukkit.unit.pagination;
 
 import eu.okaeri.menu.Menu;
+import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.pagination.ItemFilter;
 import eu.okaeri.menu.pagination.LoaderContext;
 import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.pane.PaginatedPane;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import org.junit.jupiter.api.AfterEach;
@@ -31,6 +33,7 @@ class ValueFilterTest {
     private org.bukkit.plugin.java.JavaPlugin plugin;
     private PlayerMock player;
     private Menu menu;
+    private MenuContext context;
 
     @BeforeEach
     void setUp() {
@@ -41,6 +44,9 @@ class ValueFilterTest {
         // Create menu and open for player to establish ViewerState
         this.menu = Menu.builder(this.plugin).rows(3).build();
         this.menu.open(this.player);
+
+        // Create MenuContext for pagination tests
+        this.context = new MenuContext(this.menu, this.player);
     }
 
     @AfterEach
@@ -60,7 +66,15 @@ class ValueFilterTest {
 
     // Helper methods to reduce boilerplate
     private <T> PaginationContext<T> createContext(List<T> items) {
-        return PaginationContext.get(this.menu, "test", this.player, items, 10);
+        PaginatedPane<T> testPane = PaginatedPane.<T>pane()
+            .name("test")
+            .bounds(0, 0, 9, 1)
+            .items(items)
+            .itemsPerPage(10)
+            .renderer((item, i) -> null)
+            .build();
+
+        return PaginationContext.get(this.context, testPane);
     }
 
     private PaginationContext<Offer> createEmptyContext() {

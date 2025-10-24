@@ -1,18 +1,18 @@
 package eu.okaeri.menu;
 
-import eu.okaeri.menu.async.AsyncCache;
 import eu.okaeri.menu.async.AsyncExecutor;
 import eu.okaeri.menu.item.AsyncMenuItem;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.message.DefaultMessageProvider;
 import eu.okaeri.menu.message.MessageProvider;
 import eu.okaeri.menu.navigation.NavigationHistory;
-import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.pane.AbstractPane;
 import eu.okaeri.menu.pane.AsyncPaginatedPane;
 import eu.okaeri.menu.pane.Pane;
 import eu.okaeri.menu.pane.PaneBounds;
 import eu.okaeri.menu.reactive.ReactiveProperty;
+import eu.okaeri.menu.state.StateDefaults;
+import eu.okaeri.menu.state.ViewerState;
 import lombok.Getter;
 import lombok.NonNull;
 import net.kyori.adventure.text.Component;
@@ -26,7 +26,9 @@ import org.bukkit.plugin.Plugin;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
@@ -37,61 +39,20 @@ import java.util.logging.Level;
 @Getter
 public class Menu implements InventoryHolder {
 
-    @NonNull
-    private final ReactiveProperty<String> title;
+    private @NonNull final ReactiveProperty<String> title;
     private final int rows;
-    @NonNull
-    private final Map<String, Pane> panes = new LinkedHashMap<>();
+    private @NonNull final Map<String, Pane> panes = new LinkedHashMap<>();
     private final Duration updateInterval;
-    @NonNull
-    private final Plugin plugin;
-    @NonNull
-    private final AsyncExecutor asyncExecutor;
-    @NonNull
-    private final MessageProvider messageProvider;
+    private @NonNull final Plugin plugin;
+    private @NonNull final AsyncExecutor asyncExecutor;
+    private @NonNull final MessageProvider messageProvider;
+    private @NonNull final Map<String, Object> stateDefaults;
 
     // Per-viewer state (inventory + pagination contexts)
     private final Map<UUID, ViewerState> viewerStates = new ConcurrentHashMap<>();
 
     // Update task for automatic refresh
     private MenuUpdateTask updateTask;
-
-    /**
-     * Encapsulates all state for a single viewer of this menu.
-     * Includes inventory, pagination contexts per pane, and async data cache.
-     */
-    @Getter
-    public static class ViewerState {
-        @NonNull
-        private Inventory inventory;
-        @NonNull
-        private final Map<String, PaginationContext<?>> paginationContexts = new ConcurrentHashMap<>();
-        @NonNull
-        private final AsyncCache asyncCache;
-
-        ViewerState(@NonNull Inventory inventory, @NonNull AsyncExecutor asyncExecutor) {
-            this.inventory = inventory;
-            this.asyncCache = new AsyncCache(asyncExecutor);
-        }
-
-        /**
-         * Updates the inventory reference (used when title changes).
-         */
-        void setInventory(@NonNull Inventory inventory) {
-            this.inventory = inventory;
-        }
-
-        /**
-         * Gets or creates a pagination context for a pane.
-         */
-        @NonNull
-        @SuppressWarnings("unchecked")
-        public <T> PaginationContext<T> getPaginationContext(@NonNull String paneId, @NonNull UUID playerId, @NonNull List<T> items, int itemsPerPage) {
-            return (PaginationContext<T>) this.paginationContexts.computeIfAbsent(paneId, k ->
-                new PaginationContext<>(paneId, playerId, items, itemsPerPage)
-            );
-        }
-    }
 
     private Menu(Builder builder) {
         this.title = builder.title;
@@ -101,6 +62,7 @@ public class Menu implements InventoryHolder {
         this.plugin = builder.plugin;
         this.asyncExecutor = (builder.asyncExecutor != null) ? builder.asyncExecutor : AsyncExecutor.bukkit(this.plugin);
         this.messageProvider = (builder.messageProvider != null) ? builder.messageProvider : new DefaultMessageProvider();
+        this.stateDefaults = builder.stateDefaults.isEmpty() ? Map.of() : Map.copyOf(builder.stateDefaults);
 
         // Auto-register MenuListener (idempotent - safe to call multiple times)
         MenuListener.register(this.plugin);
@@ -119,33 +81,47 @@ public class Menu implements InventoryHolder {
      * Async data will show loading states and load in the background.
      *
      * @param player The player to open the menu for
+     * @return Future with open result (completes immediately with IMMEDIATE status)
      */
-    public void open(@NonNull Player player) {
+    public CompletableFuture<MenuOpenResult> open(@NonNull Player player) {
         this.openImmediate(player);
+        return CompletableFuture.completedFuture(MenuOpenResult.immediate());
     }
 
     /**
      * Opens this menu for a player after waiting for async data to load.
      * Waits until all AsyncPaginatedPane and AsyncMenuItem instances are SUCCESS or ERROR,
      * or until timeout expires.
-     * <p>
-     * This is useful for backwards compatibility with legacy code that expects
-     * data to be loaded before the inventory opens.
      *
      * @param player  The player to open the menu for
      * @param timeout Maximum time to wait for data (e.g., Duration.ofSeconds(3))
+     * @return Future with detailed result about data loading and open status
      */
-    public void open(@NonNull Player player, @NonNull Duration timeout) {
+    public CompletableFuture<MenuOpenResult> open(@NonNull Player player, @NonNull Duration timeout) {
         // Collect all async cache keys
         List<String> asyncCacheKeys = this.collectAsyncCacheKeys();
 
         if (asyncCacheKeys.isEmpty()) {
             // No async components - just open immediately
             this.openImmediate(player);
-            return;
+            return CompletableFuture.completedFuture(MenuOpenResult.immediate());
         }
 
-        this.openWithWait(player, asyncCacheKeys, timeout);
+        CompletableFuture<MenuOpenResult> future = new CompletableFuture<>();
+        this.openWithWait(player, asyncCacheKeys, timeout, future);
+        return future;
+    }
+
+    /**
+     * Gets or creates viewer state for a player.
+     */
+    private ViewerState getOrCreateViewerState(@NonNull Player player, @NonNull MenuContext context) {
+        return this.viewerStates.computeIfAbsent(player.getUniqueId(), uuid -> {
+            String titleTemplate = this.title.get(context);
+            Component titleComponent = this.messageProvider.resolve(player, titleTemplate, Map.of());
+            Inventory inv = Bukkit.createInventory(this, this.rows * 9, titleComponent);
+            return new ViewerState(context, inv, this.asyncExecutor);
+        });
     }
 
     /**
@@ -158,14 +134,7 @@ public class Menu implements InventoryHolder {
         boolean isFirstViewer = this.viewerStates.isEmpty();
 
         // Create or get viewer state for this player
-        ViewerState state = this.viewerStates.computeIfAbsent(player.getUniqueId(), uuid -> {
-            String titleTemplate = this.title.get(context);
-            // Process title through MessageProvider for color support
-            Component titleComponent = this.messageProvider.resolve(player, titleTemplate, Map.of());
-            String invTitle = LegacyComponentSerializer.legacySection().serialize(titleComponent);
-            Inventory inv = Bukkit.createInventory(this, this.rows * 9, invTitle);
-            return new ViewerState(inv, this.asyncExecutor);
-        });
+        ViewerState state = this.getOrCreateViewerState(player, context);
         Inventory inventory = state.getInventory();
 
         // Render all panes
@@ -214,18 +183,11 @@ public class Menu implements InventoryHolder {
      * Opens menu after waiting for async data to load.
      * Polls using scheduler until all async components are ready or timeout.
      */
-    private void openWithWait(@NonNull Player player, @NonNull List<String> asyncCacheKeys, @NonNull Duration timeout) {
+    private void openWithWait(@NonNull Player player, @NonNull List<String> asyncCacheKeys, @NonNull Duration timeout, @NonNull CompletableFuture<MenuOpenResult> future) {
         MenuContext context = new MenuContext(this, player);
 
         // Create viewer state (but don't open inventory yet)
-        ViewerState state = this.viewerStates.computeIfAbsent(player.getUniqueId(), uuid -> {
-            String titleTemplate = this.title.get(context);
-            // Process title through MessageProvider for color support
-            Component titleComponent = this.messageProvider.resolve(player, titleTemplate, Map.of());
-            String invTitle = LegacyComponentSerializer.legacySection().serialize(titleComponent);
-            Inventory inv = Bukkit.createInventory(this, this.rows * 9, invTitle);
-            return new ViewerState(inv, this.asyncExecutor);
-        });
+        ViewerState state = this.getOrCreateViewerState(player, context);
 
         // Trigger initial render to start async loads
         // This will call AsyncPaginatedPane.render() and AsyncMenuItem.render()
@@ -234,7 +196,7 @@ public class Menu implements InventoryHolder {
         this.render(inventory, context);
 
         // Schedule polling task to check for completion
-        new WaitForDataTask(this, player, asyncCacheKeys, timeout, state).start();
+        new WaitForDataTask(this, player, asyncCacheKeys, timeout, state, future).start();
     }
 
     /**
@@ -293,7 +255,7 @@ public class Menu implements InventoryHolder {
             if (titleChanged) {
 
                 // Update inventory title by creating new one with same contents
-                Inventory newInventory = Bukkit.createInventory(this, this.rows * 9, newTitleSerialized);
+                Inventory newInventory = Bukkit.createInventory(this, this.rows * 9, newTitleComponent);
 
                 // Copy all items to new inventory
                 for (int i = 0; i < inventory.getSize(); i++) {
@@ -322,10 +284,9 @@ public class Menu implements InventoryHolder {
 
     /**
      * Refreshes a specific pane for a viewer.
-     * Also updates the title if it's dynamic.
      * <p>
-     * Note: Dynamic title updates require reopening the inventory in Paper API 1.21+,
-     * which may reset cursor position. The menu only reopens if the title actually changed.
+     * Only updates the specified pane's content, not the menu title or other panes.
+     * Use {@link #refresh(HumanEntity)} to refresh the entire menu including title.
      *
      * @param player   The player viewing the menu
      * @param paneName The name of the pane to refresh
@@ -335,35 +296,7 @@ public class Menu implements InventoryHolder {
         Pane pane = this.panes.get(paneName);
 
         if ((state != null) && (pane != null)) {
-            Inventory inventory = state.getInventory();
             MenuContext context = new MenuContext(this, player);
-
-            // Invalidate title to ensure it re-evaluates
-            this.title.invalidate();
-
-            // Check if title has changed
-            String newTitleTemplate = this.title.get(context);
-            Component newTitleComponent = this.messageProvider.resolve(player, newTitleTemplate, Map.of());
-            Component currentTitle = player.getOpenInventory().title();
-
-            // Only reopen if title changed (to avoid cursor reset)
-            if (!newTitleComponent.equals(currentTitle)) {
-                // Update inventory title by creating new one with same contents
-                String newTitleLegacy = LegacyComponentSerializer.legacySection().serialize(newTitleComponent);
-                Inventory newInventory = Bukkit.createInventory(this, this.rows * 9, newTitleLegacy);
-
-                // Copy all items to new inventory
-                for (int i = 0; i < inventory.getSize(); i++) {
-                    newInventory.setItem(i, inventory.getItem(i));
-                }
-
-                // Update state with new inventory
-                state.setInventory(newInventory);
-
-                // Reopen with new inventory
-                player.openInventory(newInventory);
-            }
-
             pane.invalidate();
             pane.render(state.getInventory(), context);
         }
@@ -420,10 +353,10 @@ public class Menu implements InventoryHolder {
     }
 
     @Override
-    public Inventory getInventory() {
+    public @NonNull Inventory getInventory() {
         // Return a default inventory (not per-viewer)
         // This is mainly for InventoryHolder compliance
-        return Bukkit.createInventory(this, this.rows * 9, "Menu");
+        return Bukkit.createInventory(this, this.rows * 9, Component.empty());
     }
 
     /**
@@ -432,7 +365,7 @@ public class Menu implements InventoryHolder {
      *
      * @return The plugin instance, or null if not set
      */
-    public org.bukkit.plugin.Plugin getPlugin() {
+    public @NonNull Plugin getPlugin() {
         return this.plugin;
     }
 
@@ -448,16 +381,14 @@ public class Menu implements InventoryHolder {
     }
 
     public static class Builder {
-        @NonNull
-        private ReactiveProperty<String> title = ReactiveProperty.of("Menu");
-        private int rows = 6;
-        @NonNull
-        private Map<String, Pane> panes = new LinkedHashMap<>();
+        private @NonNull ReactiveProperty<String> title = ReactiveProperty.of("Menu");
+        private int rows = -1; // -1 means auto-calculate from panes
+        private @NonNull Map<String, Pane> panes = new LinkedHashMap<>();
         private Duration updateInterval = null;
-        @NonNull
-        private final Plugin plugin;
+        private @NonNull final Plugin plugin;
         private AsyncExecutor asyncExecutor = null;
         private MessageProvider messageProvider = null;
+        private @NonNull final Map<String, Object> stateDefaults = new HashMap<>();
 
         private Builder(@NonNull Plugin plugin) {
             this.plugin = plugin;
@@ -481,6 +412,14 @@ public class Menu implements InventoryHolder {
             return this;
         }
 
+        /**
+         * Sets the number of rows for this menu.
+         * If not called, rows will be auto-calculated from pane bounds.
+         *
+         * @param rows The number of rows (1-6)
+         * @return This builder
+         * @throws IllegalArgumentException if rows is not between 1 and 6
+         */
         @NonNull
         public Builder rows(int rows) {
             if ((rows < 1) || (rows > 6)) {
@@ -513,8 +452,8 @@ public class Menu implements InventoryHolder {
                 }
             }
 
-            // Validate pane fits within menu rows
-            if ((newBounds.getY() + newBounds.getHeight()) > this.rows) {
+            // Validate pane fits within menu rows (only if rows explicitly set)
+            if ((this.rows != -1) && ((newBounds.getY() + newBounds.getHeight()) > this.rows)) {
                 throw new IllegalArgumentException(
                     "Pane '" + name + "' exceeds menu height: " +
                         "pane ends at row " + (newBounds.getY() + newBounds.getHeight()) +
@@ -565,8 +504,41 @@ public class Menu implements InventoryHolder {
             return this;
         }
 
+        /**
+         * Defines default values for per-player state variables.
+         * State is scoped per-player - each viewer has independent state.
+         *
+         * @param configurator State configuration
+         * @return This builder
+         */
+        @NonNull
+        public Builder state(@NonNull Consumer<StateDefaults> configurator) {
+            StateDefaults defaults = new StateDefaults(this.stateDefaults);
+            configurator.accept(defaults);
+            return this;
+        }
+
         @NonNull
         public Menu build() {
+            // Auto-calculate rows from panes if not explicitly set
+            if (this.rows == -1) {
+                this.rows = this.panes.values().stream()
+                    .mapToInt(pane -> {
+                        PaneBounds bounds = pane.getBounds();
+                        return bounds.getY() + bounds.getHeight();
+                    })
+                    .max()
+                    .orElse(1); // Default to 1 row if no panes
+
+                // Validate auto-calculated rows
+                if (this.rows > 6) {
+                    throw new IllegalStateException(
+                        "Auto-calculated menu height exceeds maximum: " +
+                            "panes require " + this.rows + " rows but maximum is 6"
+                    );
+                }
+            }
+
             return new Menu(this);
         }
     }

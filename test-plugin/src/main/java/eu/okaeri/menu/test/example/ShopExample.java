@@ -30,11 +30,6 @@ public class ShopExample {
     public static Menu createShopMenu(Plugin plugin) {
         List<ShopItem> items = createShopItems();
 
-        // Filter activation states
-        boolean[] weaponFilterActive = {false};
-        boolean[] armorFilterActive = {false};
-        boolean[] expensiveFilterActive = {false};
-
         return Menu.builder(plugin)
             .title("&6&lItem Shop")
             .rows(6)
@@ -43,54 +38,54 @@ public class ShopExample {
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(1, 0, MenuItem.item()
-                    .material(() -> weaponFilterActive[0] ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
-                    .name(() -> weaponFilterActive[0] ? "&a✓ Weapons" : "&7Weapons")
+                    .material(ctx -> ctx.getBool("filter:weapon") ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
+                    .name(ctx -> ctx.getBool("filter:weapon") ? "&a✓ Weapons" : "&7Weapons")
                     .lore("""
                         &7Show weapons only
-                        
+
                         &eClick to toggle!""")
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
                         .id("weapon")
-                        .when(() -> weaponFilterActive[0])
+                        .when(ctx -> ctx.getBool("filter:weapon"))
                         .predicate(item -> item.category().equals("weapon"))
                         .build())
                     .onClick(ctx -> {
-                        weaponFilterActive[0] = !weaponFilterActive[0];
+                        ctx.set("filter:weapon", !ctx.getBool("filter:weapon"));
                     })
                     .build())
                 .item(3, 0, MenuItem.item()
-                    .material(() -> armorFilterActive[0] ? Material.DIAMOND_CHESTPLATE : Material.LEATHER_CHESTPLATE)
-                    .name(() -> armorFilterActive[0] ? "&a✓ Armor" : "&7Armor")
+                    .material(ctx -> ctx.getBool("filter:armor") ? Material.DIAMOND_CHESTPLATE : Material.LEATHER_CHESTPLATE)
+                    .name(ctx -> ctx.getBool("filter:armor") ? "&a✓ Armor" : "&7Armor")
                     .lore("""
                         &7Show armor only
-                        
+
                         &eClick to toggle!""")
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
                         .id("armor")
-                        .when(() -> armorFilterActive[0])
+                        .when(ctx -> ctx.getBool("filter:armor"))
                         .predicate(item -> item.category().equals("armor"))
                         .build())
                     .onClick(ctx -> {
-                        armorFilterActive[0] = !armorFilterActive[0];
+                        ctx.set("filter:armor", !ctx.getBool("filter:armor"));
                     })
                     .build())
                 .item(5, 0, MenuItem.item()
-                    .material(() -> expensiveFilterActive[0] ? Material.GOLD_INGOT : Material.IRON_INGOT)
-                    .name(() -> expensiveFilterActive[0] ? "&a✓ Expensive (>100)" : "&7Expensive (>100)")
+                    .material(ctx -> ctx.getBool("filter:expensive") ? Material.GOLD_INGOT : Material.IRON_INGOT)
+                    .name(ctx -> ctx.getBool("filter:expensive") ? "&a✓ Expensive (>100)" : "&7Expensive (>100)")
                     .lore("""
                         &7Show items over 100 coins
-                        
+
                         &eClick to toggle!""")
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
                         .id("expensive")
-                        .when(() -> expensiveFilterActive[0])
+                        .when(ctx -> ctx.getBool("filter:expensive"))
                         .predicate(item -> item.price() > 100)
                         .build())
                     .onClick(ctx -> {
-                        expensiveFilterActive[0] = !expensiveFilterActive[0];
+                        ctx.set("filter:expensive", !ctx.getBool("filter:expensive"));
                     })
                     .build())
                 .item(7, 0, MenuItem.item()
@@ -99,14 +94,14 @@ public class ShopExample {
                     .lore("""
                             &7Active filters: &f<active_count>
                             &7Strategy: &fAND
-                            
+
                             &7All active filters
                             &7must match!""",
                         ctx -> {
                             int activeCount = 0;
-                            if (weaponFilterActive[0]) activeCount++;
-                            if (armorFilterActive[0]) activeCount++;
-                            if (expensiveFilterActive[0]) activeCount++;
+                            if (ctx.getBool("filter:weapon")) activeCount++;
+                            if (ctx.getBool("filter:armor")) activeCount++;
+                            if (ctx.getBool("filter:expensive")) activeCount++;
 
                             return Map.of("active_count", activeCount);
                         })
@@ -115,9 +110,9 @@ public class ShopExample {
                     .material(Material.BARRIER)
                     .name("&cClear All")
                     .onClick(ctx -> {
-                        weaponFilterActive[0] = false;
-                        armorFilterActive[0] = false;
-                        expensiveFilterActive[0] = false;
+                        ctx.set("filter:weapon", false);
+                        ctx.set("filter:armor", false);
+                        ctx.set("filter:expensive", false);
                     })
                     .build())
                 .build())

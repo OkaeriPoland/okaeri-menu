@@ -202,7 +202,7 @@ class PaginatedPaneTest {
         this.menu.open(this.player);
 
         // Navigate to page 1
-        PaginationContext<String> pagination = PaginationContext.get(this.menu, "test", this.player, items, 4);
+        PaginationContext<String> pagination = PaginationContext.get(context, pane);
         pagination.nextPage();
 
         pane.render(this.inventory, context);

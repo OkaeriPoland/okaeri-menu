@@ -1,6 +1,7 @@
 package eu.okaeri.menu;
 
 import eu.okaeri.menu.async.AsyncCache;
+import eu.okaeri.menu.state.ViewerState;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -8,7 +9,11 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 /**
@@ -28,49 +33,77 @@ class WaitForDataTask extends BukkitRunnable {
     private final Player player;
     private final List<String> asyncCacheKeys;
     private final Duration timeout;
-    private final Menu.ViewerState viewerState;
+    private final ViewerState viewerState;
+    private final CompletableFuture<MenuOpenResult> future;
 
-    private long startTime;
+    private Instant startTime;
 
     void start() {
-        this.startTime = System.currentTimeMillis();
+        this.startTime = Instant.now();
         // Poll every tick (50ms) for responsive UX
         this.runTaskTimer(this.menu.getPlugin(), 0L, 1L);
     }
 
     @Override
     public void run() {
+        Duration elapsed = Duration.between(this.startTime, Instant.now());
+        AsyncCache cache = this.viewerState.getAsyncCache();
+
         // Check if player is still online
         if (!this.player.isOnline()) {
             this.cancel();
             this.menu.getViewerStates().remove(this.player.getUniqueId());
+            this.future.complete(MenuOpenResult.playerOffline(elapsed));
             return;
         }
 
-        AsyncCache cache = this.viewerState.getAsyncCache();
-
         // Check timeout
-        long elapsed = System.currentTimeMillis() - this.startTime;
-        if (elapsed > this.timeout.toMillis()) {
+        if (elapsed.compareTo(this.timeout) > 0) {
             // Timeout - open anyway with whatever state we have
             this.menu.getPlugin().getLogger().log(Level.WARNING,
                 "Menu open timeout for player " + this.player.getName() +
-                    " after " + elapsed + "ms (timeout: " + this.timeout.toMillis() + "ms)");
+                    " after " + elapsed.toMillis() + "ms (timeout: " + this.timeout.toMillis() + "ms)");
             this.cancel();
             this.openMenu();
+
+            // Collect component states
+            Set<String> successful = new HashSet<>();
+            Set<String> failed = new HashSet<>();
+            Set<String> pending = new HashSet<>();
+
+            for (String key : this.asyncCacheKeys) {
+                switch (cache.getState(key)) {
+                    case SUCCESS -> successful.add(key);
+                    case ERROR -> failed.add(key);
+                    default -> pending.add(key);
+                }
+            }
+
+            this.future.complete(MenuOpenResult.timeout(elapsed, successful, failed, pending));
             return;
         }
 
         // Check if all async components are ready (SUCCESS or ERROR)
-        boolean allReady = this.asyncCacheKeys.stream().allMatch(cacheKey -> {
-            AsyncCache.AsyncState state = cache.getState(cacheKey);
-            return (state == AsyncCache.AsyncState.SUCCESS) || (state == AsyncCache.AsyncState.ERROR);
-        });
+        Set<String> successful = new HashSet<>();
+        Set<String> failed = new HashSet<>();
+        boolean allReady = true;
+
+        for (String key : this.asyncCacheKeys) {
+            AsyncCache.AsyncState state = cache.getState(key);
+            if (state == AsyncCache.AsyncState.SUCCESS) {
+                successful.add(key);
+            } else if (state == AsyncCache.AsyncState.ERROR) {
+                failed.add(key);
+            } else {
+                allReady = false;
+            }
+        }
 
         if (allReady) {
             // All data loaded - open menu
             this.cancel();
             this.openMenu();
+            this.future.complete(MenuOpenResult.preloaded(elapsed, successful, failed));
         }
 
         // Not ready yet - continue polling next tick

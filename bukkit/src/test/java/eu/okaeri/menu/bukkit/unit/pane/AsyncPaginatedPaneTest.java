@@ -1,6 +1,7 @@
 package eu.okaeri.menu.bukkit.unit.pane;
 
 import eu.okaeri.menu.Menu;
+import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.bukkit.test.PooledAsyncExecutor;
 import eu.okaeri.menu.bukkit.test.SyncTestExecutor;
 import eu.okaeri.menu.item.MenuItem;
@@ -830,7 +831,6 @@ class AsyncPaginatedPaneTest {
     @DisplayName("Inactive filters should not be included in LoaderContext")
     void testInactiveFilterNotIncludedInLoaderContext() {
         LoaderContext[] capturedContext = {null};
-        boolean[] filterActive = {false};
         String[] category = {"WEAPONS"};
 
         Menu testMenu = Menu.builder(this.plugin)
@@ -845,7 +845,7 @@ class AsyncPaginatedPaneTest {
                     .filter(ItemFilter.builder()
                         .target("items")
                         .id("category")
-                        .when(() -> filterActive[0])  // Conditional activation
+                        .when(ctx -> ctx.getBool("filterActive"))  // Conditional activation via state
                         .value(() -> category[0])
                         .build())
                     .build())
@@ -872,8 +872,9 @@ class AsyncPaginatedPaneTest {
         assertThat(capturedContext[0].getActiveFilterCount()).isEqualTo(0);
         assertThat(capturedContext[0].hasFilter("category")).isFalse();
 
-        // Activate filter
-        filterActive[0] = true;
+        // Activate filter via state API
+        MenuContext ctx = new MenuContext(testMenu, this.player);
+        ctx.set("filterActive", true);
 
         // Trigger refresh after TTL expires
         try {

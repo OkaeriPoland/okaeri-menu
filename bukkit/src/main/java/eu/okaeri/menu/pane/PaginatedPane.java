@@ -47,12 +47,8 @@ public class PaginatedPane<T> extends AbstractPane {
 
     @Override
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
-        // Get pagination context for this viewer
-        List<T> allItems = this.itemsSupplier.get();
-        PaginationContext<T> pagination = PaginationContext.get(context.getMenu(), this.name, context.getEntity(), allItems, this.itemsPerPage);
-
-        // Update items in case they've changed (for dynamic suppliers)
-        pagination.updateItems(allItems);
+        // Get pagination context for this viewer (reactive - reads items from pane on-demand)
+        PaginationContext<T> pagination = PaginationContext.get(context, this);
 
         // Apply declarative filters from menu items
         this.applyItemFilters(context, pagination);
@@ -117,7 +113,7 @@ public class PaginatedPane<T> extends AbstractPane {
         // Sync declarative filters from menu items
         for (Pane pane : context.getMenu().getPanes().values()) {
             for (MenuItem menuItem : pane.getFilteringItems().values()) {
-                this.applyFiltersFromItem(menuItem, pagination);
+                this.applyFiltersFromItem(context, menuItem, pagination);
             }
         }
     }
@@ -128,13 +124,13 @@ public class PaginatedPane<T> extends AbstractPane {
      * Eagerly validates filter values to catch exceptions early.
      */
     @SuppressWarnings("unchecked")
-    protected void applyFiltersFromItem(@NonNull MenuItem menuItem, @NonNull PaginationContext<T> pagination) {
+    protected void applyFiltersFromItem(@NonNull MenuContext context, @NonNull MenuItem menuItem, @NonNull PaginationContext<T> pagination) {
         for (ItemFilter<?> filter : menuItem.getFilters()) {
             // Check if this filter targets this pane
             if (filter.getTargetPane().equals(this.name)) {
                 // Eagerly validate by extracting value (will throw if value() supplier fails)
                 // This ensures exceptions are caught by Menu.render()'s error handling
-                if (filter.isActive()) {
+                if (filter.isActive(context)) {
                     filter.extractValue();  // May throw - that's intentional!
                 }
 

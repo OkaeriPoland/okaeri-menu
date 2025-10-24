@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * Compatibility adapter for MenuContext v1 API.
  * Bridges old v1 API to new v2 API by delegating to {@link MenuItemClickContext}.
  *
- * @deprecated Use the new 2.0 API with {@link MenuItemClickContext} and {@link eu.okaeri.menu.BaseMenuContext}
+ * @deprecated Use the new 2.0 API with {@link MenuItemClickContext} and {@link eu.okaeri.menu.MenuContext}
  */
 @Builder
 @Data(staticConstructor = "of")

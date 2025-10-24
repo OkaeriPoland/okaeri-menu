@@ -7,7 +7,9 @@ import eu.okaeri.menu.item.MenuItemClickContext;
 import eu.okaeri.menu.navigation.NavigationHistory;
 import eu.okaeri.menu.pane.AbstractPane;
 import eu.okaeri.menu.pane.Pane;
+import eu.okaeri.menu.state.ViewerState;
 import lombok.NonNull;
+import lombok.Synchronized;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -39,7 +41,6 @@ import java.util.logging.Level;
 public class MenuListener implements Listener {
 
     private static volatile MenuListener instance;
-    private static final Object LOCK = new Object();
 
     private final @NonNull Plugin plugin;
 
@@ -63,43 +64,14 @@ public class MenuListener implements Listener {
      * @param plugin The plugin instance
      * @return The singleton MenuListener instance (useful for testing)
      */
+    @Synchronized
     public static MenuListener register(@NonNull Plugin plugin) {
         if (instance != null) {
             return instance; // Already registered
         }
-
-        synchronized (LOCK) {
-            if (instance != null) {
-                return instance; // Double-check after acquiring lock
-            }
-
-            instance = new MenuListener(plugin);
-            plugin.getServer().getPluginManager().registerEvents(instance, plugin);
-            return instance;
-        }
-    }
-
-    /**
-     * Unregisters the MenuListener.
-     * Call this in your plugin's onDisable() method.
-     */
-    public static void unregister() {
-        synchronized (LOCK) {
-            if (instance != null) {
-                org.bukkit.event.HandlerList.unregisterAll(instance);
-                instance = null;
-            }
-        }
-    }
-
-    /**
-     * Checks if the listener is registered.
-     * Useful for testing and debugging.
-     *
-     * @return true if registered
-     */
-    public static boolean isRegistered() {
-        return instance != null;
+        instance = new MenuListener(plugin);
+        plugin.getServer().getPluginManager().registerEvents(instance, plugin);
+        return instance;
     }
 
     /**
@@ -277,8 +249,15 @@ public class MenuListener implements Listener {
      * Calculates the new item state directly from the event without using scheduled tasks.
      * Event starts un-cancelled, and will be cancelled only if the action should be blocked.
      */
-    private void handleInteractiveSlotClick(@NonNull InventoryClickEvent event, @NonNull Menu menu, @NonNull HumanEntity player,
-                                            int rawSlot, @NonNull MenuItem clickedItem, @NonNull Inventory inventory) {
+    private void handleInteractiveSlotClick(
+        @NonNull InventoryClickEvent event,
+        @NonNull Menu menu,
+        @NonNull HumanEntity player,
+        int rawSlot,
+        @NonNull MenuItem clickedItem,
+        @NonNull Inventory inventory
+    ) {
+
         // Check if this action is supported (can be calculated)
         if (!InventoryActionCalculator.isActionSupported(event.getAction())) {
             // Complex action that we can't calculate - cancel it
@@ -330,8 +309,12 @@ public class MenuListener implements Listener {
      * Determines if an interaction with an interactive slot should be allowed.
      * Checks permissions based on the action type.
      */
-    private boolean shouldAllowInteraction(@NonNull InventoryClickEvent event, @NonNull MenuItem item,
-                                           ItemStack currentItem, ItemStack calculatedNewItem) {
+    private boolean shouldAllowInteraction(
+        @NonNull InventoryClickEvent event,
+        @NonNull MenuItem item,
+        ItemStack currentItem,
+        ItemStack calculatedNewItem
+    ) {
         return switch (event.getAction()) {
             // Pickup actions - require allowPickup
             case PICKUP_ALL, PICKUP_HALF, PICKUP_ONE, PICKUP_SOME, DROP_ALL_SLOT, DROP_ONE_SLOT -> item.isAllowPickup();
@@ -342,9 +325,9 @@ public class MenuListener implements Listener {
             // Swap actions - require both
             case SWAP_WITH_CURSOR, HOTBAR_SWAP -> item.isAllowPickup() && item.isAllowPlacement();
 
-            // Nothing/Unknown - allow
-            case NOTHING -> true;
-            default -> true;
+            // Nothing/Unknown - deny
+            case NOTHING -> false;
+            default -> false;
         };
     }
 
@@ -413,7 +396,7 @@ public class MenuListener implements Listener {
 
         // Check if this close event is for the player's current menu inventory
         // or if it's an old inventory being replaced (e.g., for title updates)
-        Menu.ViewerState viewerState = menu.getViewerState(player.getUniqueId());
+        ViewerState viewerState = menu.getViewerState(player.getUniqueId());
         if (viewerState != null) {
             Inventory currentInventory = viewerState.getInventory();
 

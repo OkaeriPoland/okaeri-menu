@@ -4,6 +4,7 @@ import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.message.DefaultMessageProvider;
 import eu.okaeri.menu.message.MessageProvider;
 import eu.okaeri.menu.navigation.NavigationUtils;
+import eu.okaeri.menu.pane.PaginatedPane;
 import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -177,8 +178,6 @@ public class MessageExample {
      * Shows context-aware placeholders that update on refresh.
      */
     public static Menu createReactiveExample(Plugin plugin) {
-        final int[] clickCount = {0};
-
         return Menu.builder(plugin)
             .title("<gradient:blue:aqua>Reactive Messages</gradient>")
             .rows(3)
@@ -190,39 +189,40 @@ public class MessageExample {
                     .material(Material.DIAMOND)
                     .name(
                         "<gradient:blue:aqua>Clicks: <count></gradient>",
-                        ctx -> Map.of("count", clickCount[0])
+                        ctx -> Map.of("count", ctx.getInt("clickCount"))
                     )
                     .lore("""
                             <status>
-                            
+
                             &7Click to increment!""",
                         ctx -> {
-                            String status = clickCount[0] == 0 ? "<gray>Never clicked" :
-                                clickCount[0] < 5 ? "<yellow>Beginner" :
-                                    clickCount[0] < 10 ? "<gold>Intermediate" :
+                            int clickCount = ctx.getInt("clickCount");
+                            String status = clickCount == 0 ? "<gray>Never clicked" :
+                                clickCount < 5 ? "<yellow>Beginner" :
+                                    clickCount < 10 ? "<gold>Intermediate" :
                                         "<red>Expert!";
                             return Map.of("status", status);
                         }
                     )
                     .onClick(ctx -> {
-                        clickCount[0]++;
+                        ctx.set("clickCount", ctx.getInt("clickCount") + 1);
                         ctx.refresh();
                     })
                     .build())
                 // Dynamic color based on value
                 .item(5, 1, item()
-                    .material(() -> clickCount[0] > 5 ? Material.EMERALD : Material.COAL)
+                    .material(ctx -> ctx.getInt("clickCount") > 5 ? Material.EMERALD : Material.COAL)
                     .name(
                         "<color>Status Indicator",
                         ctx -> {
-                            String color = clickCount[0] > 5 ? "<green>" : "<gray>";
+                            String color = ctx.getInt("clickCount") > 5 ? "<green>" : "<gray>";
                             return Map.of("color", color);
                         }
                     )
                     .lore("""
                             <gray>Clicks: <white><count>
                             <gray>Material changes at 5+ clicks!""",
-                        ctx -> Map.of("count", clickCount[0])
+                        ctx -> Map.of("count", ctx.getInt("clickCount"))
                     )
                     .build())
                 .item(8, 2, NavigationUtils.closeButton().build())
@@ -567,7 +567,7 @@ public class MessageExample {
         return Menu.builder(plugin)
             .title("<gold>i18n Buttons Demo")
             .rows(5)
-            .pane("items", eu.okaeri.menu.pane.PaginatedPane.<String>pane()
+            .pane("items", PaginatedPane.<String>pane()
                 .name("items")
                 .bounds(0, 1, 9, 3)
                 .items(items)

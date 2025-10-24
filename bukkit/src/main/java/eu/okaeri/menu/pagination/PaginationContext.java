@@ -1,9 +1,11 @@
 package eu.okaeri.menu.pagination;
 
 import eu.okaeri.menu.Menu;
-import lombok.Getter;
+import eu.okaeri.menu.MenuContext;
+import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.pane.Pane;
+import eu.okaeri.menu.state.ViewerState;
 import lombok.NonNull;
-import org.bukkit.entity.HumanEntity;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -17,56 +19,133 @@ import java.util.stream.Collectors;
  * instead of global static storage. This prevents collisions between different
  * menu instances with the same pane names.
  */
-@Getter
 public class PaginationContext<T> {
 
-    private final String paneId;
-    private final UUID playerId;
-    private final List<T> allItems;
-    private final int itemsPerPage;
+    private MenuContext context;
+    private final PaginatedPane<T> pane;
 
     private int currentPage = 0;
     private final Map<String, ItemFilter<T>> filters = new LinkedHashMap<>();
     private FilterStrategy filterStrategy = FilterStrategy.AND;  // Default to AND
 
     /**
-     * Public constructor.
-     * Called by Menu.ViewerState to create pagination contexts.
+     * Creates a reactive pagination context.
+     * Stores reference to pane and reads data on-demand.
+     *
+     * @param context The menu context
+     * @param pane    The paginated pane (source of truth for items)
      */
-    public PaginationContext(@NonNull String paneId, @NonNull UUID playerId, @NonNull List<T> allItems, int itemsPerPage) {
-        this.paneId = paneId;
-        this.playerId = playerId;
-        this.allItems = new ArrayList<>(allItems);
-        this.itemsPerPage = itemsPerPage;
+    public PaginationContext(@NonNull MenuContext context, @NonNull PaginatedPane<T> pane) {
+        this.context = context;
+        this.pane = pane;
     }
 
     /**
-     * Gets or creates a pagination context for a pane and player in a specific menu.
+     * Gets the underlying pane reference.
      *
-     * <p>Pagination contexts are now scoped to individual menu instances via ViewerState,
-     * eliminating collisions between different menus with the same pane names.
+     * @return The paginated pane
+     */
+    @NonNull
+    public PaginatedPane<T> getPane() {
+        return this.pane;
+    }
+
+    /**
+     * Gets the pane identifier (derived from pane).
      *
-     * @param menu         The menu instance
-     * @param paneId       The pane identifier
-     * @param player       The player
-     * @param allItems     All items to paginate
-     * @param itemsPerPage Items per page
-     * @param <T>          Item type
-     * @return The pagination context
-     * @throws IllegalArgumentException if menu is null
+     * @return The pane ID
+     */
+    @NonNull
+    public String getPaneId() {
+        return this.pane.getName();
+    }
+
+    /**
+     * Sets the current context for this pagination.
+     * Called automatically when pagination is accessed via MenuContext.
+     *
+     * @param context The menu context
+     */
+    public void setContext(@NonNull MenuContext context) {
+        this.context = context;
+    }
+
+    /**
+     * Gets all items (reactive - reads from pane on-demand).
+     * For AsyncPaginatedPane, this reads from the current AtomicReference value.
+     *
+     * @return All items from the pane's supplier
+     */
+    @NonNull
+    public List<T> getAllItems() {
+        return this.pane.getItemsSupplier().get();
+    }
+
+    /**
+     * Gets items per page (reactive - reads from pane on-demand).
+     *
+     * @return Items per page configured on the pane
+     */
+    public int getItemsPerPage() {
+        return this.pane.getItemsPerPage();
+    }
+
+    /**
+     * Gets or creates a pagination context for a pane by name.
+     * Automatically extracts the pane from the menu and delegates to the pane-based overload.
+     *
+     * @param context The menu context (contains menu and entity)
+     * @param paneId  The pane identifier
+     * @param <T>     Item type
+     * @return The pagination context with context already set
+     * @throws IllegalArgumentException if pane doesn't exist or is not a PaginatedPane
      * @throws IllegalStateException    if viewer state doesn't exist for player
      */
     @SuppressWarnings("unchecked")
-    public static <T> @NonNull PaginationContext<T> get(@NonNull Menu menu, @NonNull String paneId, @NonNull HumanEntity player, @NonNull List<T> allItems, int itemsPerPage) {
+    public static <T> @NonNull PaginationContext<T> get(@NonNull MenuContext context, @NonNull String paneId) {
 
-        UUID playerId = player.getUniqueId();
-        Menu.ViewerState state = menu.getViewerState(playerId);
-
-        if (state == null) {
-            throw new IllegalStateException("No viewer state for player " + player.getName() + " in this menu. Menu must be opened first.");
+        // Extract pane and validate type
+        Pane pane = context.getMenu().getPane(paneId);
+        if (pane == null) {
+            throw new IllegalArgumentException("Pane '" + paneId + "' does not exist in menu");
+        }
+        if (!(pane instanceof PaginatedPane<?> paginatedPane)) {
+            throw new IllegalArgumentException("Pane '" + paneId + "' is not a PaginatedPane");
         }
 
-        return state.getPaginationContext(paneId, playerId, allItems, itemsPerPage);
+        // Cast to specific type parameter (unchecked due to type erasure)
+        PaginatedPane<T> typedPane = (PaginatedPane<T>) paginatedPane;
+
+        // Delegate to pane-based overload
+        return get(context, typedPane);
+    }
+
+    /**
+     * Gets or creates a pagination context for a pane.
+     * <p>
+     * The pagination context is cached per-viewer in ViewerState.
+     * The context reactively reads items from the pane's supplier on-demand,
+     * working seamlessly with AsyncPaginatedPane's AtomicReference pattern.
+     *
+     * @param context The menu context (contains menu and entity)
+     * @param pane    The paginated pane
+     * @param <T>     Item type
+     * @return The pagination context with context already set
+     * @throws IllegalStateException if viewer state doesn't exist for player
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> @NonNull PaginationContext<T> get(@NonNull MenuContext context, @NonNull PaginatedPane<T> pane) {
+
+        Menu menu = context.getMenu();
+        UUID playerId = context.getEntity().getUniqueId();
+        ViewerState state = menu.getViewerState(playerId);
+
+        if (state == null) {
+            throw new IllegalStateException("No viewer state for player " + context.getEntity().getName() + " in this menu. Menu must be opened first.");
+        }
+
+        // Get or create cached pagination context
+        return state.getPagination(pane);
     }
 
     // ========================================
@@ -96,9 +175,9 @@ public class PaginationContext<T> {
      */
     public void addFilter(@NonNull String filterId, @NonNull Predicate<T> predicate) {
         ItemFilter.Builder<T> builder = ItemFilter.<T>builder()
-            .target(this.paneId)
+            .target(this.getPaneId())
             .id(filterId)
-            .when(() -> true)  // Always active for programmatic filters
+            .when(ctx -> true)  // Always active for programmatic filters
             .predicate(predicate);
 
         this.filters.put(filterId, builder.build());
@@ -114,9 +193,9 @@ public class PaginationContext<T> {
      */
     public void addFilterValue(@NonNull String filterId, @NonNull Object value) {
         ItemFilter.Builder<T> builder = ItemFilter.<T>builder()
-            .target(this.paneId)
+            .target(this.getPaneId())
             .id(filterId)
-            .when(() -> true)  // Always active for programmatic filters
+            .when(ctx -> true)  // Always active for programmatic filters
             .value(() -> value);
 
         this.filters.put(filterId, builder.build());
@@ -133,9 +212,9 @@ public class PaginationContext<T> {
      */
     public void addFilter(@NonNull String filterId, @NonNull Predicate<T> predicate, @NonNull Object value) {
         ItemFilter.Builder<T> builder = ItemFilter.<T>builder()
-            .target(this.paneId)
+            .target(this.getPaneId())
             .id(filterId)
-            .when(() -> true)  // Always active for programmatic filters
+            .when(ctx -> true)  // Always active for programmatic filters
             .predicate(predicate)
             .value(() -> value);
 
@@ -178,7 +257,7 @@ public class PaginationContext<T> {
      */
     public boolean hasFilter(@NonNull String filterId) {
         ItemFilter<T> filter = this.filters.get(filterId);
-        return (filter != null) && filter.isActive();
+        return (filter != null) && filter.isActive(this.context);
     }
 
     /**
@@ -215,7 +294,7 @@ public class PaginationContext<T> {
     @NonNull
     public Collection<ItemFilter<T>> getActiveFilters() {
         return this.filters.values().stream()
-            .filter(ItemFilter::isActive)
+            .filter(f -> f.isActive(this.context))
             .toList();
     }
 
@@ -228,7 +307,7 @@ public class PaginationContext<T> {
     @NonNull
     public Set<String> getActiveFilterIds() {
         return this.filters.entrySet().stream()
-            .filter(entry -> entry.getValue().isActive())
+            .filter(entry -> entry.getValue().isActive(this.context))
             .map(Map.Entry::getKey)
             .collect(Collectors.toUnmodifiableSet());
     }
@@ -240,7 +319,7 @@ public class PaginationContext<T> {
      */
     public int getActiveFilterCount() {
         return (int) this.filters.values().stream()
-            .filter(ItemFilter::isActive)
+            .filter(f -> f.isActive(this.context))
             .count();
     }
 
@@ -280,7 +359,7 @@ public class PaginationContext<T> {
         Map<String, Object> values = new LinkedHashMap<>();
         for (Map.Entry<String, ItemFilter<T>> entry : this.filters.entrySet()) {
             ItemFilter<T> filter = entry.getValue();
-            if (filter.isActive()) {  // Lazy when() check
+            if (filter.isActive(this.context)) {  // Lazy when() check
                 Object value = filter.extractValue();  // Lazy value extraction
                 if (value != null) {
                     values.put(entry.getKey(), value);
@@ -304,7 +383,7 @@ public class PaginationContext<T> {
         if (filter == null) {
             return Optional.empty();
         }
-        if (!filter.isActive()) {  // Lazy when() check
+        if (!filter.isActive(this.context)) {  // Lazy when() check
             return Optional.empty();
         }
 
@@ -323,21 +402,23 @@ public class PaginationContext<T> {
      * Uses the configured filter strategy to combine multiple filters.
      * Filters are lazily evaluated (when() and predicate() called on each item).
      *
-     * <p>The strategy is responsible for checking {@link ItemFilter#isActive()}
+     * <p>The strategy is responsible for checking {@link ItemFilter#isActive(MenuContext)}
      * and combining filters according to its logic.
      *
      * @return List of filtered items
      */
     public @NonNull List<T> getFilteredItems() {
+        List<T> allItems = this.getAllItems();  // Reactive read from pane
+
         if (this.filters.isEmpty()) {
-            return new ArrayList<>(this.allItems);
+            return new ArrayList<>(allItems);
         }
 
-        // Pass ALL filters to strategy - strategy handles isActive() checking
+        // Pass context and ALL filters to strategy - strategy handles isActive() checking
         // This allows strategies to inspect all filters for metadata-based logic
-        Predicate<T> combinedFilter = this.filterStrategy.combine(this.filters.values());
+        Predicate<T> combinedFilter = this.filterStrategy.combine(this.context, this.filters.values());
 
-        return this.allItems.stream()
+        return allItems.stream()
             .filter(combinedFilter)
             .toList();
     }
@@ -353,8 +434,9 @@ public class PaginationContext<T> {
      */
     public @NonNull List<T> getCurrentPageItems() {
         List<T> filtered = this.getFilteredItems();
-        int start = this.currentPage * this.itemsPerPage;
-        int end = Math.min(start + this.itemsPerPage, filtered.size());
+        int itemsPerPage = this.getItemsPerPage();  // Reactive read from pane
+        int start = this.currentPage * itemsPerPage;
+        int end = Math.min(start + itemsPerPage, filtered.size());
 
         if (start >= filtered.size()) {
             return Collections.emptyList();
@@ -370,7 +452,8 @@ public class PaginationContext<T> {
      */
     public int getTotalPages() {
         List<T> filtered = this.getFilteredItems();
-        return (int) Math.ceil((double) filtered.size() / this.itemsPerPage);
+        int itemsPerPage = this.getItemsPerPage();  // Reactive read from pane
+        return (int) Math.ceil((double) filtered.size() / itemsPerPage);
     }
 
     /**
@@ -453,31 +536,17 @@ public class PaginationContext<T> {
      * @return Total filtered items
      */
     public int getTotalItems() {
-        return this.getFilteredItems().size();
+        List<T> filtered = this.getFilteredItems();
+        return filtered.size();
     }
 
     /**
-     * Checks if the current page is empty.
+     * Checks if the filtered items list is empty.
      *
      * @return true if empty
      */
     public boolean isEmpty() {
-        return this.getFilteredItems().isEmpty();
-    }
-
-    /**
-     * Updates the items list (useful for dynamic content).
-     *
-     * @param newItems The new items
-     */
-    public void updateItems(@NonNull List<T> newItems) {
-        this.allItems.clear();
-        this.allItems.addAll(newItems);
-
-        // Adjust current page if it's now out of bounds
-        int totalPages = this.getTotalPages();
-        if ((this.currentPage >= totalPages) && (totalPages > 0)) {
-            this.currentPage = totalPages - 1;
-        }
+        List<T> filtered = this.getFilteredItems();
+        return filtered.isEmpty();
     }
 }

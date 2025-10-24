@@ -1,12 +1,12 @@
 package eu.okaeri.menu.pane;
 
-import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.AsyncCache;
 import eu.okaeri.menu.async.AsyncUtils;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.pagination.LoaderContext;
 import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.state.ViewerState;
 import lombok.Getter;
 import lombok.NonNull;
 import org.bukkit.inventory.Inventory;
@@ -89,7 +89,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
         String cacheKey = this.getName();  // Use pane name as cache key
 
-        Menu.ViewerState state = context.getMenu().getViewerState(context.getEntity().getUniqueId());
+        ViewerState state = context.getMenu().getViewerState(context.getEntity().getUniqueId());
         if (state == null) {
             return;
         }
@@ -100,19 +100,12 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         // Check if we need to load (first time or expired)
         if ((asyncState == null) || cache.isExpired(cacheKey)) {
             // Get pagination context to extract filter values
-            // Use dummy page size since we're not using parent's getFilteredItems() for async panes
-            PaginationContext<T> pagination = PaginationContext.get(
-                context.getMenu(),
-                this.getName(),
-                context.getEntity(),
-                Collections.emptyList(),  // Dummy items list
-                this.getItemsPerPage()
-            );
+            PaginationContext<T> pagination = PaginationContext.get(context, this);
 
             // Collect filters from all filtering items in all panes
             for (Pane pane : context.getMenu().getPanes().values()) {
                 for (MenuItem menuItem : pane.getFilteringItems().values()) {
-                    this.applyFiltersFromItem(menuItem, pagination);
+                    this.applyFiltersFromItem(context, menuItem, pagination);
                 }
             }
 

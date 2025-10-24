@@ -57,13 +57,20 @@ class DeclarativeFilterTest {
     @Test
     @DisplayName("Should build ItemFilter with required fields")
     void testItemFilterBuilder() {
+        Menu menu = Menu.builder(this.plugin)
+            .title("Test")
+            .build();
+
+        menu.open(this.player);
+        MenuContext ctx = new MenuContext(menu, this.player);
+
         ItemFilter<ShopItem> filter = ItemFilter.<ShopItem>builder()
             .target("items")
             .predicate(item -> item.price > 100)
             .build();
 
         assertThat(filter.getTargetPane()).isEqualTo("items");
-        assertThat(filter.isActive()).isTrue();  // Default always active
+        assertThat(filter.isActive(ctx)).isTrue();  // Default always active
     }
 
     @Test
@@ -89,18 +96,23 @@ class DeclarativeFilterTest {
     @Test
     @DisplayName("Should support conditional activation")
     void testItemFilterConditionalActivation() {
-        boolean[] filterActive = {false};
+        Menu menu = Menu.builder(this.plugin)
+            .title("Test")
+            .build();
+
+        menu.open(this.player);
+        MenuContext ctx = new MenuContext(menu, this.player);
 
         ItemFilter<ShopItem> filter = ItemFilter.<ShopItem>builder()
             .target("items")
-            .when(() -> filterActive[0])
+            .when(c -> c.getBool("filterActive"))
             .predicate(item -> item.price > 100)
             .build();
 
-        assertThat(filter.isActive()).isFalse();
+        assertThat(filter.isActive(ctx)).isFalse();
 
-        filterActive[0] = true;
-        assertThat(filter.isActive()).isTrue();
+        ctx.set("filterActive", true);
+        assertThat(filter.isActive(ctx)).isTrue();
     }
 
     @Test
@@ -163,15 +175,13 @@ class DeclarativeFilterTest {
     @Test
     @DisplayName("Should apply active filter to paginated pane")
     void testApplyActiveFilterToPaginatedPane() {
-        boolean[] expensiveOnly = {true};
-
-        // Create filter button
+        // Create filter button with state-based filter
         MenuItem filterButton = MenuItem.item()
             .material(Material.DIAMOND)
             .name("Expensive Only")
             .filter(ItemFilter.<ShopItem>builder()
                 .target("shop")
-                .when(() -> expensiveOnly[0])
+                .when(ctx -> ctx.getBool("expensiveOnly"))
                 .predicate(item -> item.price >= 100)
                 .build())
             .build();
@@ -186,6 +196,7 @@ class DeclarativeFilterTest {
         // Create menu with filter button and paginated shop
         Menu menu = Menu.builder(this.plugin)
             .title("Test Shop")
+            .state(s -> s.define("expensiveOnly", true))  // Filter active
             .pane("filters", StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
@@ -222,14 +233,12 @@ class DeclarativeFilterTest {
     @Test
     @DisplayName("Should not apply inactive filter to paginated pane")
     void testInactiveFilterNotApplied() {
-        boolean[] expensiveOnly = {false};  // INACTIVE
-
         MenuItem filterButton = MenuItem.item()
             .material(Material.COAL)
             .name("Expensive Only (OFF)")
             .filter(ItemFilter.<ShopItem>builder()
                 .target("shop")
-                .when(() -> expensiveOnly[0])
+                .when(ctx -> ctx.getBool("expensiveOnly"))  // Defaults to false
                 .predicate(item -> item.price >= 100)
                 .build())
             .build();
@@ -266,7 +275,7 @@ class DeclarativeFilterTest {
 
         menu.render(inventory, context);
 
-        // Filter inactive, all 3 items should be rendered
+        // Filter inactive (defaults to false), all 3 items should be rendered
         assertThat(inventory.getItem(9)).isNotNull();
         assertThat(inventory.getItem(10)).isNotNull();
         assertThat(inventory.getItem(11)).isNotNull();
@@ -275,18 +284,16 @@ class DeclarativeFilterTest {
     @Test
     @DisplayName("Should toggle filter on click")
     void testToggleFilterOnClick() {
-        boolean[] weaponOnly = {false};
-
         MenuItem filterButton = MenuItem.item()
-            .material(() -> weaponOnly[0] ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
+            .material(ctx -> ctx.getBool("weaponOnly") ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
             .name("Weapon Filter")
             .filter(ItemFilter.<ShopItem>builder()
                 .target("shop")
-                .when(() -> weaponOnly[0])
+                .when(ctx -> ctx.getBool("weaponOnly"))
                 .predicate(item -> "weapon".equals(item.category))
                 .build())
             .onClick(ctx -> {
-                weaponOnly[0] = !weaponOnly[0];
+                ctx.set("weaponOnly", !ctx.getBool("weaponOnly"));
                 ctx.refresh();
             })
             .build();
@@ -321,14 +328,14 @@ class DeclarativeFilterTest {
         // Open menu to create ViewerState
         menu.open(this.player);
 
-        // Initial render - filter OFF, all items
+        // Initial render - filter OFF (defaults to false), all items
         menu.render(inventory, context);
         assertThat(inventory.getItem(9)).isNotNull();
         assertThat(inventory.getItem(10)).isNotNull();
         assertThat(inventory.getItem(11)).isNotNull();
 
-        // Toggle filter ON
-        weaponOnly[0] = true;
+        // Toggle filter ON via state
+        context.set("weaponOnly", true);
         menu.render(inventory, context);
 
         // Only 2 weapons should be rendered
@@ -401,11 +408,11 @@ class DeclarativeFilterTest {
     @Test
     @DisplayName("Should collect filters from multiple static panes")
     void testFiltersFromMultiplePanes() {
-        boolean[] weaponFilter = {true};
-        boolean[] expensiveFilter = {true};
-
         Menu menu = Menu.builder(this.plugin)
             .title("Multi-Filter Shop")
+            .state(s -> s
+                .define("weaponFilter", true)
+                .define("expensiveFilter", true))
             .pane("categoryFilters", StaticPane.staticPane()
                 .name("categoryFilters")
                 .bounds(0, 0, 5, 1)
@@ -413,7 +420,7 @@ class DeclarativeFilterTest {
                     .material(Material.IRON_SWORD)
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
-                        .when(() -> weaponFilter[0])
+                        .when(ctx -> ctx.getBool("weaponFilter"))
                         .predicate(item -> "weapon".equals(item.category))
                         .build())
                     .build())
@@ -425,7 +432,7 @@ class DeclarativeFilterTest {
                     .material(Material.GOLD_INGOT)
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
-                        .when(() -> expensiveFilter[0])
+                        .when(ctx -> ctx.getBool("expensiveFilter"))
                         .predicate(item -> item.price >= 100)
                         .build())
                     .build())

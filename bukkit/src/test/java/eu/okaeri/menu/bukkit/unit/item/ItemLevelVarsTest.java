@@ -15,6 +15,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static eu.okaeri.menu.item.MenuItem.item;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -104,7 +105,7 @@ class ItemLevelVarsTest {
 
         MenuItem item = item()
             .material(Material.DIAMOND)
-            .vars(Map.of("count", (java.util.function.Supplier<Integer>) () -> counter[0]))
+            .vars(Map.of("count", (Supplier<Integer>) () -> counter[0]))
             .name("Count: <count>")
             .build();
 
@@ -241,7 +242,7 @@ class ItemLevelVarsTest {
 
         MenuItem item = item()
             .material(Material.APPLE)
-            .vars(Map.of("stock", (java.util.function.Supplier<Integer>) () -> stock[0]))
+            .vars(Map.of("stock", (Supplier<Integer>) () -> stock[0]))
             .lore("Stock: <stock> apples")
             .build();
 

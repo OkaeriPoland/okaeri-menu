@@ -1,8 +1,10 @@
 package eu.okaeri.menu.pagination;
 
+import eu.okaeri.menu.MenuContext;
 import lombok.Getter;
 import lombok.NonNull;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -10,18 +12,18 @@ import java.util.function.Supplier;
  * Declarative filter that can be attached to MenuItems.
  * When the item's condition is active, this filter is applied to the target pane.
  *
- * <p>Example usage for in-memory filtering:
+ * <p>Example usage for in-memory filtering with per-player state:
  * <pre>{@code
  * MenuItem filterButton = MenuItem.builder()
  *     .material(Material.DIAMOND)
  *     .name("Epic Only")
  *     .filter(ItemFilter.builder()
  *         .target("items")
- *         .when(() -> epicFilterActive)
+ *         .when(ctx -> ctx.getBool("epicFilterActive"))
  *         .predicate(item -> item.getRarity() == Rarity.EPIC)
  *         .build())
  *     .onClick(ctx -> {
- *         epicFilterActive = !epicFilterActive;
+ *         ctx.set("epicFilterActive", !ctx.getBool("epicFilterActive"));
  *         ctx.refresh();
  *     })
  *     .build();
@@ -29,10 +31,9 @@ import java.util.function.Supplier;
  *
  * <p>Example usage for database-side filtering (value-only filter):
  * <pre>{@code
- * String selectedCategory = "WEAPONS";
  * MenuItem categoryFilter = MenuItem.builder()
  *     .material(Material.IRON_SWORD)
- *     .name("Category: " + selectedCategory)
+ *     .name(ctx -> "Category: " + ctx.get("selectedCategory", String.class))
  *     .filter(ItemFilter.builder()
  *         .target("items")
  *         .id("category")
@@ -45,7 +46,7 @@ import java.util.function.Supplier;
 public class ItemFilter<T> {
 
     private final String targetPane;
-    private final Supplier<Boolean> condition;
+    private final Function<MenuContext, Boolean> condition;
     private final Predicate<T> predicate;  // Nullable - null means value-only filter
     private final Supplier<Object> valueExtractor;  // For database-side filtering
     private final String filterId;  // Optional ID for tracking
@@ -61,10 +62,11 @@ public class ItemFilter<T> {
     /**
      * Checks if this filter is currently active.
      *
+     * @param context The menu context
      * @return true if the filter should be applied
      */
-    public boolean isActive() {
-        return this.condition.get();
+    public boolean isActive(@NonNull MenuContext context) {
+        return this.condition.apply(context);
     }
 
     /**
@@ -106,7 +108,7 @@ public class ItemFilter<T> {
 
     public static class Builder<T> {
         private String targetPane;
-        private Supplier<Boolean> condition = () -> true;
+        private Function<MenuContext, Boolean> condition = ctx -> true;
         private Predicate<T> predicate;
         private Supplier<Object> valueExtractor;
         private String filterId;
@@ -124,12 +126,18 @@ public class ItemFilter<T> {
 
         /**
          * Sets the condition for when this filter is active.
+         * Provides access to per-player state for dynamic filter activation.
          * If not set, the filter is always active.
          *
-         * @param condition Supplier that returns true when filter should be applied
+         * <p>Example:
+         * <pre>{@code
+         * .when(ctx -> ctx.getBool("weaponFilter"))
+         * }</pre>
+         *
+         * @param condition Function that receives BaseMenuContext and returns true when filter should be applied
          * @return This builder
          */
-        public @NonNull Builder<T> when(@NonNull Supplier<Boolean> condition) {
+        public @NonNull Builder<T> when(@NonNull Function<MenuContext, Boolean> condition) {
             this.condition = condition;
             return this;
         }

@@ -1,7 +1,7 @@
 package eu.okaeri.menu.item;
 
-import eu.okaeri.menu.BaseMenuContext;
 import eu.okaeri.menu.Menu;
+import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.pane.Pane;
 import eu.okaeri.menu.pane.PaneBounds;
 import eu.okaeri.menu.pane.StaticPane;
@@ -18,12 +18,12 @@ import java.util.Map;
  * Extends BaseMenuContext and adds event-specific functionality.
  */
 @Getter
-public abstract class BaseMenuItemContext extends BaseMenuContext {
+public abstract class MenuItemContext extends MenuContext {
 
     protected final InventoryClickEvent event;
     protected final int slot;
 
-    protected BaseMenuItemContext(
+    protected MenuItemContext(
         @NonNull Menu menu,
         @NonNull HumanEntity entity,
         @NonNull InventoryClickEvent event,

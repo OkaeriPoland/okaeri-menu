@@ -19,8 +19,7 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class AsyncCache {
 
-    @NonNull
-    private final AsyncExecutor executor;
+    private @NonNull final AsyncExecutor executor;
     private final Map<String, CacheEntry<?>> cache = new ConcurrentHashMap<>();
 
     /**

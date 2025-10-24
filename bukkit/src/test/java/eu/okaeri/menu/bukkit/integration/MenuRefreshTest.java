@@ -2,6 +2,7 @@ package eu.okaeri.menu.bukkit.integration;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.item.MenuItem;
+import eu.okaeri.menu.state.ViewerState;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -220,7 +221,7 @@ class MenuRefreshTest {
     }
 
     @Test
-    @DisplayName("Should update title on refreshPane when title is dynamic")
+    @DisplayName("Should NOT update title on refreshPane - only refreshes pane content")
     void testRefreshPaneDynamicTitle() {
         AtomicReference<String> title = new AtomicReference<>("Title 1");
 
@@ -235,18 +236,18 @@ class MenuRefreshTest {
         menu.open(this.player);
         Inventory firstInventory = this.player.getOpenInventory().getTopInventory();
 
-        // Change title and refresh pane
+        // Change title and refresh pane (refreshPane does NOT update title)
         title.set("Title 2");
         menu.refreshPane(this.player, "main");
 
         Inventory secondInventory = this.player.getOpenInventory().getTopInventory();
 
-        // Should have different inventory (because title changed)
-        assertThat(secondInventory).isNotSameAs(firstInventory);
+        // Should be same inventory (refreshPane doesn't update title - use refresh() for that)
+        assertThat(secondInventory).isSameAs(firstInventory);
     }
 
     @Test
-    @DisplayName("Should not reopen inventory on refreshPane if title unchanged")
+    @DisplayName("Should not reopen inventory on refreshPane - only updates pane content")
     void testRefreshPaneStaticTitle() {
         Menu menu = Menu.builder(this.plugin)
             .title("Static Title")
@@ -259,12 +260,12 @@ class MenuRefreshTest {
         menu.open(this.player);
         Inventory firstInventory = this.player.getOpenInventory().getTopInventory();
 
-        // Refresh pane with same title
+        // Refresh pane (only updates content, not title)
         menu.refreshPane(this.player, "main");
 
         Inventory secondInventory = this.player.getOpenInventory().getTopInventory();
 
-        // Should be same inventory (title didn't change)
+        // Should be same inventory (refreshPane never reopens, only renders pane content)
         assertThat(secondInventory).isSameAs(firstInventory);
     }
 
@@ -353,7 +354,7 @@ class MenuRefreshTest {
             .build();
 
         menu.open(this.player);
-        Menu.ViewerState state = menu.getViewerState(this.player.getUniqueId());
+        ViewerState state = menu.getViewerState(this.player.getUniqueId());
         Inventory oldInventory = state.getInventory();
 
         // Change title and refresh
@@ -442,8 +443,8 @@ class MenuRefreshTest {
         menu.open(this.player);
         menu.open(player2);
 
-        Menu.ViewerState state1 = menu.getViewerState(this.player.getUniqueId());
-        Menu.ViewerState state2 = menu.getViewerState(player2.getUniqueId());
+        ViewerState state1 = menu.getViewerState(this.player.getUniqueId());
+        ViewerState state2 = menu.getViewerState(player2.getUniqueId());
 
         Inventory inv1Before = state1.getInventory();
         Inventory inv2Before = state2.getInventory();

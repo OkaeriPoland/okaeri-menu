@@ -1,6 +1,6 @@
 package eu.okaeri.menu.navigation;
 
-import eu.okaeri.menu.BaseMenuContext;
+import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.item.MenuItem;
 import lombok.NonNull;
 import org.bukkit.Material;
@@ -36,7 +36,7 @@ public final class NavigationUtils {
         MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
-            .visible(BaseMenuContext::hasLast)
+            .visible(MenuContext::hasLast)
             .onClick(ctx -> {
                 ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
                 ctx.back();

@@ -2,6 +2,7 @@ package eu.okaeri.menu.bukkit.unit.navigation;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.navigation.NavigationHistory;
+import eu.okaeri.menu.state.ViewerState;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -369,7 +370,7 @@ class NavigationHistoryTest {
         // The stack should have menus 0-9 (menu 9 is current)
         // Go back once to see menu 8
         NavigationHistory.back(this.player);
-        Menu.ViewerState state = this.menu1.getViewerState(this.player.getUniqueId());
+        ViewerState state = this.menu1.getViewerState(this.player.getUniqueId());
 
         // Push another menu - should remove menu 0 (oldest)
         Menu newMenu = Menu.builder(this.plugin)
