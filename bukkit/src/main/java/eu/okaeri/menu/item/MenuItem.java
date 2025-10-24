@@ -34,6 +34,7 @@ public class MenuItem {
     private final ReactiveProperty<Integer> amount;
     private final ReactiveProperty<Boolean> visible;
     private final ReactiveProperty<Boolean> glint;
+    private final ReactiveProperty<Boolean> hideAttributes;
     private final Map<Enchantment, Integer> enchantments = new HashMap<>();
     private final List<ItemFlag> itemFlags = new ArrayList<>();
 
@@ -59,6 +60,7 @@ public class MenuItem {
         this.amount = builder.amount;
         this.visible = builder.visible;
         this.glint = builder.glint;
+        this.hideAttributes = builder.hideAttributes;
         this.enchantments.putAll(builder.enchantments);
         this.itemFlags.addAll(builder.itemFlags);
         this.clickHandler = builder.clickHandler;
@@ -132,6 +134,13 @@ public class MenuItem {
             // Glowing effect
             if (this.glint.get(context) && this.enchantments.isEmpty()) {
                 meta.setEnchantmentGlintOverride(true);
+            }
+
+            // Hide attributes
+            if (this.hideAttributes.get(context)) {
+                meta.addItemFlags(Arrays.stream(ItemFlag.values())
+                    .filter(it -> it.name().startsWith("HIDE_"))
+                    .toArray(ItemFlag[]::new));
             }
 
             stack.setItemMeta(meta);
@@ -227,6 +236,7 @@ public class MenuItem {
         private ReactiveProperty<Integer> amount = ReactiveProperty.of(1);
         private ReactiveProperty<Boolean> visible = ReactiveProperty.of(true);
         private ReactiveProperty<Boolean> glint = ReactiveProperty.of(false);
+        private ReactiveProperty<Boolean> hideAttributes = ReactiveProperty.of(true);  // Default true for clean appearance
         private Map<Enchantment, Integer> enchantments = new HashMap<>();
         private List<ItemFlag> itemFlags = new ArrayList<>();
         private Consumer<MenuItemClickContext> clickHandler;
@@ -879,6 +889,41 @@ public class MenuItem {
         @NonNull
         public Builder glint(@NonNull Function<MenuContext, Boolean> glintFunction) {
             this.glint = ReactiveProperty.ofContext(glintFunction);
+            return this;
+        }
+
+        // ========================================
+        // HIDE ATTRIBUTES
+        // ========================================
+
+        /**
+         * Sets whether to hide all item attributes (armor values, enchantment descriptions, etc.).
+         * Adds all HIDE_* ItemFlags when enabled.
+         *
+         * <p>Note: Defaults to {@code true} for clean menu appearance.
+         * Set to {@code false} to show item attributes.
+         *
+         * @param hideAttributes Whether to hide all attributes
+         * @return This builder
+         */
+        @NonNull
+        public Builder hideAttributes(boolean hideAttributes) {
+            this.hideAttributes = ReactiveProperty.of(hideAttributes);
+            return this;
+        }
+
+        /**
+         * Sets whether to hide all item attributes with context-aware function.
+         * Useful for dynamic attribute hiding based on player state or conditions.
+         *
+         * <p>Note: Defaults to {@code true} for clean menu appearance.
+         *
+         * @param hideAttributesFunction Function that receives MenuContext and returns whether to hide attributes
+         * @return This builder
+         */
+        @NonNull
+        public Builder hideAttributes(@NonNull Function<MenuContext, Boolean> hideAttributesFunction) {
+            this.hideAttributes = ReactiveProperty.ofContext(hideAttributesFunction);
             return this;
         }
 
