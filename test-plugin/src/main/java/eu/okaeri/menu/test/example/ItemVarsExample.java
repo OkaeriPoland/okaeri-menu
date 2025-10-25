@@ -38,7 +38,7 @@ public class ItemVarsExample {
                     .lore("""
                         &7Price: &f<price> <currency>
                         &7Click to purchase!""")
-                    .onClick(ctx -> ctx.sendMessage("&aPurchased for " + 100 + " coins!"))
+                    .onClick(event -> event.sendMessage("&aPurchased for " + 100 + " coins!"))
                     .build())
                 // Example 2: Reactive vars with context-aware vars
                 .item(3, 1, item()
@@ -47,11 +47,11 @@ public class ItemVarsExample {
                     .name("&eCounter: <count>")
                     .lore("""
                         &7Current count: &f<count>
-
+                        
                         &eClick to increment!""")
-                    .onClick(ctx -> {
-                        ctx.set("counter", ctx.getInt("counter") + 1);
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("counter", event.getInt("counter") + 1);
+                        event.refresh();
                     })
                     .build())
                 // Example 3: Method-level vars override item-level vars

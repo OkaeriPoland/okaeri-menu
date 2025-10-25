@@ -95,7 +95,7 @@ public class InteractiveSlotExample {
                     .lore("""
                         <gray>Place items in the
                         <gray>empty slots to sell
-
+                        
                         <green>Item Values:
                         <aqua>Diamond: <yellow>100 coins
                         <aqua>Emerald: <yellow>75 coins
@@ -103,7 +103,7 @@ public class InteractiveSlotExample {
                         <aqua>Iron Ingot: <yellow>25 coins
                         <aqua>Coal: <yellow>10 coins
                         <aqua>Other: <yellow>5 coins
-
+                        
                         <gray>Click the Sell button!""")
                     .build())
                 // Input slots (placement only)
@@ -118,7 +118,7 @@ public class InteractiveSlotExample {
                     .name("<green>Total Value")
                     .lore("""
                             <gray>Coins: <yellow><value>
-
+                            
                             <gray>Place items to see value""",
                         ctx -> Map.of("value", ctx.getInt("totalValue")))
                     .build())
@@ -128,20 +128,20 @@ public class InteractiveSlotExample {
                     .name("<green><b>Sell All Items")
                     .lore("""
                             <gray>Total: <yellow><value> coins
-
+                            
                             <yellow>Click to confirm sale!""",
                         ctx -> Map.of("value", ctx.getInt("totalValue")))
-                    .onClick(ctx -> {
-                        int totalValue = ctx.getInt("totalValue");
+                    .onClick(event -> {
+                        int totalValue = event.getInt("totalValue");
                         if (totalValue > 0) {
-                            ctx.sendMessage("<green>Sold items for " + totalValue + " coins!");
-                            ctx.playSound(Sound.ENTITY_PLAYER_LEVELUP);
+                            event.sendMessage("<green>Sold items for " + totalValue + " coins!");
+                            event.playSound(Sound.ENTITY_PLAYER_LEVELUP);
                             // Clear slots and reset value
-                            ctx.set("totalValue", 0);
-                            ctx.refresh();
+                            event.set("totalValue", 0);
+                            event.refresh();
                         } else {
-                            ctx.sendMessage("<red>No items to sell!");
-                            ctx.playSound(Sound.ENTITY_VILLAGER_NO);
+                            event.sendMessage("<red>No items to sell!");
+                            event.playSound(Sound.ENTITY_VILLAGER_NO);
                         }
                     })
                     .build())

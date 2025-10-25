@@ -324,18 +324,18 @@ public class MenuProvider {
 
                 // Add click handler
                 if (itemMeta.getClickHandler() != null) {
-                    builder.onClick(ctx -> {
+                    builder.onClick(event -> {
                         // Create v1 MenuContext for backwards compatibility
                         MenuContext v1Context = MenuContext.builder()
-                            .v2Context(ctx)
+                            .v2Context(event)
                             .action(MenuContext.Action.PICKUP)
-                            .doer(ctx.getEntity())
-                            .inventory(ctx.getEntity().getOpenInventory().getTopInventory())
+                            .doer(event.getEntity())
+                            .inventory(event.getEntity().getOpenInventory().getTopInventory())
                             .menuItem(itemMeta)
-                            .item(ctx.getEvent().getCurrentItem())
-                            .cursor(ctx.getEvent().getCursor())
-                            .slot(ctx.getEvent().getRawSlot())
-                            .clickType(ctx.getClickType())
+                            .item(event.getEvent().getCurrentItem())
+                            .cursor(event.getEvent().getCursor())
+                            .slot(event.getEvent().getRawSlot())
+                            .clickType(event.getClickType())
                             .build();
                         itemMeta.getClickHandler().onClick(v1Context);
                     });

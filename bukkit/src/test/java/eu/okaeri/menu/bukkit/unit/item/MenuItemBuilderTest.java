@@ -3,6 +3,7 @@ package eu.okaeri.menu.bukkit.unit.item;
 import eu.okaeri.menu.item.AsyncMenuItem;
 import eu.okaeri.menu.item.MenuItem;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.junit.jupiter.api.DisplayName;
@@ -197,7 +198,7 @@ class MenuItemBuilderTest {
     void testSetOnClickHandler() {
         MenuItem item = item()
             .material(Material.DIAMOND)
-            .onClick(ctx -> ctx.playSound(org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP))
+            .onClick(event -> event.playSound(Sound.ENTITY_EXPERIENCE_ORB_PICKUP))
             .build();
 
         assertThat(item).isNotNull();
@@ -208,7 +209,7 @@ class MenuItemBuilderTest {
     void testSetOnLeftClickHandler() {
         MenuItem item = item()
             .material(Material.EMERALD)
-            .onLeftClick(ctx -> {
+            .onLeftClick(event -> {
             })
             .build();
 
@@ -220,7 +221,7 @@ class MenuItemBuilderTest {
     void testSetOnRightClickHandler() {
         MenuItem item = item()
             .material(Material.GOLD_INGOT)
-            .onRightClick(ctx -> {
+            .onRightClick(event -> {
             })
             .build();
 
@@ -232,11 +233,11 @@ class MenuItemBuilderTest {
     void testSetMultipleClickHandlers() {
         MenuItem item = item()
             .material(Material.REDSTONE)
-            .onClick(ctx -> {
+            .onClick(event -> {
             })
-            .onLeftClick(ctx -> {
+            .onLeftClick(event -> {
             })
-            .onRightClick(ctx -> {
+            .onRightClick(event -> {
             })
             .build();
 
@@ -338,7 +339,7 @@ class MenuItemBuilderTest {
             .enchant(Enchantment.UNBREAKING, 3)
             .itemFlag(ItemFlag.HIDE_ENCHANTS)
             .glint(true)
-            .onClick(ctx -> ctx.sendMessage("You clicked the sword!"))
+            .onClick(event -> event.sendMessage("You clicked the sword!"))
             .visible(ctx -> true)
             .build();
 

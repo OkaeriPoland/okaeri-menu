@@ -1,6 +1,7 @@
 package eu.okaeri.menu.test.example;
 
 import eu.okaeri.menu.Menu;
+import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.message.DefaultMessageProvider;
 import eu.okaeri.menu.message.MessageProvider;
 import eu.okaeri.menu.navigation.NavigationUtils;
@@ -76,7 +77,7 @@ public class MessageExample {
                             <gray>This updates on refresh!""",
                         ctx -> Map.of("time", System.currentTimeMillis())
                     )
-                    .onClick(ctx -> ctx.refresh())
+                    .onClick(MenuContext::refresh)
                     .build())
                 .item(8, 2, NavigationUtils.closeButton().build())
                 .build())
@@ -193,29 +194,29 @@ public class MessageExample {
                     )
                     .lore("""
                             <status>
-
+                            
                             &7Click to increment!""",
                         ctx -> {
                             int clickCount = ctx.getInt("clickCount");
-                            String status = clickCount == 0 ? "<gray>Never clicked" :
-                                clickCount < 5 ? "<yellow>Beginner" :
-                                    clickCount < 10 ? "<gold>Intermediate" :
-                                        "<red>Expert!";
+                            String status = (clickCount == 0) ? "<gray>Never clicked" :
+                                ((clickCount < 5) ? "<yellow>Beginner" :
+                                    ((clickCount < 10) ? "<gold>Intermediate" :
+                                        "<red>Expert!"));
                             return Map.of("status", status);
                         }
                     )
-                    .onClick(ctx -> {
-                        ctx.set("clickCount", ctx.getInt("clickCount") + 1);
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("clickCount", event.getInt("clickCount") + 1);
+                        event.refresh();
                     })
                     .build())
                 // Dynamic color based on value
                 .item(5, 1, item()
-                    .material(ctx -> ctx.getInt("clickCount") > 5 ? Material.EMERALD : Material.COAL)
+                    .material(ctx -> (ctx.getInt("clickCount") > 5) ? Material.EMERALD : Material.COAL)
                     .name(
                         "<color>Status Indicator",
                         ctx -> {
-                            String color = ctx.getInt("clickCount") > 5 ? "<green>" : "<gray>";
+                            String color = (ctx.getInt("clickCount") > 5) ? "<green>" : "<gray>";
                             return Map.of("color", color);
                         }
                     )
@@ -273,7 +274,7 @@ public class MessageExample {
                             
                             <yellow>Cliquez pour acheter!"""
                     ))
-                    .onClick(ctx -> ctx.sendMessage("<green>Purchased Diamond Sword!"))
+                    .onClick(event -> event.sendMessage("<green>Purchased Diamond Sword!"))
                     .build())
                 // Health Potion with locale map and dynamic variables
                 .item(3, 1, item()
@@ -427,7 +428,7 @@ public class MessageExample {
                             <yellow>Click to purchase!""",
                         Map.of("damage", "7", "price", "150")
                     )
-                    .onClick(ctx -> ctx.sendMessage("&aPurchased Diamond Sword for 150 coins!"))
+                    .onClick(event -> event.sendMessage("&aPurchased Diamond Sword for 150 coins!"))
                     .build())
                 .item(5, 1, item()
                     .material(Material.BOOK)
@@ -457,7 +458,7 @@ public class MessageExample {
 
         public I18nMessageProvider() {
             super();
-            loadMessages();
+            this.loadMessages();
         }
 
         private void loadMessages() {
@@ -468,7 +469,7 @@ public class MessageExample {
             en.put("menu.shop.sword.lore.price", "<gray>Price: <gold><price> coins");
             en.put("menu.info.title", "<gold>Information");
             en.put("menu.info.description", "<gray>This demonstrates i18n support");
-            messages.put(Locale.ENGLISH, en);
+            this.messages.put(Locale.ENGLISH, en);
 
             // Polish messages (example)
             Map<String, String> pl = new HashMap<>();
@@ -477,7 +478,7 @@ public class MessageExample {
             pl.put("menu.shop.sword.lore.price", "<gray>Cena: <gold><price> monet");
             pl.put("menu.info.title", "<gold>Informacje");
             pl.put("menu.info.description", "<gray>To pokazuje obsługę i18n");
-            messages.put(new Locale("pl"), pl);
+            this.messages.put(new Locale("pl"), pl);
         }
 
         @Override
@@ -486,8 +487,8 @@ public class MessageExample {
             Locale locale = Locale.ENGLISH;
 
             // If template is a key, resolve it
-            Map<String, String> localeMessages = messages.get(locale);
-            if (localeMessages != null && localeMessages.containsKey(template)) {
+            Map<String, String> localeMessages = this.messages.get(locale);
+            if ((localeMessages != null) && localeMessages.containsKey(template)) {
                 template = localeMessages.get(template);
             }
 
@@ -572,7 +573,7 @@ public class MessageExample {
                 .bounds(0, 1, 9, 3)
                 .items(items)
                 .itemsPerPage(9)
-                .renderer((item, index) -> item()
+                .renderer((ctx, item, index) -> item()
                     .material(Material.PAPER)
                     .name("<yellow>" + item)
                     .build())

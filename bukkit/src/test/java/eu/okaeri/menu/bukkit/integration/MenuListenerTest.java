@@ -70,7 +70,7 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 3)
                 .item(2, 1, item()
                     .material(Material.DIAMOND)
-                    .onClick(ctx -> clicked.set(true))
+                    .onClick(event -> clicked.set(true))
                     .build())
                 .build())
             .build();
@@ -159,7 +159,7 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, item()
                     .material(Material.STONE)
-                    .onClick(ctx -> clickCount.incrementAndGet())
+                    .onClick(event -> clickCount.incrementAndGet())
                     .build())
                 .build())
             .build();
@@ -194,8 +194,8 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, item()
                     .material(Material.EMERALD)
-                    .onLeftClick(ctx -> leftClicks.incrementAndGet())
-                    .onRightClick(ctx -> rightClicks.incrementAndGet())
+                    .onLeftClick(event -> leftClicks.incrementAndGet())
+                    .onRightClick(event -> rightClicks.incrementAndGet())
                     .build())
                 .build())
             .build();
@@ -238,7 +238,7 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 2)
                 .item(5, 1, item()  // Slot 14
                     .material(Material.GOLD_INGOT)
-                    .onClick(ctx -> capturedSlot.set(ctx.getSlot()))
+                    .onClick(event -> capturedSlot.set(event.getSlot()))
                     .build())
                 .build())
             .build();
@@ -509,7 +509,7 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, item()
                     .material(Material.TNT)
-                    .onClick(ctx -> {
+                    .onClick(event -> {
                         throw new RuntimeException("Test exception");
                     })
                     .build())
@@ -586,11 +586,11 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, item()
                     .material(Material.DIAMOND)
-                    .onClick(ctx -> slot0Clicks.incrementAndGet())
+                    .onClick(event -> slot0Clicks.incrementAndGet())
                     .build())
                 .item(8, 0, item()
                     .material(Material.EMERALD)
-                    .onClick(ctx -> slot8Clicks.incrementAndGet())
+                    .onClick(event -> slot8Clicks.incrementAndGet())
                     .build())
                 .build())
             .build();
@@ -785,14 +785,14 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 1)  // First row
                 .item(0, 0, item()
                     .material(Material.DIAMOND)
-                    .onClick(ctx -> topPaneClicks.incrementAndGet())
+                    .onClick(event -> topPaneClicks.incrementAndGet())
                     .build())
                 .build())
             .pane("bottom", staticPane()
                 .bounds(0, 2, 9, 1)  // Third row
                 .item(0, 0, item()
                     .material(Material.EMERALD)
-                    .onClick(ctx -> bottomPaneClicks.incrementAndGet())
+                    .onClick(event -> bottomPaneClicks.incrementAndGet())
                     .build())
                 .build())
             .build();
@@ -837,7 +837,7 @@ class MenuListenerTest {
                 .bounds(0, 0, 5, 1)
                 .item(2, 0, item()
                     .material(Material.GOLD_INGOT)
-                    .onClick(ctx -> firstPaneClicks.incrementAndGet())
+                    .onClick(event -> firstPaneClicks.incrementAndGet())
                     .build())
                 .build())
             .build();
@@ -1056,7 +1056,7 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, item()
                     .material(Material.STONE)
-                    .onClick(ctx -> clickCount.incrementAndGet())
+                    .onClick(event -> clickCount.incrementAndGet())
                     .build())
                 .build())
             .build();
@@ -1090,7 +1090,7 @@ class MenuListenerTest {
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, item()
                     .material(Material.COMPASS)
-                    .onClick(ctx -> capturedClickType.set(ctx.getClickType()))
+                    .onClick(event -> capturedClickType.set(event.getClickType()))
                     .build())
                 .build())
             .build();

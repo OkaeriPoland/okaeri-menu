@@ -183,7 +183,7 @@ class MenuLifecycleTest {
             .bounds(0, 0, 9, 1)
             .items(List.of("Item1", "Item2", "Item3"))
             .itemsPerPage(5)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
 
         PaginationContext<String> paginationContext = state.getPagination(testPane);
@@ -243,7 +243,7 @@ class MenuLifecycleTest {
             .bounds(0, 0, 9, 1)
             .items(List.of("A", "B", "C"))
             .itemsPerPage(5)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
 
         PaginatedPane<String> pane2 = PaginatedPane.<String>pane()
@@ -251,7 +251,7 @@ class MenuLifecycleTest {
             .bounds(0, 0, 9, 1)
             .items(List.of("X", "Y", "Z"))
             .itemsPerPage(5)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
 
         PaginationContext<String> context1 = state1.getPagination(pane1);
@@ -403,7 +403,7 @@ class MenuLifecycleTest {
             .bounds(0, 0, 9, 1)
             .items(List.of("Item1", "Item2"))
             .itemsPerPage(5)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
 
         PaginationContext<String> context = state.getPagination(testPane);
@@ -430,7 +430,7 @@ class MenuLifecycleTest {
             .bounds(0, 0, 9, 1)
             .items(List.of("Item1", "Item2"))
             .itemsPerPage(5)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
 
         PaginatedPane<String> pane2 = PaginatedPane.<String>pane()
@@ -438,7 +438,7 @@ class MenuLifecycleTest {
             .bounds(0, 0, 9, 1)
             .items(List.of("Item3", "Item4"))
             .itemsPerPage(3)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
 
         // Get context twice
@@ -467,7 +467,7 @@ class MenuLifecycleTest {
             .bounds(0, 0, 9, 1)
             .items(List.of("Item1", "Item2"))
             .itemsPerPage(5)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
 
         PaginatedPane<String> pane2 = PaginatedPane.<String>pane()
@@ -475,7 +475,7 @@ class MenuLifecycleTest {
             .bounds(0, 0, 9, 1)
             .items(List.of("Item3", "Item4"))
             .itemsPerPage(5)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
 
         PaginationContext<String> context1 = state.getPagination(pane1);

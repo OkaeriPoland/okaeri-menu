@@ -61,6 +61,16 @@ public class PaginationContext<T> {
     }
 
     /**
+     * Gets the menu context associated with this pagination.
+     *
+     * @return The menu context
+     */
+    @NonNull
+    public MenuContext getMenuContext() {
+        return this.context;
+    }
+
+    /**
      * Sets the current context for this pagination.
      * Called automatically when pagination is accessed via MenuContext.
      *

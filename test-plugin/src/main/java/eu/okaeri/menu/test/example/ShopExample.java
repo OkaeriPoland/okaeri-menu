@@ -42,7 +42,7 @@ public class ShopExample {
                     .name(ctx -> ctx.getBool("filter:weapon") ? "&a✓ Weapons" : "&7Weapons")
                     .lore("""
                         &7Show weapons only
-
+                        
                         &eClick to toggle!""")
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
@@ -50,8 +50,8 @@ public class ShopExample {
                         .when(ctx -> ctx.getBool("filter:weapon"))
                         .predicate(item -> item.category().equals("weapon"))
                         .build())
-                    .onClick(ctx -> {
-                        ctx.set("filter:weapon", !ctx.getBool("filter:weapon"));
+                    .onClick(event -> {
+                        event.set("filter:weapon", !event.getBool("filter:weapon"));
                     })
                     .build())
                 .item(3, 0, MenuItem.item()
@@ -59,7 +59,7 @@ public class ShopExample {
                     .name(ctx -> ctx.getBool("filter:armor") ? "&a✓ Armor" : "&7Armor")
                     .lore("""
                         &7Show armor only
-
+                        
                         &eClick to toggle!""")
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
@@ -67,8 +67,8 @@ public class ShopExample {
                         .when(ctx -> ctx.getBool("filter:armor"))
                         .predicate(item -> item.category().equals("armor"))
                         .build())
-                    .onClick(ctx -> {
-                        ctx.set("filter:armor", !ctx.getBool("filter:armor"));
+                    .onClick(event -> {
+                        event.set("filter:armor", !event.getBool("filter:armor"));
                     })
                     .build())
                 .item(5, 0, MenuItem.item()
@@ -76,7 +76,7 @@ public class ShopExample {
                     .name(ctx -> ctx.getBool("filter:expensive") ? "&a✓ Expensive (>100)" : "&7Expensive (>100)")
                     .lore("""
                         &7Show items over 100 coins
-
+                        
                         &eClick to toggle!""")
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
@@ -84,8 +84,8 @@ public class ShopExample {
                         .when(ctx -> ctx.getBool("filter:expensive"))
                         .predicate(item -> item.price() > 100)
                         .build())
-                    .onClick(ctx -> {
-                        ctx.set("filter:expensive", !ctx.getBool("filter:expensive"));
+                    .onClick(event -> {
+                        event.set("filter:expensive", !event.getBool("filter:expensive"));
                     })
                     .build())
                 .item(7, 0, MenuItem.item()
@@ -94,7 +94,7 @@ public class ShopExample {
                     .lore("""
                             &7Active filters: &f<active_count>
                             &7Strategy: &fAND
-
+                            
                             &7All active filters
                             &7must match!""",
                         ctx -> {
@@ -109,10 +109,10 @@ public class ShopExample {
                 .item(8, 0, MenuItem.item()
                     .material(Material.BARRIER)
                     .name("&cClear All")
-                    .onClick(ctx -> {
-                        ctx.set("filter:weapon", false);
-                        ctx.set("filter:armor", false);
-                        ctx.set("filter:expensive", false);
+                    .onClick(event -> {
+                        event.set("filter:weapon", false);
+                        event.set("filter:armor", false);
+                        event.set("filter:expensive", false);
                     })
                     .build())
                 .build())
@@ -122,7 +122,7 @@ public class ShopExample {
                 .bounds(0, 1, 9, 4)
                 .items(items)
                 // itemsPerPage defaults to pane size (9x4 = 36 slots)
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(item.material())
                     .vars(Map.of(
                         "name", item.name(),
@@ -135,9 +135,9 @@ public class ShopExample {
                         &7Price: &6<price> coins
                         
                         &eClick to purchase!""")
-                    .onClick(ctx -> {
-                        ctx.sendMessage("&aPurchased " + item.name() + " for " + item.price() + " coins!");
-                        ctx.playSound(org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP);
+                    .onClick(event -> {
+                        event.sendMessage("&aPurchased " + item.name() + " for " + item.price() + " coins!");
+                        event.playSound(org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP);
                     })
                     .build())
                 .build())

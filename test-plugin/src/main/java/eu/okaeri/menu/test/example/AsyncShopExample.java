@@ -112,7 +112,7 @@ public class AsyncShopExample {
                                 
                                 <gray>Purchases: <yellow><purchases>
                                 <gray>Total Spent: <gold><spent> coins
-
+                                
                                 <dark_gray>Balance loads async!""",
                             ctx -> Map.of(
                                 "purchases", ctx.getInt("totalPurchases"),
@@ -127,10 +127,10 @@ public class AsyncShopExample {
                             <gray>Total Items: <white><total_items>
                             <gray>Filtered: <white><filtered_items>
                             <gray>Showing: <white><showing_items>
-
+                            
                             <gray>Active Filters: <green><active_filters>
                             <gray>Strategy: <white><strategy>
-
+                            
                             <dark_gray>Updates in real-time!""",
                         // Use paneData API to access async pagination context
                         ctx -> ctx.computedPagination("shop-pane", ShopItem.class)
@@ -158,10 +158,10 @@ public class AsyncShopExample {
                     .material(ctx -> ctx.getBool("filter:weapon") ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
                     .name(ctx -> ctx.getBool("filter:weapon") ? "<green>✓ Weapons" : "<gray>Weapons")
                     .lore("""
-                        <gray>Show weapons only
-                        <gray>Status: <status>
-
-                        <yellow>Click to toggle!""",
+                            <gray>Show weapons only
+                            <gray>Status: <status>
+                            
+                            <yellow>Click to toggle!""",
                         ctx -> Map.of("status", ctx.getBool("filter:weapon") ? "<green>Active" : "<gray>Inactive"))
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop-pane")
@@ -169,20 +169,20 @@ public class AsyncShopExample {
                         .when(ctx -> ctx.getBool("filter:weapon"))
                         .predicate(item -> "weapon".equals(item.category()))
                         .build())
-                    .onClick(ctx -> {
-                        boolean newValue = !ctx.getBool("filter:weapon");
-                        ctx.set("filter:weapon", newValue);
-                        ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, newValue ? 1.5f : 1.0f);
+                    .onClick(event -> {
+                        boolean newValue = !event.getBool("filter:weapon");
+                        event.set("filter:weapon", newValue);
+                        event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, newValue ? 1.5f : 1.0f);
                     })
                     .build())
                 .item(2, 0, item()
                     .material(ctx -> ctx.getBool("filter:armor") ? Material.DIAMOND_CHESTPLATE : Material.LEATHER_CHESTPLATE)
                     .name(ctx -> ctx.getBool("filter:armor") ? "<green>✓ Armor" : "<gray>Armor")
                     .lore("""
-                        <gray>Show armor only
-                        <gray>Status: <status>
-
-                        <yellow>Click to toggle!""",
+                            <gray>Show armor only
+                            <gray>Status: <status>
+                            
+                            <yellow>Click to toggle!""",
                         ctx -> Map.of("status", ctx.getBool("filter:armor") ? "<green>Active" : "<gray>Inactive"))
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop-pane")
@@ -190,20 +190,20 @@ public class AsyncShopExample {
                         .when(ctx -> ctx.getBool("filter:armor"))
                         .predicate(item -> "armor".equals(item.category()))
                         .build())
-                    .onClick(ctx -> {
-                        boolean newValue = !ctx.getBool("filter:armor");
-                        ctx.set("filter:armor", newValue);
-                        ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, newValue ? 1.5f : 1.0f);
+                    .onClick(event -> {
+                        boolean newValue = !event.getBool("filter:armor");
+                        event.set("filter:armor", newValue);
+                        event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, newValue ? 1.5f : 1.0f);
                     })
                     .build())
                 .item(4, 0, item()
                     .material(ctx -> ctx.getBool("filter:expensive") ? Material.GOLD_INGOT : Material.IRON_INGOT)
                     .name(ctx -> ctx.getBool("filter:expensive") ? "<green>✓ Expensive (>100)" : "<gray>Expensive (>100)")
                     .lore("""
-                        <gray>Show items over 100 coins
-                        <gray>Status: <status>
-
-                        <yellow>Click to toggle!""",
+                            <gray>Show items over 100 coins
+                            <gray>Status: <status>
+                            
+                            <yellow>Click to toggle!""",
                         ctx -> Map.of("status", ctx.getBool("filter:expensive") ? "<green>Active" : "<gray>Inactive"))
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop-pane")
@@ -211,10 +211,10 @@ public class AsyncShopExample {
                         .when(ctx -> ctx.getBool("filter:expensive"))
                         .predicate(item -> item.price() > 100)
                         .build())
-                    .onClick(ctx -> {
-                        boolean newValue = !ctx.getBool("filter:expensive");
-                        ctx.set("filter:expensive", newValue);
-                        ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, newValue ? 1.5f : 1.0f);
+                    .onClick(event -> {
+                        boolean newValue = !event.getBool("filter:expensive");
+                        event.set("filter:expensive", newValue);
+                        event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, newValue ? 1.5f : 1.0f);
                     })
                     .build())
                 .item(6, 0, item()
@@ -224,11 +224,11 @@ public class AsyncShopExample {
                         <gray>Remove all active filters
                         
                         <red>Click to clear!""")
-                    .onClick(ctx -> {
-                        ctx.set("filter:weapon", false);
-                        ctx.set("filter:armor", false);
-                        ctx.set("filter:expensive", false);
-                        ctx.playSound(Sound.ENTITY_ITEM_BREAK, 0.5f, 1.0f);
+                    .onClick(event -> {
+                        event.set("filter:weapon", false);
+                        event.set("filter:armor", false);
+                        event.set("filter:expensive", false);
+                        event.playSound(Sound.ENTITY_ITEM_BREAK, 0.5f, 1.0f);
                     })
                     .build())
                 .build())
@@ -252,7 +252,7 @@ public class AsyncShopExample {
                     return createShopItems();
                 })
                 .ttl(Duration.ofSeconds(30))  // Cache for 30 seconds
-                .renderer((item, index) -> item()
+                .renderer((ctx, item, index) -> item()
                     .material(item.material())
                     .vars(Map.of(
                         "name", item.name(),
@@ -268,23 +268,23 @@ public class AsyncShopExample {
                         
                         <yellow>Click to purchase!
                         <gray>Middle-click for details""")
-                    .onClick(ctx -> {
-                        ctx.set("totalPurchases", ctx.getInt("totalPurchases") + 1);
-                        ctx.set("totalSpent", ctx.getInt("totalSpent") + item.price());
-                        ctx.sendMessage("<green>✓ Purchased <yellow>" + item.name() + " <green>for <gold>" + item.price() + " coins<green>!");
-                        ctx.playSound(Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.2f);
-                        ctx.refresh();  // Refresh to update balance and stats
+                    .onClick(event -> {
+                        event.set("totalPurchases", event.getInt("totalPurchases") + 1);
+                        event.set("totalSpent", event.getInt("totalSpent") + item.price());
+                        event.sendMessage("<green>✓ Purchased <yellow>" + item.name() + " <green>for <gold>" + item.price() + " coins<green>!");
+                        event.playSound(Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.2f);
+                        event.refresh();  // Refresh to update balance and stats
                     })
-                    .onMiddleClick(ctx -> {
-                        ctx.sendMessage("<yellow>━━━━━━━━━━━━━━━━━━━━━━━━");
-                        ctx.sendMessage("<yellow><b>Item Details:");
-                        ctx.sendMessage("<gray>Name: <white>" + item.name());
-                        ctx.sendMessage("<gray>Category: <white>" + item.category());
-                        ctx.sendMessage("<gray>Price: <gold>" + item.price() + " coins");
-                        ctx.sendMessage("<gray>Stock: <white>" + item.stock() + " available");
-                        ctx.sendMessage("<gray>Rarity: <white>" + (item.price() > 200 ? "Legendary" : item.price() > 100 ? "Epic" : "Common"));
-                        ctx.sendMessage("<yellow>━━━━━━━━━━━━━━━━━━━━━━━━");
-                        ctx.playSound(Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.5f);
+                    .onMiddleClick(event -> {
+                        event.sendMessage("<yellow>━━━━━━━━━━━━━━━━━━━━━━━━");
+                        event.sendMessage("<yellow><b>Item Details:");
+                        event.sendMessage("<gray>Name: <white>" + item.name());
+                        event.sendMessage("<gray>Category: <white>" + item.category());
+                        event.sendMessage("<gray>Price: <gold>" + item.price() + " coins");
+                        event.sendMessage("<gray>Stock: <white>" + item.stock() + " available");
+                        event.sendMessage("<gray>Rarity: <white>" + (item.price() > 200 ? "Legendary" : item.price() > 100 ? "Epic" : "Common"));
+                        event.sendMessage("<yellow>━━━━━━━━━━━━━━━━━━━━━━━━");
+                        event.playSound(Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.5f);
                     })
                     .build())
                 // Suspense states
@@ -317,16 +317,16 @@ public class AsyncShopExample {
                         
                         <yellow>Click to reload!
                         <gray>Shows loading state""")
-                    .onClick(ctx -> {
+                    .onClick(event -> {
                         // Clear the async cache to trigger reload
-                        var viewerState = ctx.getMenu().getViewerState(ctx.getEntity().getUniqueId());
+                        var viewerState = event.getMenu().getViewerState(event.getEntity().getUniqueId());
                         if (viewerState != null) {
                             viewerState.getAsyncCache().invalidate("shop-pane");
                             viewerState.getAsyncCache().invalidate("balance-item");
                         }
-                        ctx.sendMessage("<yellow>⏳ Reloading shop data...");
-                        ctx.playSound(Sound.BLOCK_LEVER_CLICK, 0.5f, 1.0f);
-                        ctx.refresh();
+                        event.sendMessage("<yellow>⏳ Reloading shop data...");
+                        event.playSound(Sound.BLOCK_LEVER_CLICK, 0.5f, 1.0f);
+                        event.refresh();
                     })
                     .build())
                 .item(4, 0, PaginationUtils.pageIndicator("shop-pane")
@@ -343,8 +343,8 @@ public class AsyncShopExample {
                             
                             <yellow>Click to toggle!""",
                         ctx -> Map.of("strategy", ctx.pagination("shop-pane").getFilterStrategy().getName()))
-                    .onClick(ctx -> {
-                        PaginationContext<ShopItem> pagination = ctx.pagination("shop-pane");
+                    .onClick(event -> {
+                        PaginationContext<ShopItem> pagination = event.pagination("shop-pane");
 
                         // Toggle strategy
                         FilterStrategy newStrategy = (pagination.getFilterStrategy() == FilterStrategy.AND)
@@ -352,9 +352,9 @@ public class AsyncShopExample {
                             : FilterStrategy.AND;
                         pagination.setFilterStrategy(newStrategy);
 
-                        ctx.sendMessage("<yellow>Filter strategy changed to: <white>" + newStrategy.getName());
-                        ctx.playSound(Sound.BLOCK_NOTE_BLOCK_BELL, 0.5f, 1.0f);
-                        ctx.refresh();
+                        event.sendMessage("<yellow>Filter strategy changed to: <white>" + newStrategy.getName());
+                        event.playSound(Sound.BLOCK_NOTE_BLOCK_BELL, 0.5f, 1.0f);
+                        event.refresh();
                     })
                     .build())
                 .item(6, 0, PaginationUtils.nextPageButton("shop-pane")

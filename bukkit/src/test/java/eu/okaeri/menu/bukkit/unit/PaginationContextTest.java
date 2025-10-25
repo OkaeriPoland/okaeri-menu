@@ -73,7 +73,7 @@ class PaginationContextTest {
             .bounds(0, 0, 9, 1)
             .items(items)
             .itemsPerPage(itemsPerPage)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
     }
 
@@ -87,7 +87,7 @@ class PaginationContextTest {
             .bounds(0, 0, 9, 1)
             .items(() -> dynamicItems)  // Supplier reads from mutable list
             .itemsPerPage(itemsPerPage)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
     }
 

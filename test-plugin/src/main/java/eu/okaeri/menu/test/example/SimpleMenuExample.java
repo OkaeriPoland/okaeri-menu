@@ -1,6 +1,7 @@
 package eu.okaeri.menu.test.example;
 
 import eu.okaeri.menu.Menu;
+import eu.okaeri.menu.MenuContext;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -29,20 +30,20 @@ public class SimpleMenuExample {
                 .item(0, 0, item()
                     .material(Material.DIAMOND)
                     .name("Static Diamond")
-                    .onClick(ctx -> ctx.sendMessage("You clicked a diamond!"))
+                    .onClick(event -> event.sendMessage("You clicked a diamond!"))
                     .build())
                 .item(1, 0, item()
                     .material(Material.GOLD_INGOT)
                     .name(() -> "Dynamic: " + System.currentTimeMillis())  // Reactive!
-                    .onClick(ctx -> {
-                        ctx.sendMessage("Refreshing menu...");
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.sendMessage("Refreshing menu...");
+                        event.refresh();
                     })
                     .build())
                 .item(8, 2, item()
                     .material(Material.BARRIER)
                     .name("Close")
-                    .onClick(ctx -> ctx.closeInventory())
+                    .onClick(MenuContext::closeInventory)
                     .build())
                 .build())
             .build();
@@ -63,7 +64,7 @@ public class SimpleMenuExample {
                 .item(8, 0, item()
                     .material(Material.BARRIER)
                     .name("Close")
-                    .onClick(ctx -> ctx.closeInventory())
+                    .onClick(MenuContext::closeInventory)
                     .build())
                 .build())
             // Content pane
@@ -73,9 +74,9 @@ public class SimpleMenuExample {
                 .item(4, 2, item()
                     .material(Material.EMERALD)
                     .name("Content Item")
-                    .onClick(ctx -> {
-                        ctx.sendMessage("Content clicked!");
-                        ctx.refreshPane("content");  // Refresh only this pane
+                    .onClick(event -> {
+                        event.sendMessage("Content clicked!");
+                        event.refreshPane("content");  // Refresh only this pane
                     })
                     .build())
                 .build())
@@ -96,9 +97,9 @@ public class SimpleMenuExample {
                     .material(Material.DIAMOND)
                     .name(ctx -> "Clicks: " + ctx.getInt("clickCount"))  // Reactive!
                     .amount(ctx -> Math.min(64, ctx.getInt("clickCount") + 1))  // Reactive amount!
-                    .onClick(ctx -> {
-                        ctx.set("clickCount", ctx.getInt("clickCount") + 1);
-                        ctx.refresh();  // Re-evaluate reactive properties
+                    .onClick(event -> {
+                        event.set("clickCount", event.getInt("clickCount") + 1);
+                        event.refresh();  // Re-evaluate reactive properties
                     })
                     .build())
                 .build())
@@ -165,7 +166,7 @@ public class SimpleMenuExample {
                 .item(8, 2, item()
                     .material(Material.BARRIER)
                     .name("Close")
-                    .onClick(ctx -> ctx.closeInventory())
+                    .onClick(event -> event.closeInventory())
                     .build())
                 .build())
             .build();

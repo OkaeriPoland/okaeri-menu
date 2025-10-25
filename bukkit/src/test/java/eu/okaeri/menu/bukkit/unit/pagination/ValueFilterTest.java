@@ -71,7 +71,7 @@ class ValueFilterTest {
             .bounds(0, 0, 9, 1)
             .items(items)
             .itemsPerPage(10)
-            .renderer((item, i) -> null)
+            .renderer((ctx, item, i) -> null)
             .build();
 
         return PaginationContext.get(this.context, testPane);

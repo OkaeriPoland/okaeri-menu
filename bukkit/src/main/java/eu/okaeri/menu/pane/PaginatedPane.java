@@ -4,6 +4,7 @@ import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.pagination.ItemFilter;
 import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.util.TriFunction;
 import lombok.Getter;
 import lombok.NonNull;
 import org.bukkit.inventory.Inventory;
@@ -13,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /**
@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 public class PaginatedPane<T> extends AbstractPane {
 
     private final Supplier<List<T>> itemsSupplier;
-    private final BiFunction<T, Integer, MenuItem> itemRenderer;
+    private final TriFunction<MenuContext, T, Integer, MenuItem> itemRenderer;
     private final int itemsPerPage;
 
     // Cache for rendered items
@@ -75,7 +75,7 @@ public class PaginatedPane<T> extends AbstractPane {
             }
 
             // Render the item
-            MenuItem menuItem = this.itemRenderer.apply(item, index);
+            MenuItem menuItem = this.itemRenderer.apply(context, item, index);
             if (menuItem != null) {
                 ItemStack itemStack = menuItem.render(context);
                 if (itemStack != null) {
@@ -187,7 +187,7 @@ public class PaginatedPane<T> extends AbstractPane {
         private String name;
         private PaneBounds bounds;
         private Supplier<List<T>> itemsSupplier;
-        private BiFunction<T, Integer, MenuItem> itemRenderer;
+        private TriFunction<MenuContext, T, Integer, MenuItem> itemRenderer;
         private int itemsPerPage;
         private List<AbstractPane.ItemCoordinateEntry> staticItemEntries = new ArrayList<>();
         private Map<Integer, MenuItem> staticItems = new HashMap<>();  // Populated in build()
@@ -245,13 +245,13 @@ public class PaginatedPane<T> extends AbstractPane {
 
         /**
          * Sets the item renderer function.
-         * The function receives the item and its index, and returns a MenuItem.
+         * The function receives the menu context, item, and its index, and returns a MenuItem.
          *
-         * @param renderer The renderer function
+         * @param renderer The renderer function (context, item, index) -> MenuItem
          * @return This builder
          */
         @NonNull
-        public Builder<T> renderer(@NonNull BiFunction<T, Integer, MenuItem> renderer) {
+        public Builder<T> renderer(@NonNull TriFunction<MenuContext, T, Integer, MenuItem> renderer) {
             this.itemRenderer = renderer;
             return this;
         }

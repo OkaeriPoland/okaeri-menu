@@ -51,12 +51,12 @@ public class FilterStrategyExample {
                     .lore("""
                         &7Combines filters with AND logic
                         &7All filters must match
-
+                        
                         &eClick to activate!""")
-                    .onClick(ctx -> {
-                        ctx.set("strategy", FilterStrategy.AND);
-                        ctx.pagination("shop").setFilterStrategy(FilterStrategy.AND);
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("strategy", FilterStrategy.AND);
+                        event.pagination("shop").setFilterStrategy(FilterStrategy.AND);
+                        event.refresh();
                     })
                     .build())
                 .item(3, 0, item()
@@ -67,21 +67,21 @@ public class FilterStrategyExample {
                     .lore("""
                         &7Combines filters with OR logic
                         &7Any filter can match
-
+                        
                         &eClick to activate!""")
-                    .onClick(ctx -> {
-                        ctx.set("strategy", FilterStrategy.OR);
-                        ctx.pagination("shop").setFilterStrategy(FilterStrategy.OR);
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("strategy", FilterStrategy.OR);
+                        event.pagination("shop").setFilterStrategy(FilterStrategy.OR);
+                        event.refresh();
                     })
                     .build())
                 .item(8, 0, item()
                     .material(Material.BARRIER)
                     .name("&cClear Filters")
-                    .onClick(ctx -> {
+                    .onClick(event -> {
                         // Clear all filter states
-                        ctx.clearState();
-                        ctx.refresh();
+                        event.clearState();
+                        event.refresh();
                     })
                     .build())
                 .build())
@@ -104,11 +104,11 @@ public class FilterStrategyExample {
                         : "&bWeapons Only")
                     .lore("""
                         &7Filter by category
-
+                        
                         &eTry with AND and OR!""")
-                    .onClick(ctx -> {
-                        ctx.set("filter:weapon", !ctx.getBool("filter:weapon"));
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("filter:weapon", !event.getBool("filter:weapon"));
+                        event.refresh();
                     })
                     .build())
                 .item(3, 0, item()
@@ -126,11 +126,11 @@ public class FilterStrategyExample {
                         : "&9Armor Only")
                     .lore("""
                         &7Filter by category
-
+                        
                         &eTry with AND and OR!""")
-                    .onClick(ctx -> {
-                        ctx.set("filter:armor", !ctx.getBool("filter:armor"));
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("filter:armor", !event.getBool("filter:armor"));
+                        event.refresh();
                     })
                     .build())
                 .item(5, 0, item()
@@ -148,11 +148,11 @@ public class FilterStrategyExample {
                         : "&6Expensive (>100)")
                     .lore("""
                         &7Filter by price
-
+                        
                         &eTry with AND and OR!""")
-                    .onClick(ctx -> {
-                        ctx.set("filter:expensive", !ctx.getBool("filter:expensive"));
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("filter:expensive", !event.getBool("filter:expensive"));
+                        event.refresh();
                     })
                     .build())
                 .item(7, 0, item()
@@ -170,11 +170,11 @@ public class FilterStrategyExample {
                         : "&aAffordable (<100)")
                     .lore("""
                         &7Filter by price
-
+                        
                         &eTry with AND and OR!""")
-                    .onClick(ctx -> {
-                        ctx.set("filter:affordable", !ctx.getBool("filter:affordable"));
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("filter:affordable", !event.getBool("filter:affordable"));
+                        event.refresh();
                     })
                     .build())
                 .build())
@@ -184,7 +184,7 @@ public class FilterStrategyExample {
                 .bounds(0, 2, 9, 3)
                 .items(items)
                 // itemsPerPage defaults to pane size (9x3 = 27 slots)
-                .renderer((item, index) -> item()
+                .renderer((ctx, item, index) -> item()
                     .material(item.material())
                     .vars(Map.of(
                         "name", item.name(),

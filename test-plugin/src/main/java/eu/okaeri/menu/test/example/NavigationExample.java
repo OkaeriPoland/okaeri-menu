@@ -32,8 +32,8 @@ public class NavigationExample {
                         &7Browse items for sale
                         
                         &eClick to open!""")
-                    .onClick(ctx -> {
-                        ctx.open(createShopMenu(ctx.getMenu().getPlugin()));
+                    .onClick(event -> {
+                        event.open(createShopMenu(event.getMenu().getPlugin()));
                     })
                     .build())
                 // Navigate to Settings
@@ -44,8 +44,8 @@ public class NavigationExample {
                         &7Configure your preferences
                         
                         &eClick to open!""")
-                    .onClick(ctx -> {
-                        ctx.open(createSettingsMenu(ctx.getMenu().getPlugin()));
+                    .onClick(event -> {
+                        event.open(createSettingsMenu(event.getMenu().getPlugin()));
                     })
                     .build())
                 // Navigate to Profile
@@ -56,8 +56,8 @@ public class NavigationExample {
                         &7View your statistics
                         
                         &eClick to open!""")
-                    .onClick(ctx -> {
-                        ctx.open(createProfileMenu(ctx.getMenu().getPlugin()));
+                    .onClick(event -> {
+                        event.open(createProfileMenu(event.getMenu().getPlugin()));
                     })
                     .build())
                 // Close button (no back button since this is main menu)
@@ -84,8 +84,8 @@ public class NavigationExample {
                         &7Browse weapons
                         
                         &eClick to open!""")
-                    .onClick(ctx -> {
-                        ctx.open(createWeaponsMenu(ctx.getMenu().getPlugin()));
+                    .onClick(event -> {
+                        event.open(createWeaponsMenu(event.getMenu().getPlugin()));
                     })
                     .build())
                 .item(4, 1, item()
@@ -95,8 +95,8 @@ public class NavigationExample {
                         &7Browse armor
                         
                         &eClick to open!""")
-                    .onClick(ctx -> {
-                        ctx.open(createArmorMenu(ctx.getMenu().getPlugin()));
+                    .onClick(event -> {
+                        event.open(createArmorMenu(event.getMenu().getPlugin()));
                     })
                     .build())
                 .item(7, 1, item()
@@ -106,8 +106,8 @@ public class NavigationExample {
                         &7Browse consumables
                         
                         &eClick to open!""")
-                    .onClick(ctx -> {
-                        ctx.open(createConsumablesMenu(ctx.getMenu().getPlugin()));
+                    .onClick(event -> {
+                        event.open(createConsumablesMenu(event.getMenu().getPlugin()));
                     })
                     .build())
                 // Navigation: Back button (visible because we came from main menu)
@@ -137,8 +137,8 @@ public class NavigationExample {
                         &7Price: &6100 coins
                         
                         &eClick to purchase!""")
-                    .onClick(ctx -> {
-                        ctx.sendMessage("&aPurchased Diamond Sword!");
+                    .onClick(event -> {
+                        event.sendMessage("&aPurchased Diamond Sword!");
                     })
                     .build())
                 .item(2, 1, item()
@@ -149,8 +149,8 @@ public class NavigationExample {
                         &7Price: &650 coins
                         
                         &eClick to purchase!""")
-                    .onClick(ctx -> {
-                        ctx.sendMessage("&aPurchased Iron Sword!");
+                    .onClick(event -> {
+                        event.sendMessage("&aPurchased Iron Sword!");
                     })
                     .build())
                 .item(3, 1, item()
@@ -161,8 +161,8 @@ public class NavigationExample {
                         &7Price: &675 coins
                         
                         &eClick to purchase!""")
-                    .onClick(ctx -> {
-                        ctx.sendMessage("&aPurchased Bow!");
+                    .onClick(event -> {
+                        event.sendMessage("&aPurchased Bow!");
                     })
                     .build())
                 // Navigation: Back button (visible, goes to Shop menu)

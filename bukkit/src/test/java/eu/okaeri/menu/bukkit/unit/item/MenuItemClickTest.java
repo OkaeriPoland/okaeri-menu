@@ -69,7 +69,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.DIAMOND)
-            .onClick(ctx -> clicked.set(true))
+            .onClick(event -> clicked.set(true))
             .build();
 
         // Create a left click
@@ -87,7 +87,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.EMERALD)
-            .onClick(ctx -> clicked.set(true))
+            .onClick(event -> clicked.set(true))
             .build();
 
         // Create a right click
@@ -122,7 +122,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.IRON_SWORD)
-            .onLeftClick(ctx -> leftClicked.set(true))
+            .onLeftClick(event -> leftClicked.set(true))
             .build();
 
         // Create a left click
@@ -140,7 +140,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.GOLDEN_SWORD)
-            .onLeftClick(ctx -> leftClicked.set(true))
+            .onLeftClick(event -> leftClicked.set(true))
             .build();
 
         // Create a right click
@@ -162,7 +162,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.BOW)
-            .onRightClick(ctx -> rightClicked.set(true))
+            .onRightClick(event -> rightClicked.set(true))
             .build();
 
         // Create a right click
@@ -180,7 +180,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.CROSSBOW)
-            .onRightClick(ctx -> rightClicked.set(true))
+            .onRightClick(event -> rightClicked.set(true))
             .build();
 
         // Create a left click
@@ -203,8 +203,8 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.REDSTONE)
-            .onClick(ctx -> clickCount.incrementAndGet())
-            .onLeftClick(ctx -> leftClickCount.incrementAndGet())
+            .onClick(event -> clickCount.incrementAndGet())
+            .onLeftClick(event -> leftClickCount.incrementAndGet())
             .build();
 
         // Create a left click
@@ -224,8 +224,8 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.GLOWSTONE)
-            .onClick(ctx -> clickCount.incrementAndGet())
-            .onRightClick(ctx -> rightClickCount.incrementAndGet())
+            .onClick(event -> clickCount.incrementAndGet())
+            .onRightClick(event -> rightClickCount.incrementAndGet())
             .build();
 
         // Create a right click
@@ -246,9 +246,9 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.BEACON)
-            .onClick(ctx -> clickCount.incrementAndGet())
-            .onLeftClick(ctx -> leftClickCount.incrementAndGet())
-            .onRightClick(ctx -> rightClickCount.incrementAndGet())
+            .onClick(event -> clickCount.incrementAndGet())
+            .onLeftClick(event -> leftClickCount.incrementAndGet())
+            .onRightClick(event -> rightClickCount.incrementAndGet())
             .build();
 
         // Test left click
@@ -279,7 +279,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.CHEST)
-            .onClick(ctx -> capturedSlot.set(ctx.getSlot()))
+            .onClick(event -> capturedSlot.set(event.getSlot()))
             .build();
 
         MenuItemClickContext clickContext = this.createClickContext(15, ClickType.LEFT);
@@ -296,8 +296,8 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.ENDER_PEARL)
-            .onClick(ctx -> {
-                playerMatches.set(ctx.getEntity().equals(this.player));
+            .onClick(event -> {
+                playerMatches.set(event.getEntity().equals(this.player));
             })
             .build();
 
@@ -316,9 +316,9 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.COMPASS)
-            .onClick(ctx -> {
-                isLeftClick.set(ctx.isLeftClick());
-                isRightClick.set(ctx.isRightClick());
+            .onClick(event -> {
+                isLeftClick.set(event.isLeftClick());
+                isRightClick.set(event.isRightClick());
             })
             .build();
 
@@ -351,8 +351,8 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.PAPER)
-            .onClick(ctx -> executionOrder.append("1"))
-            .onLeftClick(ctx -> executionOrder.append("2"))
+            .onClick(event -> executionOrder.append("1"))
+            .onLeftClick(event -> executionOrder.append("2"))
             .build();
 
         MenuItemClickContext clickContext = this.createClickContext(0, ClickType.LEFT);
@@ -369,8 +369,8 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.BOOK)
-            .onClick(ctx -> executionOrder.append("1"))
-            .onRightClick(ctx -> executionOrder.append("2"))
+            .onClick(event -> executionOrder.append("1"))
+            .onRightClick(event -> executionOrder.append("2"))
             .build();
 
         MenuItemClickContext clickContext = this.createClickContext(0, ClickType.RIGHT);
@@ -391,7 +391,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.DIAMOND)
-            .onMiddleClick(ctx -> middleClicked.set(true))
+            .onMiddleClick(event -> middleClicked.set(true))
             .build();
 
         // Create a middle click
@@ -409,7 +409,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.IRON_SWORD)
-            .onMiddleClick(ctx -> middleClicked.set(true))
+            .onMiddleClick(event -> middleClicked.set(true))
             .build();
 
         // Create a left click
@@ -427,7 +427,7 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.GOLDEN_SWORD)
-            .onMiddleClick(ctx -> middleClicked.set(true))
+            .onMiddleClick(event -> middleClicked.set(true))
             .build();
 
         // Create a right click
@@ -446,8 +446,8 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.REDSTONE)
-            .onClick(ctx -> clickCount.incrementAndGet())
-            .onMiddleClick(ctx -> middleClickCount.incrementAndGet())
+            .onClick(event -> clickCount.incrementAndGet())
+            .onMiddleClick(event -> middleClickCount.incrementAndGet())
             .build();
 
         // Create a middle click
@@ -469,10 +469,10 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.BEACON)
-            .onClick(ctx -> clickCount.incrementAndGet())
-            .onMiddleClick(ctx -> middleClickCount.incrementAndGet())
-            .onLeftClick(ctx -> leftClickCount.incrementAndGet())
-            .onRightClick(ctx -> rightClickCount.incrementAndGet())
+            .onClick(event -> clickCount.incrementAndGet())
+            .onMiddleClick(event -> middleClickCount.incrementAndGet())
+            .onLeftClick(event -> leftClickCount.incrementAndGet())
+            .onRightClick(event -> rightClickCount.incrementAndGet())
             .build();
 
         // Create a middle click
@@ -493,8 +493,8 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.PAPER)
-            .onClick(ctx -> executionOrder.append("1"))
-            .onMiddleClick(ctx -> executionOrder.append("2"))
+            .onClick(event -> executionOrder.append("1"))
+            .onMiddleClick(event -> executionOrder.append("2"))
             .build();
 
         MenuItemClickContext clickContext = this.createClickContext(0, ClickType.MIDDLE);
@@ -511,8 +511,8 @@ class MenuItemClickTest {
 
         MenuItem item = item()
             .material(Material.CHEST)
-            .onMiddleClick(ctx -> {
-                isMiddleClick.set(ctx.isMiddleClick());
+            .onMiddleClick(event -> {
+                isMiddleClick.set(event.isMiddleClick());
             })
             .build();
 

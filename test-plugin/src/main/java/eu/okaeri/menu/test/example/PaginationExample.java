@@ -50,15 +50,15 @@ public class PaginationExample {
                 .bounds(0, 0, 9, 5)  // 5 rows for content
                 .items(items)
                 // itemsPerPage defaults to pane size (9x5 = 45 slots)
-                .renderer((fruit, index) -> item()
+                .renderer((ctx, fruit, index) -> item()
                     .material(Material.APPLE)  // Could map different materials
                     .name("&e" + fruit)
                     .lore("""
                         &7Index: &f%d
                         
                         &eClick for more info!""".formatted(index))
-                    .onClick(ctx -> {
-                        ctx.sendMessage("&aYou selected: " + fruit);
+                    .onClick(event -> {
+                        event.sendMessage("&aYou selected: " + fruit);
                     })
                     .build())
                 .build())
@@ -92,7 +92,7 @@ public class PaginationExample {
                 .name("players")
                 .bounds(0, 0, 9, 4)
                 .items(players)
-                .renderer((playerName, index) -> item()
+                .renderer((ctx, playerName, index) -> item()
                     .material(Material.PLAYER_HEAD)
                     .name("&a" + playerName)
                     .lore("""
@@ -147,7 +147,7 @@ public class PaginationExample {
                 .bounds(0, 1, 9, 4)
                 .items(profiles)
                 // itemsPerPage defaults to pane size (9x4 = 36 slots)
-                .renderer((profile, index) -> item()
+                .renderer((ctx, profile, index) -> item()
                     .material(profile.isOnline() ? Material.LIME_WOOL : Material.GRAY_WOOL)
                     .name((profile.isOnline() ? "&a" : "&7") + profile.getName())
                     .lore("""

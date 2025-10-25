@@ -102,15 +102,15 @@ public class OkaeriMenu {
             .items(stacks.stream()
                 .map(stack -> OkaeriMenu.item()
                     .display(() -> stack)
-                    .click(ctx -> ctx.setAllowPickup(true))
+                    .click(event -> event.setAllowPickup(true))
                     .build()))
             .close(ctx -> callback.accept(Arrays.stream(ctx.getInventory().getContents())
                 .filter(Objects::nonNull)
                 .filter(stack -> (stack.getType() != Material.AIR) && !stack.getType().name().contains("_AIR"))
                 .collect(Collectors.toList())))
-            .fallbackClick(ctx -> {
-                ctx.setAllowInput(true);
-                ctx.setAllowPickup(true);
+            .fallbackClick(event -> {
+                event.setAllowInput(true);
+                event.setAllowPickup(true);
             })
             .build();
     }

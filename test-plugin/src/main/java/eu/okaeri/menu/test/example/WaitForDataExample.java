@@ -48,7 +48,7 @@ public class WaitForDataExample {
                         "Potion of Strength"
                     );
                 })
-                .renderer((itemName, index) -> item()
+                .renderer((ctx, itemName, index) -> item()
                     .material(getMaterialForItem(itemName))
                     .name("&e" + itemName)
                     .lore("&7Click to purchase!")

@@ -58,7 +58,7 @@ public class DynamicTitleExample {
                     .lore("""
                         <gray>Watch the countdown in the title
                         <gray>and in this item!
-
+                        
                         <yellow>The color changes as time runs out.""")
                     .build())
                 .build())
@@ -97,11 +97,11 @@ public class DynamicTitleExample {
                     .lore("""
                         <gray>Click to decrease progress
                         <gray>by 10%
-
+                        
                         <yellow>Click me!""")
-                    .onClick(ctx -> {
-                        ctx.set("progress", Math.max(0, ctx.getInt("progress") - 10));
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("progress", Math.max(0, event.getInt("progress") - 10));
+                        event.refresh();
                     })
                     .build())
                 .item(4, 1, item()
@@ -110,7 +110,7 @@ public class DynamicTitleExample {
                     .lore("""
                         <gray>Watch the progress bar
                         <gray>in the title update!
-
+                        
                         <gray>Use the buttons to change it.""")
                     .build())
                 .item(5, 1, item()
@@ -119,11 +119,11 @@ public class DynamicTitleExample {
                     .lore("""
                         <gray>Click to increase progress
                         <gray>by 10%
-
+                        
                         <yellow>Click me!""")
-                    .onClick(ctx -> {
-                        ctx.set("progress", Math.min(100, ctx.getInt("progress") + 10));
-                        ctx.refresh();
+                    .onClick(event -> {
+                        event.set("progress", Math.min(100, event.getInt("progress") + 10));
+                        event.refresh();
                     })
                     .build())
                 .build())

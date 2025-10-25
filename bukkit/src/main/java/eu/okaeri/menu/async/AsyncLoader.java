@@ -66,5 +66,6 @@ public class AsyncLoader {
         String key,
         Function<MenuContext, ?> loader,
         Duration ttl
-    ) {}
+    ) {
+    }
 }

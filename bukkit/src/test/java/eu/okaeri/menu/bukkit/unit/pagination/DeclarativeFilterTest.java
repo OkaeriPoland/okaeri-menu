@@ -206,7 +206,7 @@ class DeclarativeFilterTest {
                 .name("shop")
                 .bounds(0, 1, 9, 5)
                 .items(items)
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item.name)
                     .build())
@@ -260,7 +260,7 @@ class DeclarativeFilterTest {
                 .name("shop")
                 .bounds(0, 1, 9, 5)
                 .items(items)
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item.name)
                     .build())
@@ -292,9 +292,9 @@ class DeclarativeFilterTest {
                 .when(ctx -> ctx.getBool("weaponOnly"))
                 .predicate(item -> "weapon".equals(item.category))
                 .build())
-            .onClick(ctx -> {
-                ctx.set("weaponOnly", !ctx.getBool("weaponOnly"));
-                ctx.refresh();
+            .onClick(event -> {
+                event.set("weaponOnly", !event.getBool("weaponOnly"));
+                event.refresh();
             })
             .build();
 
@@ -315,7 +315,7 @@ class DeclarativeFilterTest {
                 .name("shop")
                 .bounds(0, 1, 9, 5)
                 .items(items)
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item.name)
                     .build())
@@ -445,7 +445,7 @@ class DeclarativeFilterTest {
                     new ShopItem("Cheap Sword", 50, "weapon"),
                     new ShopItem("Expensive Helmet", 120, "armor")
                 ))
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())

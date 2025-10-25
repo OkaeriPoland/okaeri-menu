@@ -7,6 +7,7 @@ import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.pagination.LoaderContext;
 import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.state.ViewerState;
+import eu.okaeri.menu.util.TriFunction;
 import lombok.Getter;
 import lombok.NonNull;
 import org.bukkit.inventory.Inventory;
@@ -18,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -232,7 +232,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         private PaneBounds bounds;
         private Function<LoaderContext, List<T>> asyncLoader;
         private Duration ttl = Duration.ofSeconds(30);  // Default TTL
-        private BiFunction<T, Integer, MenuItem> itemRenderer;
+        private TriFunction<MenuContext, T, Integer, MenuItem> itemRenderer;
         private int itemsPerPage;
         private List<AbstractPane.ItemCoordinateEntry> staticItems = new ArrayList<>();
         private MenuItem loadingItem;
@@ -315,7 +315,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
          * @return This builder
          */
         @NonNull
-        public Builder<T> renderer(@NonNull BiFunction<T, Integer, MenuItem> renderer) {
+        public Builder<T> renderer(@NonNull TriFunction<MenuContext, T, Integer, MenuItem> renderer) {
             this.itemRenderer = renderer;
             return this;
         }

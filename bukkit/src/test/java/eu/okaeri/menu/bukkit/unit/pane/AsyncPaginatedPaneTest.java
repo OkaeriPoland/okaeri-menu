@@ -79,7 +79,7 @@ class AsyncPaginatedPaneTest {
             paneAsync(String.class)
                 .name("test-pane")
                 .bounds(0, 0, 3, 3)
-                .renderer((item, index) -> MenuItem.item().material(Material.STONE).build())
+                .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
                 .build()
         ).isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("loader");
@@ -92,7 +92,7 @@ class AsyncPaginatedPaneTest {
             .name("test-pane")
             .bounds(0, 0, 3, 3)
             .loader(ctx -> Collections.emptyList())
-            .renderer((item, index) -> MenuItem.item().material(Material.STONE).build())
+            .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
 
         assertThat(pane.getTtl()).isEqualTo(Duration.ofSeconds(30));
@@ -106,7 +106,7 @@ class AsyncPaginatedPaneTest {
             .bounds(0, 0, 3, 3)
             .loader(ctx -> Collections.emptyList())
             .ttl(Duration.ofMinutes(5))
-            .renderer((item, index) -> MenuItem.item().material(Material.STONE).build())
+            .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
 
         assertThat(pane.getTtl()).isEqualTo(Duration.ofMinutes(5));
@@ -129,7 +129,7 @@ class AsyncPaginatedPaneTest {
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)  // 3x2 = 6 slots
                 .loader(ctx -> testData)
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .name(item)
                     .build())
@@ -171,7 +171,7 @@ class AsyncPaginatedPaneTest {
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)  // 3x3 = 9 slots
                 .loader(ctx -> Collections.emptyList())
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
                 .loading(MenuItem.item()
@@ -218,7 +218,7 @@ class AsyncPaginatedPaneTest {
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)  // 3x2 = 6 slots
                 .loader(ctx -> testData)
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .name(item)
                     .build())
@@ -258,7 +258,7 @@ class AsyncPaginatedPaneTest {
                     }
                     return Arrays.asList("A", "B");
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
                 .staticItem(0, 1, MenuItem.item()
@@ -321,7 +321,7 @@ class AsyncPaginatedPaneTest {
             .name("my-pane")
             .bounds(0, 0, 3, 3)
             .loader(ctx -> Arrays.asList("A", "B", "C"))
-            .renderer((item, index) -> MenuItem.item().material(Material.STONE).build())
+            .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
 
         assertThat(pane.getName()).isEqualTo("my-pane");
@@ -345,7 +345,7 @@ class AsyncPaginatedPaneTest {
                     return List.of("Load " + loadCount[0]);
                 })
                 .ttl(Duration.ofMillis(100))  // Short TTL for faster test
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .name(item)
                     .build())
@@ -381,7 +381,7 @@ class AsyncPaginatedPaneTest {
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)
                 .loader(ctx -> Collections.singletonList("Only Item"))
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.EMERALD)
                     .name(item)
                     .build())
@@ -416,7 +416,7 @@ class AsyncPaginatedPaneTest {
                 .bounds(0, 0, 7, 2)  // 7x2 = 14 slots
                 .itemsPerPage(10)
                 .loader(ctx -> largeList)
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item)
                     .build())
@@ -446,7 +446,7 @@ class AsyncPaginatedPaneTest {
             .name("test-pane")
             .bounds(0, 0, 3, 3)
             .loader(ctx -> Arrays.asList("Item 1", "Item 2"))
-            .renderer((item, index) -> MenuItem.item()
+            .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .name(item)
                 .build())
@@ -478,7 +478,7 @@ class AsyncPaginatedPaneTest {
             .name("test-pane")
             .bounds(0, 0, 3, 3)
             .loader(ctx -> Arrays.asList("Item 1", "Item 2"))
-            .renderer((item, index) -> MenuItem.item()
+            .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .name(item)
                 .build())
@@ -512,7 +512,7 @@ class AsyncPaginatedPaneTest {
                     }
                     return Arrays.asList("Item 1", "Item 2");
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item)
                     .build())
@@ -542,7 +542,7 @@ class AsyncPaginatedPaneTest {
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)
                 .loader(ctx -> Collections.emptyList())  // Returns empty list
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .name(item)
                     .build())
@@ -583,7 +583,7 @@ class AsyncPaginatedPaneTest {
                     capturedContext[0] = ctx;
                     return Arrays.asList("A", "B", "C");
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())
@@ -614,7 +614,7 @@ class AsyncPaginatedPaneTest {
                     capturedContext[0] = ctx;
                     return Collections.emptyList();
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())
@@ -667,7 +667,7 @@ class AsyncPaginatedPaneTest {
                     capturedContext[0] = ctx;
                     return Collections.emptyList();
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())
@@ -716,7 +716,7 @@ class AsyncPaginatedPaneTest {
                     capturedContext[0] = ctx;
                     return Collections.emptyList();
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())
@@ -762,7 +762,7 @@ class AsyncPaginatedPaneTest {
                     capturedContext[0] = ctx;
                     return Arrays.asList("A", "B", "C");
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())
@@ -806,7 +806,7 @@ class AsyncPaginatedPaneTest {
                     capturedContext[0] = ctx;
                     return Collections.emptyList();
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())
@@ -858,7 +858,7 @@ class AsyncPaginatedPaneTest {
                     capturedContext[0] = ctx;
                     return Collections.emptyList();
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())
@@ -938,7 +938,7 @@ class AsyncPaginatedPaneTest {
                     capturedContext[0] = ctx;
                     return Collections.emptyList();
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())
@@ -996,7 +996,7 @@ class AsyncPaginatedPaneTest {
                     capturedContext[0] = ctx;
                     return Collections.emptyList();
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
                 .build())
@@ -1048,7 +1048,7 @@ class AsyncPaginatedPaneTest {
                     // Should never be called because filter extraction fails first
                     return Arrays.asList("Should", "Not", "Appear");
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
                 .build())
@@ -1104,7 +1104,7 @@ class AsyncPaginatedPaneTest {
                 .loader(ctx -> {
                     throw new RuntimeException("Loader failed!");
                 })
-                .renderer((item, index) -> MenuItem.item()
+                .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
                 .error(MenuItem.item()
@@ -1157,7 +1157,7 @@ class AsyncPaginatedPaneTest {
                 .name("failingPane")
                 .bounds(0, 0, 9, 1)
                 .loader(ctx -> Arrays.asList("A", "B", "C"))  // Loader succeeds
-                .renderer((item, index) -> {
+                .renderer((ctx, item, index) -> {
                     throw new RuntimeException("Renderer failed!");  // Renderer fails
                 })
                 .build())

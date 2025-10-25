@@ -22,9 +22,9 @@ import java.util.function.Supplier;
  *         .when(ctx -> ctx.getBool("epicFilterActive"))
  *         .predicate(item -> item.getRarity() == Rarity.EPIC)
  *         .build())
- *     .onClick(ctx -> {
- *         ctx.set("epicFilterActive", !ctx.getBool("epicFilterActive"));
- *         ctx.refresh();
+ *     .onClick(event -> {
+ *         event.set("epicFilterActive", !event.getBool("epicFilterActive"));
+ *         event.refresh();
  *     })
  *     .build();
  * }</pre>

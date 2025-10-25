@@ -510,8 +510,8 @@ class InteractiveSlotTest {
 
         MenuItem item = item()
             .interactive()
-            .onClick(ctx -> clicked.set(true))
-            .onItemChange(ctx -> changed.set(true))
+            .onClick(event -> clicked.set(true))
+            .onItemChange(event -> changed.set(true))
             .build();
 
         // Test change handler

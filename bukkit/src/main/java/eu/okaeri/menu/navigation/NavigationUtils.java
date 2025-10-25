@@ -37,9 +37,9 @@ public final class NavigationUtils {
             .material(material)
             .name(name)
             .visible(MenuContext::hasLast)
-            .onClick(ctx -> {
-                ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
-                ctx.back();
+            .onClick(event -> {
+                event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+                event.back();
             });
 
         if ((lore != null) && !lore.isEmpty()) {
@@ -75,9 +75,9 @@ public final class NavigationUtils {
         MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
-            .onClick(ctx -> {
-                ctx.clearHistory();
-                ctx.closeInventory();
+            .onClick(event -> {
+                event.clearHistory();
+                event.closeInventory();
             });
 
         if ((lore != null) && !lore.isEmpty()) {

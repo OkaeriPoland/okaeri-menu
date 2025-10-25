@@ -39,11 +39,11 @@ public final class PaginationUtils {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
                 return pagination.hasNext();
             })
-            .onClick(ctx -> {
-                PaginationContext<?> pagination = ctx.pagination(paneName);
+            .onClick(event -> {
+                PaginationContext<?> pagination = event.pagination(paneName);
                 if (pagination.nextPage()) {
-                    ctx.refresh();
-                    ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
+                    event.refresh();
+                    event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
                 }
             });
 
@@ -89,11 +89,11 @@ public final class PaginationUtils {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
                 return pagination.hasPrevious();
             })
-            .onClick(ctx -> {
-                PaginationContext<?> pagination = ctx.pagination(paneName);
+            .onClick(event -> {
+                PaginationContext<?> pagination = event.pagination(paneName);
                 if (pagination.previousPage()) {
-                    ctx.refresh();
-                    ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 0.8f);
+                    event.refresh();
+                    event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 0.8f);
                 }
             });
 
@@ -186,11 +186,11 @@ public final class PaginationUtils {
                 return pagination.hasFilter(filterId) ? Material.EMERALD : Material.COAL;
             })
             .name(filterName)
-            .onClick(ctx -> {
-                PaginationContext<T> pagination = ctx.pagination(paneName);
+            .onClick(event -> {
+                PaginationContext<T> pagination = event.pagination(paneName);
                 pagination.toggleFilter(filterId, predicate);
-                ctx.refresh();
-                ctx.playSound(Sound.UI_BUTTON_CLICK);
+                event.refresh();
+                event.playSound(Sound.UI_BUTTON_CLICK);
             });
 
         if ((lore != null) && !lore.isEmpty()) {
@@ -221,11 +221,11 @@ public final class PaginationUtils {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
                 return pagination.getActiveFilterCount() > 0;
             })
-            .onClick(ctx -> {
-                PaginationContext<?> pagination = ctx.pagination(paneName);
+            .onClick(event -> {
+                PaginationContext<?> pagination = event.pagination(paneName);
                 pagination.clearFilters();
-                ctx.refresh();
-                ctx.playSound(Sound.ENTITY_ITEM_BREAK);
+                event.refresh();
+                event.playSound(Sound.ENTITY_ITEM_BREAK);
             });
 
         if ((lore != null) && !lore.isEmpty()) {
@@ -402,11 +402,11 @@ public final class PaginationUtils {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
                 return pagination.getCurrentPage() > 0;
             })
-            .onClick(ctx -> {
-                PaginationContext<?> pagination = ctx.pagination(paneName);
+            .onClick(event -> {
+                PaginationContext<?> pagination = event.pagination(paneName);
                 pagination.firstPage();
-                ctx.refresh();
-                ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 0.6f);
+                event.refresh();
+                event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 0.6f);
             });
     }
 
@@ -424,11 +424,11 @@ public final class PaginationUtils {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
                 return pagination.getCurrentPage() < (pagination.getTotalPages() - 1);
             })
-            .onClick(ctx -> {
-                PaginationContext<?> pagination = ctx.pagination(paneName);
+            .onClick(event -> {
+                PaginationContext<?> pagination = event.pagination(paneName);
                 pagination.lastPage();
-                ctx.refresh();
-                ctx.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 1.4f);
+                event.refresh();
+                event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, 1.4f);
             });
     }
 
