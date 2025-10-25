@@ -173,8 +173,8 @@ class MenuContextBasicTest {
     }
 
     @Test
-    @DisplayName("Should return empty getReactive when data not loaded")
-    void testGetReactiveEmpty() {
+    @DisplayName("Should return empty getComputed when data not loaded")
+    void testGetComputedEmpty() {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
@@ -183,14 +183,14 @@ class MenuContextBasicTest {
         menu.open(this.player);
         MenuContext context = new MenuContext(menu, this.player);
 
-        Optional<String> value = context.getReactive("test_key", String.class);
+        Optional<String> value = context.getComputed("test_key", String.class);
 
         assertThat(value).isEmpty();
     }
 
     @Test
-    @DisplayName("Should return value via getReactive when loaded")
-    void testGetReactivePresent() throws Exception {
+    @DisplayName("Should return value via getComputed when loaded")
+    void testGetComputedPresent() throws Exception {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
@@ -203,7 +203,7 @@ class MenuContextBasicTest {
         context.loadAsync("test_key", () -> "Test Value", Duration.ofSeconds(1)).get(1, TimeUnit.SECONDS);
         Thread.sleep(100);
 
-        Optional<String> value = context.getReactive("test_key", String.class);
+        Optional<String> value = context.getComputed("test_key", String.class);
 
         assertThat(value).hasValue("Test Value");
     }

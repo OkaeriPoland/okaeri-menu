@@ -2,6 +2,7 @@ package eu.okaeri.menu.pagination;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
+import eu.okaeri.menu.async.ComputedValue;
 import eu.okaeri.menu.state.TypeReference;
 import lombok.Getter;
 import lombok.NonNull;
@@ -80,6 +81,20 @@ import java.util.logging.Logger;
  *
  *     // Load related data based on other pane's state
  *     return database.findRelated(searchQuery, ctx.getCurrentPage());
+ * })
+ * }</pre>
+ *
+ * <p><b>Multi-source async coordination:</b>
+ * <pre>{@code
+ * .loader(ctx -> {
+ *     // Wait for prerequisite async data before loading
+ *     Guild guild = ctx.computed("playerGuild", Guild.class).orElse(null);
+ *     if (guild == null) {
+ *         return Collections.emptyList(); // Guild data still loading
+ *     }
+ *
+ *     // Load items using the prerequisite data
+ *     return database.getGuildItems(guild.getId(), ctx.getCurrentPage());
  * })
  * }</pre>
  */
@@ -569,5 +584,161 @@ public class LoaderContext {
      */
     public <T> @NonNull PaginationContext<T> pagination(@NonNull String paneName) {
         return this.pagination.getMenuContext().pagination(paneName);
+    }
+
+    // ========================================
+    // ASYNC DATA ACCESS
+    // ========================================
+
+    /**
+     * Accesses async cached data with fluent error/loading handling.
+     * Returns a {@link ComputedValue} that can be in SUCCESS, LOADING, ERROR, or empty state.
+     *
+     * <p>This is useful for multi-source data coordination where a loader depends on
+     * other async data that may still be loading or in an error state.
+     *
+     * <p><b>Example - Wait for prerequisite data:</b>
+     * <pre>{@code
+     * .loader(ctx -> {
+     *     // Don't load items until guild data is ready
+     *     Optional<Guild> guild = ctx.computed("playerGuild").toOptional();
+     *     if (guild.isEmpty()) {
+     *         return Collections.emptyList(); // Guild still loading
+     *     }
+     *
+     *     return database.getGuildItems(guild.get().getId(), ctx.getCurrentPage());
+     * })
+     * }</pre>
+     *
+     * <p><b>Example - Conditional loading based on async state:</b>
+     * <pre>{@code
+     * .loader(ctx -> {
+     *     // Check if player data is still loading
+     *     if (ctx.computed("playerData").isLoading()) {
+     *         return Collections.emptyList();
+     *     }
+     *
+     *     PlayerData data = ctx.computed("playerData").orElse(PlayerData.DEFAULT);
+     *     return database.find(data.getPreferences(), ctx.getCurrentPage());
+     * })
+     * }</pre>
+     *
+     * <p><b>Example - Load related data from another async source:</b>
+     * <pre>{@code
+     * .loader(ctx -> {
+     *     // Access currently selected item from another async pane
+     *     Item currentItem = ctx.computed("currentItem").orElse(null);
+     *     if (currentItem == null) return Collections.emptyList();
+     *
+     *     return database.getRelatedItems(currentItem.getId());
+     * })
+     * }</pre>
+     *
+     * @param key The async data key
+     * @param <T> The value type
+     * @return ComputedValue wrapper supporting map/loading/error/orElse
+     */
+    @NonNull
+    public <T> ComputedValue<T> computed(@NonNull String key) {
+        return this.pagination.getMenuContext().computed(key);
+    }
+
+    /**
+     * Accesses async cached data with type hint.
+     * Convenience overload of {@link #computed(String)}.
+     *
+     * @param key  The async data key
+     * @param type The expected type (for type safety, not enforced at runtime)
+     * @param <T>  The value type
+     * @return ComputedValue wrapper supporting map/loading/error/orElse
+     */
+    @NonNull
+    public <T> ComputedValue<T> computed(@NonNull String key, @NonNull Class<T> type) {
+        return this.pagination.getMenuContext().computed(key, type);
+    }
+
+    /**
+     * Accesses full pagination context for async panes.
+     * Designed for AsyncPaginatedPane where the pane's data is async-loaded.
+     *
+     * <p>This returns a ComputedValue that wraps the PaginationContext itself,
+     * allowing you to access the paginated items after they've been loaded.
+     *
+     * <p><b>Example - Access items from another async pane:</b>
+     * <pre>{@code
+     * .loader(ctx -> {
+     *     // Get paginated items from another async pane
+     *     PaginationContext<Player> players = ctx.computedPagination("players", Player.class)
+     *         .orElse(null);
+     *
+     *     if (players == null) {
+     *         return Collections.emptyList(); // Still loading
+     *     }
+     *
+     *     // Load related data based on the current page of players
+     *     return database.getStatsForPlayers(players.getCurrentItems());
+     * })
+     * }</pre>
+     *
+     * @param paneName The name of the async paginated pane
+     * @param itemType The item type class
+     * @param <T>      The item type
+     * @return ComputedValue wrapping PaginationContext
+     */
+    @NonNull
+    public <T> ComputedValue<PaginationContext<T>> computedPagination(@NonNull String paneName, @NonNull Class<T> itemType) {
+        return this.pagination.getMenuContext().computedPagination(paneName, itemType);
+    }
+
+    /**
+     * Gets loaded async data directly (unwraps ComputedValue to Optional).
+     * Convenience method that returns empty if data is loading or in error state.
+     *
+     * <p>Equivalent to {@code computed(key, type).toOptional()}.
+     *
+     * @param key  The async data key
+     * @param type The expected type
+     * @param <T>  The value type
+     * @return Optional containing the value if loaded successfully, empty otherwise
+     */
+    @NonNull
+    public <T> Optional<T> getComputed(@NonNull String key, @NonNull Class<T> type) {
+        return this.pagination.getMenuContext().getComputed(key, type);
+    }
+
+    /**
+     * Gets loaded async data directly with TypeReference for complex generic types.
+     * Convenience method that returns empty if data is loading or in error state.
+     *
+     * <p>Useful for type-safe access to async data with complex generics in loaders:
+     * <pre>{@code
+     * .loader(ctx -> {
+     *     // Access complex async data with full type safety
+     *     Optional<Map<String, List<Item>>> categories = ctx.getComputed(
+     *         "itemCategories",
+     *         new TypeReference<Map<String, List<Item>>>() {}
+     *     );
+     *
+     *     if (categories.isEmpty()) {
+     *         return Collections.emptyList(); // Still loading
+     *     }
+     *
+     *     // Use the fully-typed data
+     *     return categories.get().values().stream()
+     *         .flatMap(List::stream)
+     *         .collect(Collectors.toList());
+     * })
+     * }</pre>
+     *
+     * <p>Equivalent to {@code computed(key).toOptional()}.
+     *
+     * @param key           The async data key
+     * @param typeReference Type reference capturing generic type information
+     * @param <T>           The value type
+     * @return Optional containing the value if loaded successfully, empty otherwise
+     */
+    @NonNull
+    public <T> Optional<T> getComputed(@NonNull String key, @NonNull TypeReference<T> typeReference) {
+        return this.pagination.getMenuContext().getComputed(key, typeReference);
     }
 }

@@ -356,8 +356,10 @@ public class MenuContext {
     }
 
     /**
-     * Get loaded reactive data directly (for handlers).
+     * Get loaded computed data directly (unwraps ComputedValue to Optional).
      * Returns empty if still loading or error.
+     *
+     * <p>Convenience method equivalent to {@code computed(key, type).toOptional()}.
      *
      * @param key  The data key
      * @param type The expected type
@@ -365,8 +367,39 @@ public class MenuContext {
      * @return Optional of the loaded value
      */
     @NonNull
-    public <T> Optional<T> getReactive(@NonNull String key, @NonNull Class<T> type) {
+    public <T> Optional<T> getComputed(@NonNull String key, @NonNull Class<T> type) {
         return this.computed(key, type).toOptional();
+    }
+
+    /**
+     * Get loaded computed data directly with TypeReference for complex generic types.
+     * Returns empty if still loading or error.
+     *
+     * <p>Useful for type-safe access to async data with complex generics:
+     * <pre>{@code
+     * // Load complex data
+     * menu.reactive("inventory", ctx ->
+     *     Map.of("weapons", List.of(sword, bow), "armor", List.of(helmet)),
+     *     Duration.ofSeconds(30));
+     *
+     * // Access with type safety
+     * Optional<Map<String, List<Item>>> inventory = ctx.getComputed(
+     *     "inventory",
+     *     new TypeReference<Map<String, List<Item>>>() {}
+     * );
+     * }</pre>
+     *
+     * <p>Equivalent to {@code computed(key).toOptional()}.
+     *
+     * @param key           The data key
+     * @param typeReference Type reference capturing generic type information
+     * @param <T>           The value type
+     * @return Optional of the loaded value
+     */
+    @NonNull
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getComputed(@NonNull String key, @NonNull TypeReference<T> typeReference) {
+        return (Optional<T>) this.computed(key).toOptional();
     }
 
     /**
