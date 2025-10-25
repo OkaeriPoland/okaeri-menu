@@ -1,6 +1,6 @@
 package eu.okaeri.menu.bukkit.unit.async;
 
-import eu.okaeri.menu.async.ComputedValue;
+import eu.okaeri.menu.async.Computed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should create SUCCESS state with value")
     void testSuccessFactory() {
-        ComputedValue<String> value = ComputedValue.success("test");
+        Computed<String> value = Computed.ok("test");
 
         assertThat(value.isPresent()).isTrue();
         assertThat(value.isLoading()).isFalse();
@@ -32,7 +32,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should create LOADING state")
     void testLoadingFactory() {
-        ComputedValue<String> value = ComputedValue.loading();
+        Computed<String> value = Computed.loading();
 
         assertThat(value.isPresent()).isFalse();
         assertThat(value.isLoading()).isTrue();
@@ -43,7 +43,7 @@ class ComputedValueTest {
     @DisplayName("Should create ERROR state with exception")
     void testErrorFactory() {
         Throwable error = new RuntimeException("Test error");
-        ComputedValue<String> value = ComputedValue.error(error);
+        Computed<String> value = Computed.err(error);
 
         assertThat(value.isPresent()).isFalse();
         assertThat(value.isLoading()).isFalse();
@@ -54,7 +54,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should create empty state")
     void testEmptyFactory() {
-        ComputedValue<String> value = ComputedValue.empty();
+        Computed<String> value = Computed.empty();
 
         assertThat(value.isPresent()).isFalse();
         assertThat(value.isLoading()).isFalse();
@@ -69,8 +69,8 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should map SUCCESS value")
     void testMapSuccess() {
-        ComputedValue<String> original = ComputedValue.success("hello");
-        ComputedValue<Integer> mapped = original.map(String::length);
+        Computed<String> original = Computed.ok("hello");
+        Computed<Integer> mapped = original.map(String::length);
 
         assertThat(mapped.isPresent()).isTrue();
         assertThat(mapped.orElse(0)).isEqualTo(5);
@@ -79,7 +79,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should chain multiple map operations")
     void testMapChaining() {
-        ComputedValue<String> result = ComputedValue.success(10)
+        Computed<String> result = Computed.ok(10)
             .map(n -> n * 2)
             .map(n -> n + 5)
             .map(n -> "Value: " + n);
@@ -90,8 +90,8 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should pass through LOADING state in map")
     void testMapLoading() {
-        ComputedValue<String> loading = ComputedValue.loading();
-        ComputedValue<Integer> mapped = loading.map(String::length);
+        Computed<String> loading = Computed.loading();
+        Computed<Integer> mapped = loading.map(String::length);
 
         assertThat(mapped.isLoading()).isTrue();
         assertThat(mapped.isPresent()).isFalse();
@@ -101,8 +101,8 @@ class ComputedValueTest {
     @DisplayName("Should pass through ERROR state in map")
     void testMapError() {
         Throwable error = new RuntimeException("Original error");
-        ComputedValue<String> errorValue = ComputedValue.error(error);
-        ComputedValue<Integer> mapped = errorValue.map(String::length);
+        Computed<String> errorValue = Computed.err(error);
+        Computed<Integer> mapped = errorValue.map(String::length);
 
         assertThat(mapped.isError()).isTrue();
         assertThat(mapped.getError()).contains(error);
@@ -111,8 +111,8 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should convert to ERROR if mapper throws exception")
     void testMapperException() {
-        ComputedValue<String> original = ComputedValue.success("test");
-        ComputedValue<Integer> mapped = original.map(s -> {
+        Computed<String> original = Computed.ok("test");
+        Computed<Integer> mapped = original.map(s -> {
             throw new IllegalArgumentException("Mapper failed");
         });
 
@@ -127,8 +127,8 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should not map null SUCCESS value")
     void testMapNullSuccess() {
-        ComputedValue<String> nullValue = ComputedValue.success(null);
-        ComputedValue<Integer> mapped = nullValue.map(String::length);
+        Computed<String> nullValue = Computed.ok(null);
+        Computed<Integer> mapped = nullValue.map(String::length);
 
         // Null value in SUCCESS state should not be mapped
         assertThat(mapped.isPresent()).isFalse();
@@ -141,7 +141,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should apply loading fallback when in LOADING state")
     void testLoadingFallback() {
-        ComputedValue<String> loading = ComputedValue.<String>loading()
+        Computed<String> loading = Computed.<String>loading()
             .loading("Loading...");
 
         assertThat(loading.isPresent()).isTrue();
@@ -151,7 +151,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should ignore loading fallback when in SUCCESS state")
     void testLoadingFallbackIgnoredForSuccess() {
-        ComputedValue<String> success = ComputedValue.success("data")
+        Computed<String> success = Computed.ok("data")
             .loading("Loading...");
 
         assertThat(success.orElse("fallback")).isEqualTo("data");
@@ -160,7 +160,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should ignore loading fallback when in ERROR state")
     void testLoadingFallbackIgnoredForError() {
-        ComputedValue<String> error = ComputedValue.<String>error(new RuntimeException())
+        Computed<String> error = Computed.<String>err(new RuntimeException())
             .loading("Loading...");
 
         assertThat(error.isError()).isTrue();
@@ -173,7 +173,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should apply error fallback when in ERROR state")
     void testErrorFallback() {
-        ComputedValue<String> error = ComputedValue.<String>error(new RuntimeException("Failed"))
+        Computed<String> error = Computed.<String>err(new RuntimeException("Failed"))
             .error("Error occurred");
 
         assertThat(error.isPresent()).isTrue();
@@ -183,7 +183,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should ignore error fallback when in SUCCESS state")
     void testErrorFallbackIgnoredForSuccess() {
-        ComputedValue<String> success = ComputedValue.success("data")
+        Computed<String> success = Computed.ok("data")
             .error("Error occurred");
 
         assertThat(success.orElse("fallback")).isEqualTo("data");
@@ -192,7 +192,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should ignore error fallback when in LOADING state")
     void testErrorFallbackIgnoredForLoading() {
-        ComputedValue<String> loading = ComputedValue.<String>loading()
+        Computed<String> loading = Computed.<String>loading()
             .error("Error occurred");
 
         assertThat(loading.isLoading()).isTrue();
@@ -205,7 +205,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should return value in SUCCESS state with orElse")
     void testOrElseSuccess() {
-        String result = ComputedValue.success("value").orElse("fallback");
+        String result = Computed.ok("value").orElse("fallback");
 
         assertThat(result).isEqualTo("value");
     }
@@ -213,7 +213,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should return fallback in LOADING state with orElse")
     void testOrElseLoading() {
-        String result = ComputedValue.<String>loading().orElse("fallback");
+        String result = Computed.<String>loading().orElse("fallback");
 
         assertThat(result).isEqualTo("fallback");
     }
@@ -221,7 +221,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should return fallback in ERROR state with orElse")
     void testOrElseError() {
-        String result = ComputedValue.<String>error(new RuntimeException()).orElse("fallback");
+        String result = Computed.<String>err(new RuntimeException()).orElse("fallback");
 
         assertThat(result).isEqualTo("fallback");
     }
@@ -229,7 +229,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should return fallback for null value in SUCCESS state")
     void testOrElseNullSuccess() {
-        String result = ComputedValue.<String>success(null).orElse("fallback");
+        String result = Computed.<String>ok(null).orElse("fallback");
 
         assertThat(result).isEqualTo("fallback");
     }
@@ -237,7 +237,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should allow null as orElse fallback")
     void testOrElseNullFallback() {
-        String result = ComputedValue.<String>loading().orElse(null);
+        String result = Computed.<String>loading().orElse(null);
 
         assertThat(result).isNull();
     }
@@ -249,7 +249,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should convert SUCCESS to present Optional")
     void testToOptionalSuccess() {
-        Optional<String> optional = ComputedValue.success("value").toOptional();
+        Optional<String> optional = Computed.ok("value").toOptional();
 
         assertThat(optional).isPresent().contains("value");
     }
@@ -257,7 +257,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should convert LOADING to empty Optional")
     void testToOptionalLoading() {
-        Optional<String> optional = ComputedValue.<String>loading().toOptional();
+        Optional<String> optional = Computed.<String>loading().toOptional();
 
         assertThat(optional).isEmpty();
     }
@@ -265,7 +265,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should convert ERROR to empty Optional")
     void testToOptionalError() {
-        Optional<String> optional = ComputedValue.<String>error(new RuntimeException()).toOptional();
+        Optional<String> optional = Computed.<String>err(new RuntimeException()).toOptional();
 
         assertThat(optional).isEmpty();
     }
@@ -273,7 +273,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should convert null SUCCESS to empty Optional")
     void testToOptionalNullSuccess() {
-        Optional<String> optional = ComputedValue.<String>success(null).toOptional();
+        Optional<String> optional = Computed.<String>ok(null).toOptional();
 
         assertThat(optional).isEmpty();
     }
@@ -285,7 +285,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should chain map and fallbacks for SUCCESS")
     void testFullChainSuccess() {
-        Integer result = ComputedValue.success(10)
+        Integer result = Computed.ok(10)
             .map(n -> n * 2)
             .loading(-1)
             .error(-1)
@@ -297,7 +297,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should chain map and fallbacks for LOADING")
     void testFullChainLoading() {
-        String result = ComputedValue.<Integer>loading()
+        String result = Computed.<Integer>loading()
             .map(n -> n * 2)
             .map(n -> "Value: " + n)
             .loading("Loading...")
@@ -310,7 +310,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should chain map and fallbacks for ERROR")
     void testFullChainError() {
-        String result = ComputedValue.<Integer>error(new RuntimeException())
+        String result = Computed.<Integer>err(new RuntimeException())
             .map(n -> n * 2)
             .map(n -> "Value: " + n)
             .loading("Loading...")
@@ -324,7 +324,7 @@ class ComputedValueTest {
     @DisplayName("Should handle complex transformation chain")
     void testComplexChain() {
         // Simulate fetching user data, extracting email, and formatting
-        ComputedValue<String> result = ComputedValue.success("john.doe@example.com")
+        Computed<String> result = Computed.ok("john.doe@example.com")
             .map(email -> email.split("@")[0])  // Get username part
             .map(username -> username.replace(".", " "))  // Replace dots with spaces
             .map(name -> name.substring(0, 1).toUpperCase() + name.substring(1))  // Capitalize
@@ -338,7 +338,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should handle error in middle of chain")
     void testErrorInMiddleOfChain() {
-        ComputedValue<String> result = ComputedValue.success(10)
+        Computed<String> result = Computed.ok(10)
             .map(n -> n * 2)  // 20
             .map(n -> {
                 if (n > 15) throw new IllegalStateException("Too large");
@@ -358,29 +358,29 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should correctly report isPresent for all states")
     void testIsPresent() {
-        assertThat(ComputedValue.success("value").isPresent()).isTrue();
-        assertThat(ComputedValue.success(null).isPresent()).isFalse();
-        assertThat(ComputedValue.loading().isPresent()).isFalse();
-        assertThat(ComputedValue.error(new RuntimeException()).isPresent()).isFalse();
-        assertThat(ComputedValue.empty().isPresent()).isFalse();
+        assertThat(Computed.ok("value").isPresent()).isTrue();
+        assertThat(Computed.ok(null).isPresent()).isFalse();
+        assertThat(Computed.loading().isPresent()).isFalse();
+        assertThat(Computed.err(new RuntimeException()).isPresent()).isFalse();
+        assertThat(Computed.empty().isPresent()).isFalse();
     }
 
     @Test
     @DisplayName("Should correctly report isLoading for all states")
     void testIsLoading() {
-        assertThat(ComputedValue.success("value").isLoading()).isFalse();
-        assertThat(ComputedValue.loading().isLoading()).isTrue();
-        assertThat(ComputedValue.error(new RuntimeException()).isLoading()).isFalse();
-        assertThat(ComputedValue.empty().isLoading()).isFalse();
+        assertThat(Computed.ok("value").isLoading()).isFalse();
+        assertThat(Computed.loading().isLoading()).isTrue();
+        assertThat(Computed.err(new RuntimeException()).isLoading()).isFalse();
+        assertThat(Computed.empty().isLoading()).isFalse();
     }
 
     @Test
     @DisplayName("Should correctly report isError for all states")
     void testIsError() {
-        assertThat(ComputedValue.success("value").isError()).isFalse();
-        assertThat(ComputedValue.loading().isError()).isFalse();
-        assertThat(ComputedValue.error(new RuntimeException()).isError()).isTrue();
-        assertThat(ComputedValue.empty().isError()).isFalse();
+        assertThat(Computed.ok("value").isError()).isFalse();
+        assertThat(Computed.loading().isError()).isFalse();
+        assertThat(Computed.err(new RuntimeException()).isError()).isTrue();
+        assertThat(Computed.empty().isError()).isFalse();
     }
 
     // ========================================
@@ -391,7 +391,7 @@ class ComputedValueTest {
     @DisplayName("Should retrieve error from ERROR state")
     void testGetError() {
         Throwable error = new IllegalArgumentException("Test error");
-        ComputedValue<String> value = ComputedValue.error(error);
+        Computed<String> value = Computed.err(error);
 
         assertThat(value.getError()).isPresent().contains(error);
     }
@@ -399,13 +399,13 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should return empty Optional for error in SUCCESS state")
     void testGetErrorInSuccessState() {
-        assertThat(ComputedValue.success("value").getError()).isEmpty();
+        assertThat(Computed.ok("value").getError()).isEmpty();
     }
 
     @Test
     @DisplayName("Should return empty Optional for error in LOADING state")
     void testGetErrorInLoadingState() {
-        assertThat(ComputedValue.loading().getError()).isEmpty();
+        assertThat(Computed.loading().getError()).isEmpty();
     }
 
     // ========================================
@@ -415,7 +415,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should handle empty string values")
     void testEmptyStringValue() {
-        ComputedValue<String> value = ComputedValue.success("");
+        Computed<String> value = Computed.ok("");
 
         assertThat(value.isPresent()).isTrue();
         assertThat(value.orElse("fallback")).isEqualTo("");
@@ -424,7 +424,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should handle zero as valid value")
     void testZeroValue() {
-        ComputedValue<Integer> value = ComputedValue.success(0);
+        Computed<Integer> value = Computed.ok(0);
 
         assertThat(value.isPresent()).isTrue();
         assertThat(value.orElse(-1)).isEqualTo(0);
@@ -433,7 +433,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should handle false as valid value")
     void testFalseValue() {
-        ComputedValue<Boolean> value = ComputedValue.success(false);
+        Computed<Boolean> value = Computed.ok(false);
 
         assertThat(value.isPresent()).isTrue();
         assertThat(value.orElse(true)).isEqualTo(false);
@@ -443,7 +443,7 @@ class ComputedValueTest {
     @DisplayName("Should handle large object transformations")
     void testLargeObjectTransformation() {
         String largeString = "x".repeat(10000);
-        ComputedValue<Integer> length = ComputedValue.success(largeString)
+        Computed<Integer> length = Computed.ok(largeString)
             .map(String::length);
 
         assertThat(length.orElse(0)).isEqualTo(10000);
@@ -452,7 +452,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should handle type changes in map chain")
     void testTypeChangesInChain() {
-        ComputedValue<String> result = ComputedValue.success(42)
+        Computed<String> result = Computed.ok(42)
             .map(n -> n * 2)  // Integer -> Integer
             .map(n -> (double) n / 3)  // Integer -> Double
             .map(d -> String.format("%.2f", d));  // Double -> String
@@ -468,7 +468,7 @@ class ComputedValueTest {
     @DisplayName("Should integrate with typical async menu pattern - success case")
     void testAsyncMenuPatternSuccess() {
         // Simulate async data fetch that succeeds
-        ComputedValue<String> playerName = ComputedValue.success("Steve");
+        Computed<String> playerName = Computed.ok("Steve");
 
         String displayName = playerName
             .map(name -> "Player: " + name)
@@ -483,7 +483,7 @@ class ComputedValueTest {
     @DisplayName("Should integrate with typical async menu pattern - loading case")
     void testAsyncMenuPatternLoading() {
         // Simulate async data fetch that is still loading
-        ComputedValue<String> playerName = ComputedValue.loading();
+        Computed<String> playerName = Computed.loading();
 
         String displayName = playerName
             .map(name -> "Player: " + name)
@@ -498,7 +498,7 @@ class ComputedValueTest {
     @DisplayName("Should integrate with typical async menu pattern - error case")
     void testAsyncMenuPatternError() {
         // Simulate async data fetch that failed
-        ComputedValue<String> playerName = ComputedValue.error(
+        Computed<String> playerName = Computed.err(
             new RuntimeException("Database connection failed")
         );
 
@@ -514,7 +514,7 @@ class ComputedValueTest {
     @Test
     @DisplayName("Should support conditional display based on state")
     void testConditionalDisplay() {
-        ComputedValue<Integer> playerCount = ComputedValue.success(5);
+        Computed<Integer> playerCount = Computed.ok(5);
 
         // Conditional formatting
         String display = playerCount

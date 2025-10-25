@@ -1,7 +1,7 @@
 package eu.okaeri.menu;
 
 import eu.okaeri.menu.async.AsyncCache;
-import eu.okaeri.menu.async.ComputedValue;
+import eu.okaeri.menu.async.Computed;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.navigation.NavigationHistory;
 import eu.okaeri.menu.pagination.PaginationContext;
@@ -294,50 +294,117 @@ public class MenuContext {
     // ========================================
 
     /**
-     * Access async data by key with computed transformations.
-     * The key should be registered via AsyncPaginatedPane or MenuItem.async().
+     * Access async data by key with full state information.
+     * Returns {@link Computed} which can be in SUCCESS, LOADING, ERROR, or EMPTY state.
+     *
+     * <p>Simple usage (Optional-like):
+     * <pre>{@code
+     * int level = ctx.computed("stats").map(Stats::getLevel).orElse(0);
+     * }</pre>
+     *
+     * <p>State-specific defaults:
+     * <pre>{@code
+     * Material icon = ctx.computed("status")
+     *     .loading(Material.CLOCK)
+     *     .error(Material.BARRIER)
+     *     .orElse(Material.STONE);
+     * }</pre>
+     *
+     * <p>Native pattern matching (Java 21+):
+     * <pre>{@code
+     * String msg = switch (ctx.computed("data")) {
+     *     case Success(var value) -> "Loaded: " + value;
+     *     case Loading() -> "Loading...";
+     *     case Error(var err) -> "Error: " + err.getMessage();
+     *     case Empty() -> "No data";
+     * };
+     * }</pre>
+     *
+     * <p>Side effects:
+     * <pre>{@code
+     * ctx.computed("stats")
+     *     .onSuccess(s -> log.info("Loaded: {}", s))
+     *     .onError(e -> log.error("Failed", e))
+     *     .map(Stats::getLevel)
+     *     .orElse(0);
+     * }</pre>
      *
      * @param key The data key
      * @param <T> The value type
-     * @return ComputedValue wrapper supporting map/loading/error/orElse
+     * @return Computed in one of four states: SUCCESS, LOADING, ERROR, or EMPTY
      */
     @NonNull
-    public <T> ComputedValue<T> computed(@NonNull String key) {
+    @SuppressWarnings("unchecked")
+    public <T> Computed<T> computed(@NonNull String key) {
         ViewerState state = this.menu.getViewerState(this.entity.getUniqueId());
         if (state == null) {
-            return ComputedValue.empty();
+            return Computed.empty();
         }
 
         AsyncCache cache = state.getAsyncCache();
         AsyncCache.AsyncState asyncState = cache.getState(key);
 
         if (asyncState == null) {
-            return ComputedValue.empty();
+            return Computed.empty();
         }
 
         return switch (asyncState) {
             case SUCCESS -> {
                 Optional<?> value = cache.get(key, Object.class);
-                @SuppressWarnings("unchecked")
-                T castValue = (T) value.orElse(null);
-                yield ComputedValue.success(castValue);
+                yield Computed.ok((T) value.orElse(null));
             }
-            case LOADING -> ComputedValue.loading();
-            case ERROR -> ComputedValue.error(cache.getError(key).orElse(null));
-            default -> ComputedValue.empty();
+            case LOADING -> Computed.loading();
+            case ERROR -> Computed.err(cache.getError(key).orElse(new RuntimeException("Unknown error")));
         };
     }
 
     /**
-     * Access async data by key with type hint.
+     * Access async data by key with type hint for IDE support.
+     * Convenience overload of {@link #computed(String)}.
      *
      * @param key  The data key
-     * @param type The expected type
+     * @param type The expected type (for type safety, not enforced at runtime)
      * @param <T>  The value type
-     * @return ComputedValue wrapper supporting map/loading/error/orElse
+     * @return Computed in one of four states: SUCCESS, LOADING, ERROR, or EMPTY
      */
     @NonNull
-    public <T> ComputedValue<T> computed(@NonNull String key, @NonNull Class<T> type) {
+    public <T> Computed<T> computed(@NonNull String key, @NonNull Class<T> type) {
+        return this.computed(key);
+    }
+
+    /**
+     * Access async data by key with TypeReference for complex generic types.
+     *
+     * <p>Useful for type-safe access to async data with complex generics:
+     * <pre>{@code
+     * // Load complex data
+     * menu.reactive("inventory", ctx ->
+     *     Map.of("weapons", List.of(sword, bow), "armor", List.of(helmet)),
+     *     Duration.ofSeconds(30));
+     *
+     * // Access with full type safety
+     * Computed<Map<String, List<Item>>> inventory = ctx.computed(
+     *     "inventory",
+     *     new TypeReference<Map<String, List<Item>>>() {}
+     * );
+     *
+     * // Use with pattern matching
+     * String display = switch (inventory) {
+     *     case Success(var inv) -> "Items: " + inv.size();
+     *     case Loading() -> "Loading inventory...";
+     *     case Error(var e) -> "Failed to load";
+     *     case Empty() -> "No inventory";
+     * };
+     * }</pre>
+     *
+     * @param key           The data key
+     * @param typeReference Type reference capturing generic type information
+     * @param <T>           The value type
+     * @return Computed in one of four states: SUCCESS, LOADING, ERROR, or EMPTY
+     */
+    @NonNull
+    @SuppressWarnings("unchecked")
+    public <T> Computed<T> computed(@NonNull String key, @NonNull TypeReference<T> typeReference) {
         return this.computed(key);
     }
 
@@ -351,55 +418,8 @@ public class MenuContext {
      * @return ComputedValue wrapping PaginationContext
      */
     @NonNull
-    public <T> ComputedValue<PaginationContext<T>> computedPagination(@NonNull String paneName, @NonNull Class<T> itemType) {
+    public <T> Computed<PaginationContext<T>> computedPagination(@NonNull String paneName, @NonNull Class<T> itemType) {
         return this.computed(paneName).map(allItems -> this.pagination(paneName));
-    }
-
-    /**
-     * Get loaded computed data directly (unwraps ComputedValue to Optional).
-     * Returns empty if still loading or error.
-     *
-     * <p>Convenience method equivalent to {@code computed(key, type).toOptional()}.
-     *
-     * @param key  The data key
-     * @param type The expected type
-     * @param <T>  The value type
-     * @return Optional of the loaded value
-     */
-    @NonNull
-    public <T> Optional<T> getComputed(@NonNull String key, @NonNull Class<T> type) {
-        return this.computed(key, type).toOptional();
-    }
-
-    /**
-     * Get loaded computed data directly with TypeReference for complex generic types.
-     * Returns empty if still loading or error.
-     *
-     * <p>Useful for type-safe access to async data with complex generics:
-     * <pre>{@code
-     * // Load complex data
-     * menu.reactive("inventory", ctx ->
-     *     Map.of("weapons", List.of(sword, bow), "armor", List.of(helmet)),
-     *     Duration.ofSeconds(30));
-     *
-     * // Access with type safety
-     * Optional<Map<String, List<Item>>> inventory = ctx.getComputed(
-     *     "inventory",
-     *     new TypeReference<Map<String, List<Item>>>() {}
-     * );
-     * }</pre>
-     *
-     * <p>Equivalent to {@code computed(key).toOptional()}.
-     *
-     * @param key           The data key
-     * @param typeReference Type reference capturing generic type information
-     * @param <T>           The value type
-     * @return Optional of the loaded value
-     */
-    @NonNull
-    @SuppressWarnings("unchecked")
-    public <T> Optional<T> getComputed(@NonNull String key, @NonNull TypeReference<T> typeReference) {
-        return (Optional<T>) this.computed(key).toOptional();
     }
 
     /**

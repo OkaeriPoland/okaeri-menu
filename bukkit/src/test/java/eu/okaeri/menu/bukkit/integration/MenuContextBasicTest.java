@@ -2,7 +2,7 @@ package eu.okaeri.menu.bukkit.integration;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
-import eu.okaeri.menu.async.ComputedValue;
+import eu.okaeri.menu.async.Computed;
 import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -102,7 +102,7 @@ class MenuContextBasicTest {
         // Don't open menu
         MenuContext context = new MenuContext(menu, this.player);
 
-        ComputedValue<String> computed = context.computed("test_key");
+        Computed<String> computed = context.computed("test_key");
 
         assertThat(computed.isPresent()).isFalse();
     }
@@ -118,7 +118,7 @@ class MenuContextBasicTest {
         menu.open(this.player);
         MenuContext context = new MenuContext(menu, this.player);
 
-        ComputedValue<String> computed = context.computed("nonexistent");
+        Computed<String> computed = context.computed("nonexistent");
 
         assertThat(computed.isPresent()).isFalse();
     }
@@ -148,7 +148,7 @@ class MenuContextBasicTest {
         Thread.sleep(100);
 
         // Should be in cache
-        ComputedValue<String> computed = context.computed("test_key");
+        Computed<String> computed = context.computed("test_key");
         assertThat(computed.isPresent()).isTrue();
         assertThat(computed.toOptional()).hasValue("Test Value");
     }
@@ -183,7 +183,7 @@ class MenuContextBasicTest {
         menu.open(this.player);
         MenuContext context = new MenuContext(menu, this.player);
 
-        Optional<String> value = context.getComputed("test_key", String.class);
+        Optional<String> value = context.computed("test_key", String.class).toOptional();
 
         assertThat(value).isEmpty();
     }
@@ -203,7 +203,7 @@ class MenuContextBasicTest {
         context.loadAsync("test_key", () -> "Test Value", Duration.ofSeconds(1)).get(1, TimeUnit.SECONDS);
         Thread.sleep(100);
 
-        Optional<String> value = context.getComputed("test_key", String.class);
+        Optional<String> value = context.computed("test_key", String.class).toOptional();
 
         assertThat(value).hasValue("Test Value");
     }
@@ -223,13 +223,13 @@ class MenuContextBasicTest {
         context.loadAsync("test_key", () -> "Test Value", Duration.ofSeconds(10)).get(1, TimeUnit.SECONDS);
         Thread.sleep(100);
 
-        ComputedValue<String> before = context.computed("test_key");
+        Computed<String> before = context.computed("test_key");
         assertThat(before.isPresent()).isTrue();
 
         // Invalidate
         context.invalidate("test_key");
 
-        ComputedValue<String> after = context.computed("test_key");
+        Computed<String> after = context.computed("test_key");
         assertThat(after.isPresent()).isFalse();
     }
 
