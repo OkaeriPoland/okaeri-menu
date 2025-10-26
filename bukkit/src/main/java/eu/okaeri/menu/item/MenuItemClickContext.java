@@ -42,4 +42,20 @@ public class MenuItemClickContext extends MenuItemContext {
     public boolean isMiddleClick() {
         return this.clickType == ClickType.MIDDLE;
     }
+
+    /**
+     * Checks if the current click type matches any of the provided types.
+     * Useful for checking multiple click types at once.
+     *
+     * @param types The click types to check against
+     * @return true if the current click type matches any of the provided types
+     */
+    public boolean is(@NonNull ClickType... types) {
+        for (ClickType type : types) {
+            if (this.clickType == type) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
