@@ -511,31 +511,6 @@ Check out [test-plugin](test-plugin/src/main/java/eu/okaeri/menu/test/example) f
 - **[SimpleMenuExample.java](test-plugin/src/main/java/eu/okaeri/menu/test/example/SimpleMenuExample.java)** - Basic static menus
 - **[PaginationExample.java](test-plugin/src/main/java/eu/okaeri/menu/test/example/PaginationExample.java)** - Pagination and filtering
 - **[AsyncShopExample.java](test-plugin/src/main/java/eu/okaeri/menu/test/example/AsyncShopExample.java)** - Async loading, filters, and statistics
-- **[ConfirmDialogExample.java](test-plugin/src/main/java/eu/okaeri/menu/test/example/ConfirmDialogExample.java)** - Dialog patterns
-
-## Migration from v1
-
-See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for detailed migration instructions from 0.x to 2.x.
-
-### V1 Compatibility Layer
-
-Need time to migrate? Use the compatibility module:
-
-```xml
-<dependency>
-    <groupId>eu.okaeri</groupId>
-    <artifactId>okaeri-menu-bukkit-compat</artifactId>
-    <version>2.0.1-beta.2</version>
-</dependency>
-```
-
-The compat layer provides shims for legacy APIs while you migrate to the new system.
-
----
-
-**Looking for the legacy 0.x version?** The last 0.x release is **0.0.17**.
-While it still works, I strongly recommend migrating to 2.x for better implementation,
-modern async support, and active maintenance.
 
 ```xml
 <dependency>
