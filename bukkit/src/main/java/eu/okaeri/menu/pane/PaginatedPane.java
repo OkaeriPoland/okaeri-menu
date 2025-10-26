@@ -62,25 +62,27 @@ public class PaginatedPane<T> extends AbstractPane {
         List<T> pageItems = pagination.getCurrentPageItems();
 
         // Render paginated items
-        int index = 0;
-        for (T item : pageItems) {
-            if (index >= this.itemsPerPage) {
-                break; // Safety check
-            }
+        // Use separate counters: slotIndex tracks position, itemIndex tracks which item to render
+        int slotIndex = 0;
+        int itemIndex = 0;
 
+        while ((itemIndex < pageItems.size()) && (slotIndex < this.bounds.getSlotCount())) {
             // Calculate position in pane
-            int localX = index % this.bounds.getWidth();
-            int localY = index / this.bounds.getWidth();
+            int localX = slotIndex % this.bounds.getWidth();
+            int localY = slotIndex / this.bounds.getWidth();
+            int localSlot = (localY * this.bounds.getWidth()) + localX;
 
             // Check if position is occupied by static item
-            int localSlot = (localY * this.bounds.getWidth()) + localX;
             if (this.staticItems.containsKey(localSlot)) {
-                index++;
-                continue; // Skip positions with static items
+                slotIndex++; // Skip this slot, retry same item at next position
+                continue;
             }
 
+            // Get the current item to render
+            T item = pageItems.get(itemIndex);
+
             // Render the item
-            MenuItem menuItem = this.itemRenderer.apply(context, item, index);
+            MenuItem menuItem = this.itemRenderer.apply(context, item, itemIndex);
             if (menuItem != null) {
                 ItemStack itemStack = menuItem.render(context);
                 if (itemStack != null) {
@@ -91,14 +93,15 @@ public class PaginatedPane<T> extends AbstractPane {
                 this.renderedItems.put(localSlot, menuItem);
             }
 
-            index++;
+            itemIndex++; // Move to next item
+            slotIndex++; // Move to next slot
         }
 
         // Clear unfilled slots (slots beyond the last rendered item, but not static items)
         // This prevents old items from showing when page has fewer items
         this.bounds.slots()
             .excludeKeys(this.staticItems)
-            .range(index, this.bounds.getSlotCount())
+            .range(slotIndex, this.bounds.getSlotCount())
             .clear(inventory);
 
         // Render static items (buttons, decorations, etc.)

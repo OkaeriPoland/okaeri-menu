@@ -310,6 +310,72 @@ class PaginatedPaneTest {
     }
 
     @Test
+    @DisplayName("Should render ALL paginated items around static items without losing any")
+    void testStaticItemsDontLosePageItems() {
+        // Item list where each item has a unique identifier
+        List<Integer> items = Arrays.asList(1, 2, 3, 4, 5);  // Will use amount to identify
+
+        PaginatedPane<Integer> pane = pane(Integer.class)
+            .name("test")
+            .bounds(0, 0, 9, 1)  // 9 slots wide
+            .items(items)
+            .renderer((ctx, itemId, index) -> MenuItem.item()
+                .material(Material.STONE)
+                .amount(itemId)  // Use amount to identify which item (1,2,3,4,5)
+                .build())
+            .staticItem(2, 0, MenuItem.item()  // Static at position 2
+                .material(Material.BARRIER)
+                .build())
+            .itemsPerPage(5)
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        pane.render(this.inventory, context);
+
+        // Verify static item at position 2
+        assertThat(this.inventory.getItem(2))
+            .as("Position 2 should have static barrier")
+            .isNotNull()
+            .extracting(ItemStack::getType)
+            .isEqualTo(Material.BARRIER);
+
+        // CRITICAL: Verify ALL 5 paginated items render (1,2,3,4,5)
+        // Items should flow around the static item:
+        // Expected: [1, 2, STATIC, 3, 4, 5, ...]
+        assertThat(this.inventory.getItem(0))
+            .as("Slot 0 should have item 1")
+            .isNotNull()
+            .extracting(ItemStack::getAmount)
+            .isEqualTo(1);
+
+        assertThat(this.inventory.getItem(1))
+            .as("Slot 1 should have item 2")
+            .isNotNull()
+            .extracting(ItemStack::getAmount)
+            .isEqualTo(2);
+
+        // Slot 2 is static (already verified above)
+
+        assertThat(this.inventory.getItem(3))
+            .as("Slot 3 should have item 3 (not item 4!) - Bug: currently skips item 3")
+            .isNotNull()
+            .extracting(ItemStack::getAmount)
+            .isEqualTo(3);
+
+        assertThat(this.inventory.getItem(4))
+            .as("Slot 4 should have item 4")
+            .isNotNull()
+            .extracting(ItemStack::getAmount)
+            .isEqualTo(4);
+
+        assertThat(this.inventory.getItem(5))
+            .as("Slot 5 should have item 5")
+            .isNotNull()
+            .extracting(ItemStack::getAmount)
+            .isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Should support dynamic items via supplier")
     void testDynamicItemsSupplier() {
         List<String> dynamicList = new ArrayList<>(Arrays.asList("A", "B"));
