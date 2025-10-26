@@ -132,7 +132,7 @@ public static Menu createReactiveMenu(Plugin plugin) {
 }
 ```
 
-**Automatic Refresh:** State changes (`ctx.set()`), async data updates, and pagination changes automatically trigger refresh on the next tick. Manual `ctx.refresh()` is only needed for immediate updates within the same tick.
+**Automatic Refresh:** State changes (`ctx.set()`), async data updates, and pagination changes automatically trigger refresh on the next tick.
 
 ### Lazy Computation & Computed Values
 
@@ -296,13 +296,6 @@ State changes automatically trigger refreshes on the next tick:
 
 - **State changes** (`ctx.set()`) → refresh on next tick
 - **Pagination changes** (page navigation, filters) → refresh on next tick
-
-This means you typically don't need manual `ctx.refresh()` calls. The menu automatically updates when data changes!
-
-**When to use updateInterval:**
-Use `.updateInterval(Duration)` only for periodic re-evaluation of properties that directly access external state without async caching. For example: `ctx -> player.getLevel()`.
-
-For async reactive polling (like `menu.reactive(() -> database.getBalance(), Duration.ofSeconds(5))`), you **don't need** `updateInterval` - the menu automatically refreshes when TTL expires!
 
 ### Pagination with Filtering
 
