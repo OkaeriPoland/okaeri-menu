@@ -39,14 +39,19 @@ class MenuIntegrationTest {
     @Test
     @DisplayName("Should create menu with valid configuration")
     void testCreateMenu() {
+        PlayerMock player = this.server.addPlayer();
+
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
             .build();
 
         assertNotNull(menu);
-        assertEquals("Test Menu", menu.getTitle().get(null));
         assertEquals(3, menu.getRows());
+
+        // Open menu to create ViewerState, then check title
+        menu.open(player);
+        assertEquals("Test Menu", player.getOpenInventory().getTitle());
     }
 
     @Test

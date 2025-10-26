@@ -8,7 +8,7 @@ import eu.okaeri.menu.message.DefaultMessageProvider;
 import eu.okaeri.menu.message.MessageProvider;
 import eu.okaeri.menu.navigation.NavigationHistory;
 import eu.okaeri.menu.pane.*;
-import eu.okaeri.menu.reactive.ReactiveProperty;
+import eu.okaeri.menu.state.ViewerProp;
 import eu.okaeri.menu.state.StateDefaults;
 import eu.okaeri.menu.state.ViewerState;
 import lombok.Getter;
@@ -41,7 +41,7 @@ public class Menu implements InventoryHolder {
     // Per-viewer state (inventory + pagination contexts)
     private final Map<UUID, ViewerState> viewerStates = new ConcurrentHashMap<>();
 
-    private @NonNull final ReactiveProperty<String> title;
+    private @NonNull final ViewerProp<String> title;
     private final int rows;
     private @NonNull final Map<String, Pane> panes = new LinkedHashMap<>();
     private final Duration updateInterval;
@@ -190,10 +190,8 @@ public class Menu implements InventoryHolder {
 
         // Optionally invalidate before rendering (for refresh, not needed on first open)
         if (invalidateFirst) {
-            this.title.invalidate();
-            for (Pane pane : this.panes.values()) {
-                pane.invalidate();
-            }
+            // Invalidate all reactive properties for this player (without setting dirty flag)
+            state.invalidateProps();
         }
 
         // Render BEFORE title evaluation so pagination data (currentItems) is fresh
@@ -351,7 +349,8 @@ public class Menu implements InventoryHolder {
 
         if ((state != null) && (pane != null)) {
             MenuContext context = new MenuContext(this, player);
-            pane.invalidate();
+            // Invalidate all reactive properties for targeted pane refresh
+            state.invalidateProps();
             pane.render(state.getInventory(), context);
         }
     }
@@ -435,7 +434,7 @@ public class Menu implements InventoryHolder {
     }
 
     public static class Builder {
-        private @NonNull ReactiveProperty<String> title = ReactiveProperty.of("Menu");
+        private @NonNull ViewerProp<String> title = ViewerProp.of("Menu");
         private int rows = -1; // -1 means auto-calculate from panes
         private @NonNull Map<String, Pane> panes = new LinkedHashMap<>();
         private Duration updateInterval = null;
@@ -451,19 +450,19 @@ public class Menu implements InventoryHolder {
 
         @NonNull
         public Builder title(@NonNull String title) {
-            this.title = ReactiveProperty.of(title);
+            this.title = ViewerProp.of(title);
             return this;
         }
 
         @NonNull
         public Builder title(@NonNull Supplier<String> supplier) {
-            this.title = ReactiveProperty.of(supplier);
+            this.title = ViewerProp.of(supplier);
             return this;
         }
 
         @NonNull
         public Builder title(@NonNull Function<MenuContext, String> function) {
-            this.title = ReactiveProperty.ofContext(function);
+            this.title = ViewerProp.ofContext(function);
             return this;
         }
 
@@ -479,7 +478,7 @@ public class Menu implements InventoryHolder {
             if (localizedTitles.isEmpty()) {
                 throw new IllegalArgumentException("Localized titles map cannot be empty");
             }
-            this.title = ReactiveProperty.ofContext(ctx -> {
+            this.title = ViewerProp.ofContext(ctx -> {
                 Component component = ctx.getMenu().getMessageProvider().resolveSingle(ctx.getEntity(), localizedTitles, Map.of());
                 return LegacyComponentSerializer.legacySection().serialize(component);
             });

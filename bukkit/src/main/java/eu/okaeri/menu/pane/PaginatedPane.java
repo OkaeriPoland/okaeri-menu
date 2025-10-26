@@ -29,8 +29,6 @@ public class PaginatedPane<T> extends AbstractPane {
     private final TriFunction<MenuContext, T, Integer, MenuItem> itemRenderer;
     private final int itemsPerPage;
 
-    // Cache for rendered items
-    private boolean dirty = true;
     // Track rendered paginated items for click routing (localSlot -> MenuItem)
     private final Map<Integer, MenuItem> renderedItems = new HashMap<>();
 
@@ -106,8 +104,6 @@ public class PaginatedPane<T> extends AbstractPane {
 
         // Render static items (buttons, decorations, etc.)
         this.renderStaticItems(inventory, context, this.staticItems);
-
-        this.dirty = false;
     }
 
     /**
@@ -151,15 +147,6 @@ public class PaginatedPane<T> extends AbstractPane {
     }
 
     @Override
-    public void invalidate() {
-        // Invalidate static items to clear their ReactiveProperty caches (e.g., .visible())
-        for (MenuItem item : this.staticItems.values()) {
-            item.invalidate();
-        }
-        this.dirty = true;
-    }
-
-    @Override
     public MenuItem getItem(int localX, int localY) {
         int localSlot = this.localCoordinatesToSlot(localX, localY);
         // Check static items first (they have priority)
@@ -182,7 +169,6 @@ public class PaginatedPane<T> extends AbstractPane {
     public void setStaticItem(int localX, int localY, @NonNull MenuItem menuItem) {
         int localSlot = (localY * this.bounds.getWidth()) + localX;
         this.staticItems.put(localSlot, menuItem);
-        this.invalidate();
     }
 
     @NonNull

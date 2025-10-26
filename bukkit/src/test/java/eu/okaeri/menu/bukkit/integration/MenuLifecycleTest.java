@@ -71,7 +71,7 @@ class MenuLifecycleTest {
         ViewerState state = menu.getViewerState(this.player1.getUniqueId());
         assertThat(state).isNotNull();
         assertThat(state.getInventory()).isNotNull();
-        assertThat(state.getAsyncCache()).isNotNull();
+        assertThat(state.getAsync()).isNotNull();
     }
 
     @Test
@@ -538,7 +538,7 @@ class MenuLifecycleTest {
         // Verify ViewerState has the pagination context
         ViewerState state = menu.getViewerState(this.player1.getUniqueId());
         assertThat(state).isNotNull();
-        assertThat(state.getPaginationContexts())
+        assertThat(state.getPagination())
             .as("Pagination context should be cached in ViewerState")
             .containsKey("items");
     }
@@ -571,7 +571,7 @@ class MenuLifecycleTest {
         // Expected title: "Total: 7 | Pages: 2"
 
         ViewerState state = menu.getViewerState(this.player1.getUniqueId());
-        PaginationContext<?> paginationContext = state.getPaginationContexts().get("items");
+        PaginationContext<?> paginationContext = state.getPagination().get("items");
 
         // Verify pagination context has correct data
         assertThat(paginationContext.getTotalItems())
@@ -611,7 +611,7 @@ class MenuLifecycleTest {
 
         // ViewerState should have no pagination contexts
         ViewerState state = menu.getViewerState(this.player1.getUniqueId());
-        assertThat(state.getPaginationContexts())
+        assertThat(state.getPagination())
             .as("Should have no pagination contexts for menu without paginated panes")
             .isEmpty();
     }

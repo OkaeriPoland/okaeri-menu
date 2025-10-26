@@ -98,19 +98,6 @@ public class StaticPane extends AbstractPane {
         }
     }
 
-    @Override
-    public void invalidate() {
-        for (MenuItem item : this.staticItems.values()) {
-            item.invalidate();
-        }
-        for (MenuItem item : this.autoItems) {
-            item.invalidate();
-        }
-        if (this.fillerItem != null) {
-            this.fillerItem.invalidate();
-        }
-    }
-
     /**
      * Gets the menu item at the specified local coordinates.
      * Checks static items first, then looks up auto-item from the render cache.

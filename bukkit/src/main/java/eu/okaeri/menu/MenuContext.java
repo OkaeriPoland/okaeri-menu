@@ -85,6 +85,17 @@ public class MenuContext {
         return this.menu.getPlugin().getLogger();
     }
 
+    /**
+     * Gets the ViewerState for this player.
+     * ViewerState holds per-player caching for reactive properties, pagination, async data, and custom state.
+     *
+     * @return The viewer state for this player
+     */
+    @NonNull
+    public ViewerState getViewerState() {
+        return this.menu.getViewerState(this.entity.getUniqueId());
+    }
+
     // ========================================
     // MENU OPERATIONS
     // ========================================
@@ -377,7 +388,7 @@ public class MenuContext {
             return Computed.empty();
         }
 
-        AsyncCache cache = state.getAsyncCache();
+        AsyncCache cache = state.getAsync();
         AsyncCache.AsyncState asyncState = cache.getState(key);
 
         if (asyncState == null) {
@@ -475,7 +486,7 @@ public class MenuContext {
     public void invalidate(@NonNull String key) {
         ViewerState state = this.menu.getViewerState(this.entity.getUniqueId());
         if (state != null) {
-            state.getAsyncCache().invalidate(key);
+            state.getAsync().invalidate(key);
         }
     }
 
@@ -494,7 +505,7 @@ public class MenuContext {
     public void invalidate() {
         ViewerState state = this.menu.getViewerState(this.entity.getUniqueId());
         if (state != null) {
-            state.getAsyncCache().invalidateAll();
+            state.getAsync().invalidateAll();
         }
     }
 
@@ -514,7 +525,7 @@ public class MenuContext {
         if (state == null) {
             return CompletableFuture.failedFuture(new IllegalStateException("ViewerState not found"));
         }
-        return state.getAsyncCache().getOrStartLoad(key, loader, ttl);
+        return state.getAsync().getOrStartLoad(key, loader, ttl);
     }
 
     // ========================================

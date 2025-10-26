@@ -321,8 +321,8 @@ public class AsyncShopExample {
                         // Clear the async cache to trigger reload
                         var viewerState = event.getMenu().getViewerState(event.getEntity().getUniqueId());
                         if (viewerState != null) {
-                            viewerState.getAsyncCache().invalidate("shop-pane");
-                            viewerState.getAsyncCache().invalidate("balance-item");
+                            viewerState.getAsync().invalidate("shop-pane");
+                            viewerState.getAsync().invalidate("balance-item");
                         }
                         event.sendMessage("<yellow>⏳ Reloading shop data...");
                         event.playSound(Sound.BLOCK_LEVER_CLICK, 0.5f, 1.0f);

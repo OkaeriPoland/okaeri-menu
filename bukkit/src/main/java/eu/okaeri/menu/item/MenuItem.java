@@ -3,7 +3,7 @@ package eu.okaeri.menu.item;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.AsyncLoader;
 import eu.okaeri.menu.pagination.ItemFilter;
-import eu.okaeri.menu.reactive.ReactiveProperty;
+import eu.okaeri.menu.state.ViewerProp;
 import lombok.Getter;
 import lombok.NonNull;
 import net.kyori.adventure.text.Component;
@@ -28,14 +28,14 @@ import java.util.function.Supplier;
 @Getter
 public class MenuItem {
 
-    private final ReactiveProperty<ItemStack> baseItem;
-    private final ReactiveProperty<Material> material;
-    private final ReactiveProperty<Component> name;
-    private final ReactiveProperty<List<Component>> lore;
-    private final ReactiveProperty<Integer> amount;
-    private final ReactiveProperty<Boolean> visible;
-    private final ReactiveProperty<Boolean> glint;
-    private final ReactiveProperty<Boolean> hideAttributes;
+    private final ViewerProp<ItemStack> baseItem;
+    private final ViewerProp<Material> material;
+    private final ViewerProp<Component> name;
+    private final ViewerProp<List<Component>> lore;
+    private final ViewerProp<Integer> amount;
+    private final ViewerProp<Boolean> visible;
+    private final ViewerProp<Boolean> glint;
+    private final ViewerProp<Boolean> hideAttributes;
     private final Map<Enchantment, Integer> enchantments = new HashMap<>();
     private final List<ItemFlag> itemFlags = new ArrayList<>();
 
@@ -161,18 +161,6 @@ public class MenuItem {
     }
 
     /**
-     * Invalidates all reactive properties, forcing re-evaluation on next render.
-     */
-    public void invalidate() {
-        this.material.invalidate();
-        this.name.invalidate();
-        this.lore.invalidate();
-        this.amount.invalidate();
-        this.visible.invalidate();
-        this.glint.invalidate();
-    }
-
-    /**
      * Handles a click event on this item (sync handlers only).
      * Async handlers are executed separately by MenuListener.
      *
@@ -286,14 +274,14 @@ public class MenuItem {
     public static class Builder {
         private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacySection();
 
-        private ReactiveProperty<ItemStack> baseItem = ReactiveProperty.of((ItemStack) null);
-        private ReactiveProperty<Material> material = ReactiveProperty.of(Material.AIR);
-        private ReactiveProperty<Component> name = ReactiveProperty.of(Component.empty());
-        private ReactiveProperty<List<Component>> lore = ReactiveProperty.of(new ArrayList<>());
-        private ReactiveProperty<Integer> amount = ReactiveProperty.of(1);
-        private ReactiveProperty<Boolean> visible = ReactiveProperty.of(true);
-        private ReactiveProperty<Boolean> glint = ReactiveProperty.of(false);
-        private ReactiveProperty<Boolean> hideAttributes = ReactiveProperty.of(true);  // Default true for clean appearance
+        private ViewerProp<ItemStack> baseItem = ViewerProp.of((ItemStack) null);
+        private ViewerProp<Material> material = ViewerProp.of(Material.AIR);
+        private ViewerProp<Component> name = ViewerProp.of(Component.empty());
+        private ViewerProp<List<Component>> lore = ViewerProp.of(new ArrayList<>());
+        private ViewerProp<Integer> amount = ViewerProp.of(1);
+        private ViewerProp<Boolean> visible = ViewerProp.of(true);
+        private ViewerProp<Boolean> glint = ViewerProp.of(false);
+        private ViewerProp<Boolean> hideAttributes = ViewerProp.of(true);  // Default true for clean appearance
         private Map<Enchantment, Integer> enchantments = new HashMap<>();
         private List<ItemFlag> itemFlags = new ArrayList<>();
         private Consumer<MenuItemClickContext> clickHandler;
@@ -313,7 +301,10 @@ public class MenuItem {
         private Consumer<MenuItemChangeContext> itemChangeHandler;
 
         // Item-level variables shared across name, lore, etc.
-        private ReactiveProperty<Map<String, Object>> itemLevelVars = ReactiveProperty.of(Map.of());
+        private ViewerProp<Map<String, Object>> itemLevelVars = ViewerProp.of(Map.of());
+        // Track static vars separately for merging during building (before context is available)
+        private Map<String, Object> staticVars = new HashMap<>();
+        private boolean hasStaticVarsOnly = true;
 
         // Declarative filters
         private List<ItemFilter<?>> filters = new ArrayList<>();
@@ -423,7 +414,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder from(@NonNull ItemStack base) {
-            this.baseItem = ReactiveProperty.of(base.clone());
+            this.baseItem = ViewerProp.of(base.clone());
             return this;
         }
 
@@ -444,7 +435,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder from(@NonNull Function<MenuContext, ItemStack> baseFunction) {
-            this.baseItem = ReactiveProperty.ofContext(ctx -> {
+            this.baseItem = ViewerProp.ofContext(ctx -> {
                 ItemStack base = baseFunction.apply(ctx);
                 return (base != null) ? base.clone() : null;
             });
@@ -463,7 +454,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder material(@NonNull Material material) {
-            this.material = ReactiveProperty.of(material);
+            this.material = ViewerProp.of(material);
             // Only mark as explicitly set if it's not AIR (AIR is the default "no material")
             if (material != Material.AIR) {
                 this.materialExplicitlySet = true;
@@ -480,7 +471,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder material(@NonNull Supplier<Material> supplier) {
-            this.material = ReactiveProperty.of(supplier);
+            this.material = ViewerProp.of(supplier);
             this.materialExplicitlySet = true;
             return this;
         }
@@ -499,7 +490,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder material(@NonNull Function<MenuContext, Material> function) {
-            this.material = ReactiveProperty.ofContext(function::apply);
+            this.material = ViewerProp.ofContext(function::apply);
             this.materialExplicitlySet = true;
             return this;
         }
@@ -518,7 +509,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull String template) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, template, null)));
+            this.name = ViewerProp.ofContext(ctx -> this.joinComponents(this.resolve(ctx, template, null)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -533,7 +524,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull String template, Map<String, Object> vars) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, template, vars)));
+            this.name = ViewerProp.ofContext(ctx -> this.joinComponents(this.resolve(ctx, template, vars)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -548,7 +539,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull String template, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
-            this.name = ReactiveProperty.ofContext(ctx -> {
+            this.name = ViewerProp.ofContext(ctx -> {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
                 return this.joinComponents(this.resolve(ctx, template, vars));
             });
@@ -565,7 +556,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull Supplier<String> supplier) {
-            this.name = ReactiveProperty.ofContext(ctx -> {
+            this.name = ViewerProp.ofContext(ctx -> {
                 String template = supplier.get();
                 if ((template == null) || template.isEmpty()) {
                     return Component.empty();
@@ -585,7 +576,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull Function<MenuContext, String> function) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, function.apply(ctx), null)));
+            this.name = ViewerProp.ofContext(ctx -> this.joinComponents(this.resolve(ctx, function.apply(ctx), null)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -608,7 +599,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull Map<Locale, String> localeMap) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, localeMap, null)));
+            this.name = ViewerProp.ofContext(ctx -> this.joinComponents(this.resolve(ctx, localeMap, null)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -631,7 +622,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull Map<Locale, String> localeMap, Map<String, Object> vars) {
-            this.name = ReactiveProperty.ofContext(ctx -> this.joinComponents(this.resolve(ctx, localeMap, vars)));
+            this.name = ViewerProp.ofContext(ctx -> this.joinComponents(this.resolve(ctx, localeMap, vars)));
             this.nameExplicitlySet = true;
             return this;
         }
@@ -646,7 +637,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder name(@NonNull Map<Locale, String> localeMap, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
-            this.name = ReactiveProperty.ofContext(ctx -> {
+            this.name = ViewerProp.ofContext(ctx -> {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
                 return this.joinComponents(this.resolve(ctx, localeMap, vars));
             });
@@ -669,7 +660,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull String template) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, template, null));
+            this.lore = ViewerProp.ofContext(ctx -> this.resolve(ctx, template, null));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -684,7 +675,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull String template, Map<String, Object> vars) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, template, vars));
+            this.lore = ViewerProp.ofContext(ctx -> this.resolve(ctx, template, vars));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -699,7 +690,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull String template, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
-            this.lore = ReactiveProperty.ofContext(ctx -> {
+            this.lore = ViewerProp.ofContext(ctx -> {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
                 return this.resolve(ctx, template, vars);
             });
@@ -723,7 +714,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Supplier<String> supplier) {
-            this.lore = ReactiveProperty.ofContext(ctx -> {
+            this.lore = ViewerProp.ofContext(ctx -> {
                 String template = supplier.get();
                 return this.resolve(ctx, template, null);
             });
@@ -741,7 +732,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Function<MenuContext, String> function) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, function.apply(ctx), null));
+            this.lore = ViewerProp.ofContext(ctx -> this.resolve(ctx, function.apply(ctx), null));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -773,7 +764,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Map<Locale, String> localeMap) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, localeMap, null));
+            this.lore = ViewerProp.ofContext(ctx -> this.resolve(ctx, localeMap, null));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -804,7 +795,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Map<Locale, String> localeMap, Map<String, Object> vars) {
-            this.lore = ReactiveProperty.ofContext(ctx -> this.resolve(ctx, localeMap, vars));
+            this.lore = ViewerProp.ofContext(ctx -> this.resolve(ctx, localeMap, vars));
             this.loreExplicitlySet = true;
             return this;
         }
@@ -819,7 +810,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Map<Locale, String> localeMap, @NonNull Function<MenuContext, Map<String, Object>> varsSupplier) {
-            this.lore = ReactiveProperty.ofContext(ctx -> {
+            this.lore = ViewerProp.ofContext(ctx -> {
                 Map<String, Object> vars = varsSupplier.apply(ctx);
                 return this.resolve(ctx, localeMap, vars);
             });
@@ -839,7 +830,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder amount(int amount) {
-            this.amount = ReactiveProperty.of(amount);
+            this.amount = ViewerProp.of(amount);
             return this;
         }
 
@@ -852,7 +843,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder amount(@NonNull Supplier<Integer> supplier) {
-            this.amount = ReactiveProperty.of(supplier);
+            this.amount = ViewerProp.of(supplier);
             return this;
         }
 
@@ -865,7 +856,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder amount(@NonNull Function<MenuContext, Integer> amountFunction) {
-            this.amount = ReactiveProperty.ofContext(amountFunction);
+            this.amount = ViewerProp.ofContext(amountFunction);
             return this;
         }
 
@@ -882,7 +873,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder visible(boolean visible) {
-            this.visible = ReactiveProperty.of(visible);
+            this.visible = ViewerProp.of(visible);
             return this;
         }
 
@@ -895,7 +886,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder visible(@NonNull Supplier<Boolean> supplier) {
-            this.visible = ReactiveProperty.of(supplier);
+            this.visible = ViewerProp.of(supplier);
             return this;
         }
 
@@ -914,7 +905,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder visible(@NonNull Function<MenuContext, Boolean> function) {
-            this.visible = ReactiveProperty.ofContext(function::apply);
+            this.visible = ViewerProp.ofContext(function::apply);
             return this;
         }
 
@@ -930,7 +921,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder glint(boolean glint) {
-            this.glint = ReactiveProperty.of(glint);
+            this.glint = ViewerProp.of(glint);
             return this;
         }
 
@@ -950,7 +941,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder glint(@NonNull Function<MenuContext, Boolean> glintFunction) {
-            this.glint = ReactiveProperty.ofContext(glintFunction);
+            this.glint = ViewerProp.ofContext(glintFunction);
             return this;
         }
 
@@ -970,7 +961,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder hideAttributes(boolean hideAttributes) {
-            this.hideAttributes = ReactiveProperty.of(hideAttributes);
+            this.hideAttributes = ViewerProp.of(hideAttributes);
             return this;
         }
 
@@ -985,7 +976,7 @@ public class MenuItem {
          */
         @NonNull
         public Builder hideAttributes(@NonNull Function<MenuContext, Boolean> hideAttributesFunction) {
-            this.hideAttributes = ReactiveProperty.ofContext(hideAttributesFunction);
+            this.hideAttributes = ViewerProp.ofContext(hideAttributesFunction);
             return this;
         }
 
@@ -1226,11 +1217,18 @@ public class MenuItem {
          */
         @NonNull
         public Builder vars(@NonNull Map<String, Object> vars) {
-            // For static vars, we need to merge with existing vars
-            Map<String, Object> currentVars = this.itemLevelVars.get(null);
-            Map<String, Object> merged = new HashMap<>(currentVars);
-            merged.putAll(vars);
-            this.itemLevelVars = ReactiveProperty.of(merged);
+            // If we only have static vars, merge them
+            if (this.hasStaticVarsOnly) {
+                this.staticVars.putAll(vars);
+                this.itemLevelVars = ViewerProp.of(new HashMap<>(this.staticVars));
+            } else {
+                // Already have a dynamic function, can't replace with static vars
+                throw new IllegalStateException(
+                    "Cannot call vars(Map) after vars(Function) has been set. " +
+                        "Static variables cannot replace dynamic variable functions. " +
+                        "Use vars(Function) to merge or override, or call vars(Map) before vars(Function)."
+                );
+            }
             return this;
         }
 
@@ -1243,7 +1241,9 @@ public class MenuItem {
          */
         @NonNull
         public Builder vars(@NonNull Function<MenuContext, Map<String, Object>> varsFunction) {
-            this.itemLevelVars = ReactiveProperty.ofContext(varsFunction);
+            this.itemLevelVars = ViewerProp.ofContext(varsFunction);
+            this.hasStaticVarsOnly = false;
+            this.staticVars.clear();
             return this;
         }
 
@@ -1359,8 +1359,8 @@ public class MenuItem {
             // Start async loads for all reactive sources on first render
             if (!this.asyncLoader.isEmpty()) {
                 // Wrap material property to trigger async loads on first access
-                ReactiveProperty<Material> originalMaterial = this.material;
-                this.material = ReactiveProperty.ofContext(ctx -> {
+                ViewerProp<Material> originalMaterial = this.material;
+                this.material = ViewerProp.ofContext(ctx -> {
                     // Trigger all reactive data sources
                     this.asyncLoader.trigger(ctx);
                     return originalMaterial.get(ctx);

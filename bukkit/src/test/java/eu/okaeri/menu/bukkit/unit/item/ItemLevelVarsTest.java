@@ -3,6 +3,7 @@ package eu.okaeri.menu.bukkit.unit.item;
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.item.MenuItem;
+import eu.okaeri.menu.state.ViewerState;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 import static eu.okaeri.menu.item.MenuItem.item;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for item-level variables feature.
@@ -39,11 +41,23 @@ class ItemLevelVarsTest {
         this.server = MockBukkit.mock();
         this.plugin = MockBukkit.createMockPlugin();
         this.player = this.server.addPlayer();
-        this.menu = Menu.builder(this.plugin)
+
+        // Create a test menu
+        Menu realMenu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(6)
             .build();
+
+        // Spy on the menu to mock getViewerState
+        this.menu = spy(realMenu);
+
+        // Create MenuContext for rendering
         this.context = new MenuContext(this.menu, this.player);
+
+        // Create ViewerState for per-player caching
+        ViewerState viewerState = new ViewerState(this.context, null);
+        when(this.menu.getViewerState(this.player.getUniqueId())).thenReturn(viewerState);
+
         this.plainSerializer = PlainTextComponentSerializer.plainText();
     }
 
@@ -118,7 +132,7 @@ class ItemLevelVarsTest {
 
         // Change value
         counter[0] = 42;
-        item.invalidate();
+        this.context.invalidate();
 
         // Second render
         String name2 = this.plainSerializer.serialize(item.getName().get(this.context));
@@ -255,7 +269,7 @@ class ItemLevelVarsTest {
         assertThat(loreLine1).contains("10");
 
         stock[0] = 5;
-        item.invalidate();
+        this.context.invalidate();
 
         var lore2 = item.getLore().get(this.context);
         String loreLine2 = this.plainSerializer.serialize(lore2.get(0));
@@ -362,7 +376,7 @@ class ItemLevelVarsTest {
 
         // Change value
         stock[0] = 50;
-        item.invalidate();
+        this.context.invalidate();
 
         // Second render
         String name2 = this.plainSerializer.serialize(item.getName().get(this.context));

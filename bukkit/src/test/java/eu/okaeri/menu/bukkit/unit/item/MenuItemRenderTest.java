@@ -3,6 +3,7 @@ package eu.okaeri.menu.bukkit.unit.item;
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.item.MenuItem;
+import eu.okaeri.menu.state.ViewerState;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -16,6 +17,9 @@ import org.mockbukkit.mockbukkit.ServerMock;
 
 import static eu.okaeri.menu.item.MenuItem.item;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
+import java.util.UUID;
 
 /**
  * Unit tests for MenuItem rendering to ItemStack.
@@ -45,13 +49,20 @@ class MenuItemRenderTest {
         this.player = server.addPlayer();
 
         // Create a test menu
-        this.menu = Menu.builder(this.plugin)
+        Menu realMenu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
             .build();
 
+        // Spy on the menu to mock getViewerState
+        this.menu = spy(realMenu);
+
         // Create MenuContext for rendering
         this.context = new MenuContext(this.menu, this.player);
+
+        // Create ViewerState for per-player caching
+        ViewerState viewerState = new ViewerState(this.context, null);
+        when(this.menu.getViewerState(this.player.getUniqueId())).thenReturn(viewerState);
     }
 
     // ========================================
@@ -657,7 +668,7 @@ class MenuItemRenderTest {
         assertThat(rendered1.getItemMeta().getDisplayName()).isEqualTo("§7Disabled");
 
         state[0] = true;
-        item.invalidate();
+        this.context.invalidate();
         ItemStack rendered2 = item.render(this.context);
         assertThat(rendered2.getItemMeta().getDisplayName()).isEqualTo("§cEnabled");
     }

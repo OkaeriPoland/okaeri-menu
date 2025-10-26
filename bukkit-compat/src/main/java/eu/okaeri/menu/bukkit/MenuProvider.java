@@ -87,7 +87,7 @@ public class MenuProvider {
             // Clear async cache to force fresh data (v1 render() behavior)
             ViewerState state = menu.getViewerState(viewer.getUniqueId());
             if (state != null) {
-                state.getAsyncCache().clear();
+                state.getAsync().clear();
             }
             // Refresh menu (will reload all async data)
             menu.refresh(viewer);

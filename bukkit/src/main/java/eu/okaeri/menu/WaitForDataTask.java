@@ -47,7 +47,7 @@ class WaitForDataTask extends BukkitRunnable {
     @Override
     public void run() {
         Duration elapsed = Duration.between(this.startTime, Instant.now());
-        AsyncCache cache = this.viewerState.getAsyncCache();
+        AsyncCache cache = this.viewerState.getAsync();
 
         // Check if player is still online
         if (!this.player.isOnline()) {

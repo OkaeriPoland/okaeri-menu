@@ -83,7 +83,7 @@ public class AsyncMenuItem extends MenuItem {
             return this.loadingState.render(context);
         }
 
-        AsyncCache cache = state.getAsyncCache();
+        AsyncCache cache = state.getAsync();
         AsyncCache.AsyncState asyncState = cache.getState(this.cacheKey);
 
         // Start load if needed (first time or expired)
@@ -133,7 +133,7 @@ public class AsyncMenuItem extends MenuItem {
             return;
         }
 
-        AsyncCache cache = state.getAsyncCache();
+        AsyncCache cache = state.getAsync();
         AsyncCache.AsyncState asyncState = cache.getState(this.cacheKey);
 
         switch (asyncState) {

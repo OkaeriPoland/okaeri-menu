@@ -799,10 +799,9 @@ class PaginatedPaneTest {
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
 
-        pane.invalidate();
-
         // Should not throw when rendering after invalidation
         MenuContext context = new MenuContext(this.menu, this.player);
+        context.getViewerState().invalidateProps();
         assertThatCode(() -> pane.render(this.inventory, context))
             .doesNotThrowAnyException();
     }

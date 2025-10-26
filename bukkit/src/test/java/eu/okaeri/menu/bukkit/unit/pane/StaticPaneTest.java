@@ -5,6 +5,7 @@ import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.pane.PaneBounds;
 import eu.okaeri.menu.pane.StaticPane;
+import eu.okaeri.menu.state.ViewerState;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static eu.okaeri.menu.pane.StaticPane.staticPane;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for StaticPane.
@@ -39,11 +41,22 @@ class StaticPaneTest {
         this.server = MockBukkit.mock();
         this.plugin = MockBukkit.createMockPlugin();
         this.player = this.server.addPlayer();
-        this.menu = Menu.builder(this.plugin)
+
+        // Create a test menu
+        Menu realMenu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(6)
             .build();
+
+        // Spy on the menu to mock getViewerState
+        this.menu = spy(realMenu);
+
+        // Create MenuContext for rendering
         this.context = new MenuContext(this.menu, this.player);
+
+        // Create ViewerState for per-player caching
+        ViewerState viewerState = new ViewerState(this.context, null);
+        when(this.menu.getViewerState(this.player.getUniqueId())).thenReturn(viewerState);
     }
 
     @AfterEach
@@ -362,7 +375,7 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // Invalidate
-        pane.invalidate();
+        this.context.getViewerState().invalidateProps();
 
         // After invalidation, properties should be re-evaluated on next render
         // (We can't directly test caching, but we verify no errors occur)
@@ -621,7 +634,7 @@ class StaticPaneTest {
 
         // Hide item2
         item2Visible.set(false);
-        pane.invalidate();  // Clear cached reactive properties
+        this.context.getViewerState().invalidateProps();  // Clear cached reactive properties
         pane.render(inventory, this.context);
 
         // item3 should shift to slot 1 (reflow)
@@ -821,7 +834,7 @@ class StaticPaneTest {
 
         // Hide item1 and re-render
         item1Visible.set(false);
-        pane.invalidate();
+        this.context.getViewerState().invalidateProps();
         pane.render(inventory, this.context);
 
         // Now: slot 0 = item2, slot 1 = item3 (reflowed)
@@ -934,7 +947,7 @@ class StaticPaneTest {
 
         // Hide item2
         item2Visible.set(false);
-        pane.invalidate();
+        this.context.getViewerState().invalidateProps();
         pane.render(inventory, this.context);
 
         // Now: slot 0 = item1, slot 1 = item3
@@ -944,7 +957,7 @@ class StaticPaneTest {
 
         // Show item2 again
         item2Visible.set(true);
-        pane.invalidate();
+        this.context.getViewerState().invalidateProps();
         pane.render(inventory, this.context);
 
         // Back to: slot 0 = item1, slot 1 = item2, slot 2 = item3

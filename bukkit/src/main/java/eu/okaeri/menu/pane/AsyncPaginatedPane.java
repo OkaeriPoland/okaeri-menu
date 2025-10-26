@@ -91,7 +91,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
             return;
         }
 
-        AsyncCache cache = state.getAsyncCache();
+        AsyncCache cache = state.getAsync();
         AsyncCache.AsyncState asyncState = cache.getState(cacheKey);
 
         // Check if we need to load (first time or expired)

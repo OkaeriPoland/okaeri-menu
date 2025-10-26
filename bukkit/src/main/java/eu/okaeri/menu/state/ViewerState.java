@@ -16,9 +16,11 @@ import org.bukkit.inventory.Inventory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Encapsulates all state for a single viewer of this menu.
@@ -30,9 +32,10 @@ public class ViewerState {
     private @NonNull final MenuContext context;
     private Inventory inventory;  // Lazily initialized on first access
 
-    private @NonNull final AsyncCache asyncCache;
-    private @NonNull final Map<String, PaginationContext<?>> paginationContexts = new ConcurrentHashMap<>();
-    private @NonNull final Map<String, Optional<Object>> customState = new ConcurrentHashMap<>();
+    private @NonNull final AsyncCache async;
+    private @NonNull final Map<String, PaginationContext<?>> pagination = new ConcurrentHashMap<>();
+    private @NonNull final Map<String, Optional<Object>> state = new ConcurrentHashMap<>();
+    private @NonNull final Map<ViewerProp<?>, PropValue> props = new HashMap<>();
 
     // Dirty flag for tracking state changes (used by MenuUpdateTask)
     private volatile boolean dirty = false;
@@ -40,11 +43,19 @@ public class ViewerState {
     // Last refresh timestamp for interval-based updates
     private volatile Instant lastRefreshTime = null;
 
+    /**
+     * Holds a cached viewer prop value with per-player dirty tracking.
+     */
+    private static class PropValue {
+        Object value;
+        boolean dirty = true;
+    }
+
     public ViewerState(@NonNull MenuContext context, Inventory inventory) {
         this.context = context;
         this.inventory = inventory;  // Can be null - will be lazily initialized
         AsyncExecutor asyncExecutor = context.getMenu().getAsyncExecutor();
-        this.asyncCache = new AsyncCache(asyncExecutor, this);  // Pass reference for invalidation
+        this.async = new AsyncCache(asyncExecutor, this);  // Pass reference for invalidation
     }
 
     /**
@@ -92,9 +103,64 @@ public class ViewerState {
     /**
      * Marks this viewer's state as dirty (needing refresh).
      * Called automatically when async cache, pagination, or custom state changes.
+     * Also clears all viewer prop caches for this viewer.
      */
     public void invalidate() {
         this.dirty = true;
+        // Clear all viewer prop caches for this viewer
+        for (PropValue cached : this.props.values()) {
+            cached.dirty = true;
+        }
+    }
+
+    /**
+     * Invalidates all reactive properties for this viewer without marking state as dirty.
+     * Forces re-evaluation of all cached reactive properties on next access.
+     * Use this for refresh() to re-render items without affecting dirty flag.
+     */
+    public void invalidateProps() {
+        for (PropValue cached : this.props.values()) {
+            cached.dirty = true;
+        }
+    }
+
+    /**
+     * Invalidates a specific viewer prop for this viewer.
+     * Forces re-evaluation on next access.
+     *
+     * @param property The viewer prop to invalidate
+     */
+    public void invalidateProp(@NonNull ViewerProp<?> property) {
+        PropValue cached = this.props.get(property);
+        if (cached != null) {
+            cached.dirty = true;
+        }
+    }
+
+    /**
+     * Gets or evaluates a viewer prop value, using per-player cache.
+     * This ensures reactive properties are cached separately for each viewer.
+     *
+     * @param property  The viewer prop to evaluate
+     * @param evaluator The function to evaluate the value if not cached
+     * @param <T>       The value type
+     * @return The cached or newly evaluated value
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getProp(@NonNull ViewerProp<T> property, @NonNull Supplier<T> evaluator) {
+        PropValue cached = this.props.get(property);
+
+        if ((cached == null) || cached.dirty) {
+            T value = evaluator.get();
+            if (cached == null) {
+                cached = new PropValue();
+                this.props.put(property, cached);
+            }
+            cached.value = value;
+            cached.dirty = false;
+        }
+
+        return (T) cached.value;
     }
 
     /**
@@ -138,7 +204,7 @@ public class ViewerState {
      * @return true if any cached async data is expired
      */
     public boolean hasExpiredAsyncData() {
-        return this.asyncCache.hasExpiredEntries();
+        return this.async.hasExpiredEntries();
     }
 
     /**
@@ -159,7 +225,7 @@ public class ViewerState {
     @NonNull
     @SuppressWarnings("unchecked")
     public <T> PaginationContext<T> getPagination(@NonNull PaginatedPane<T> pane) {
-        return (PaginationContext<T>) this.paginationContexts.computeIfAbsent(pane.getName(),
+        return (PaginationContext<T>) this.pagination.computeIfAbsent(pane.getName(),
             k -> new PaginationContext<>(this.context, pane)
         );
     }
@@ -173,7 +239,7 @@ public class ViewerState {
      * 4. null (for non-primitive types)
      */
     public <T> T getState(@NonNull String key, @NonNull Class<T> type) {
-        Optional<Object> optValue = this.customState.get(key);
+        Optional<Object> optValue = this.state.get(key);
 
         if (optValue != null) {
             Object value = optValue.orElse(null);
@@ -200,7 +266,7 @@ public class ViewerState {
      * Overrides all automatic defaults.
      */
     public <T> T getState(@NonNull String key, @NonNull Class<T> type, @NonNull T defaultValue) {
-        Optional<Object> optValue = this.customState.get(key);
+        Optional<Object> optValue = this.state.get(key);
 
         if (optValue != null) {
             Object value = optValue.orElse(null);
@@ -244,7 +310,7 @@ public class ViewerState {
      * Marks viewer as dirty for update interval refresh.
      */
     public void setState(@NonNull String key, Object value) {
-        this.customState.put(key, Optional.ofNullable(value));
+        this.state.put(key, Optional.ofNullable(value));
         this.invalidate(); // Mark dirty when state changes
     }
 
@@ -252,20 +318,20 @@ public class ViewerState {
      * Checks if state exists (in custom state, not defaults).
      */
     public boolean hasState(@NonNull String key) {
-        return this.customState.containsKey(key);
+        return this.state.containsKey(key);
     }
 
     /**
      * Removes state.
      */
     public void removeState(@NonNull String key) {
-        this.customState.remove(key);
+        this.state.remove(key);
     }
 
     /**
      * Clears all custom state (not defaults).
      */
     public void clearState() {
-        this.customState.clear();
+        this.state.clear();
     }
 }

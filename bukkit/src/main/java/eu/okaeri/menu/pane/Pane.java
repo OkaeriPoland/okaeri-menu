@@ -38,12 +38,6 @@ public interface Pane {
     void render(@NonNull Inventory inventory, @NonNull MenuContext context);
 
     /**
-     * Invalidates all reactive properties in this pane,
-     * marking them for re-evaluation on next render.
-     */
-    void invalidate();
-
-    /**
      * Gets all menu items that can contain declarative filters.
      * For StaticPane: all items (since all items are static).
      * For PaginatedPane: only static items (navigation buttons, filter buttons, etc).
