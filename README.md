@@ -503,14 +503,6 @@ Check out [test-plugin](test-plugin/src/main/java/eu/okaeri/menu/test/example) f
 - **[PaginationExample.java](test-plugin/src/main/java/eu/okaeri/menu/test/example/PaginationExample.java)** - Pagination and filtering
 - **[AsyncShopExample.java](test-plugin/src/main/java/eu/okaeri/menu/test/example/AsyncShopExample.java)** - Async loading, filters, and statistics
 
-```xml
-<dependency>
-    <groupId>eu.okaeri</groupId>
-    <artifactId>okaeri-menu</artifactId>
-    <version>0.0.17</version>
-</dependency>
-```
-
 ---
 
 ## "Nooo, I can't use Paper!" 😱
