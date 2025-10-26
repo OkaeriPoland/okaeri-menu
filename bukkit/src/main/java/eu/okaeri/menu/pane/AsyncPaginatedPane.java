@@ -76,7 +76,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
         // Copy static items
         asyncBuilder.staticItems.forEach(entry ->
-            parentBuilder.staticItem(entry.getLocalRow(), entry.getLocalCol(), entry.getMenuItem()));
+            parentBuilder.item(entry.getLocalRow(), entry.getLocalCol(), entry.getMenuItem()));
 
         return parentBuilder;
     }
@@ -263,6 +263,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         private MenuItem loadingItem;
         private MenuItem errorItem;
         private MenuItem emptyItem;
+        private PaneTemplate template = null;  // Visual template for item placement
 
         // Shared reference for currentItems, set during construction
         private AtomicReference<List<T>> currentItemsRef;
@@ -282,15 +283,15 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         /**
          * Sets the pane bounds.
          *
-         * @param y      Y position (0-5)
-         * @param x      X position (0-8)
+         * @param row    Row position (0-5)
+         * @param col    Column position (0-8)
          * @param height Height (1-6)
          * @param width  Width (1-9)
          * @return This builder
          */
         @NonNull
-        public Builder<T> bounds(int y, int x, int height, int width) {
-            this.bounds = new PaneBounds(y, x, height, width);
+        public Builder<T> bounds(int row, int col, int height, int width) {
+            this.bounds = new PaneBounds(row, col, height, width);
             return this;
         }
 
@@ -303,6 +304,43 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         @NonNull
         public Builder<T> bounds(@NonNull PaneBounds bounds) {
             this.bounds = bounds;
+            return this;
+        }
+
+        /**
+         * Sets bounds using a visual ASCII template.
+         * The template defines both dimensions and static item positions (like navigation buttons).
+         * Height and width are automatically derived from the template.
+         *
+         * <p>Template format:
+         * <ul>
+         *   <li>Spaces are formatting-only (ignored)</li>
+         *   <li>'.' marks slots for paginated content</li>
+         *   <li>Any other character is a marker for static items (navigation, controls, etc.)</li>
+         * </ul>
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .bounds(1, 0, """
+         *     . . . . . . . . .
+         *     . . . . . . . . .
+         *     . . . . . . . . .
+         *     < . . . I . . . >
+         *     """)
+         * .item('<', prevPageButton())   // Previous page at bottom-left
+         * .item('>', nextPageButton())   // Next page at bottom-right
+         * .item('I', pageIndicator())    // Page indicator at bottom-center
+         * }</pre>
+         *
+         * @param row      Starting row position
+         * @param col      Starting column position
+         * @param template The ASCII template string (height/width auto-derived)
+         * @return This builder
+         */
+        @NonNull
+        public Builder<T> bounds(int row, int col, @NonNull String template) {
+            this.template = PaneTemplate.parse(template);
+            this.bounds = new PaneBounds(row, col, this.template.getRows(), this.template.getColumns());
             return this;
         }
 
@@ -362,14 +400,57 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         /**
          * Adds a static item that's always rendered (e.g., navigation buttons).
          *
-         * @param localRow Local Y coordinate
-         * @param localCol Local X coordinate
+         * @param localRow Local row coordinate (0 to height-1)
+         * @param localCol Local column coordinate (0 to width-1)
          * @param menuItem The menu item
          * @return This builder
          */
         @NonNull
-        public Builder<T> staticItem(int localRow, int localCol, @NonNull MenuItem menuItem) {
+        public Builder<T> item(int localRow, int localCol, @NonNull MenuItem menuItem) {
             this.staticItems.add(new AbstractPane.ItemCoordinateEntry(localRow, localCol, menuItem));
+            return this;
+        }
+
+        /**
+         * Adds a static item at all positions marked with the specified character in the template.
+         * The same item instance will be placed at every position with this marker.
+         * Useful for navigation buttons, page indicators, and other controls.
+         * Only valid after calling {@link #bounds(int, int, String)}.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .bounds(1, 0, """
+         *     . . . . . . . . .
+         *     . . . . . . . . .
+         *     < . . . I . . . >
+         *     """)
+         * .item('<', prevPageButton())  // Places at bottom-left
+         * .item('>', nextPageButton())  // Places at bottom-right
+         * .item('I', pageIndicator())   // Places at bottom-center
+         * }</pre>
+         *
+         * @param marker   The character marker from the template
+         * @param menuItem The menu item to place at all marker positions
+         * @return This builder
+         * @throws IllegalStateException    if no template has been defined
+         * @throws IllegalArgumentException if marker not found in template
+         */
+        @NonNull
+        public Builder<T> item(char marker, @NonNull MenuItem menuItem) {
+            if (this.template == null) {
+                throw new IllegalStateException("Template must be defined before using item(char, MenuItem). Call .bounds(row, col, template) first.");
+            }
+
+            if (!this.template.hasMarker(marker)) {
+                throw new IllegalArgumentException("Marker '" + marker + "' not found in template");
+            }
+
+            // Place item at all positions for this marker
+            List<PaneTemplate.Position> positions = this.template.getPositions(marker);
+            for (PaneTemplate.Position pos : positions) {
+                this.item(pos.row(), pos.col(), menuItem);
+            }
+
             return this;
         }
 

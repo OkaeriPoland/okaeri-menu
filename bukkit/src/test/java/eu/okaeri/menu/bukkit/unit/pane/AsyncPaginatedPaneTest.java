@@ -262,11 +262,11 @@ class AsyncPaginatedPaneTest {
                 .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
-                .staticItem(1, 0, MenuItem.item()
+                .item(1, 0, MenuItem.item()
                     .material(Material.ARROW)
                     .name("Previous")
                     .build())
-                .staticItem(1, 2, MenuItem.item()
+                .item(1, 2, MenuItem.item()
                     .material(Material.ARROW)
                     .name("Next")
                     .build())
@@ -325,7 +325,7 @@ class AsyncPaginatedPaneTest {
                 .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
-                .staticItem(0, 0, MenuItem.item()
+                .item(0, 0, MenuItem.item()
                     .material(Material.TORCH)
                     .name("Create")
                     .visible(ctx -> false)  // Always invisible
@@ -697,8 +697,8 @@ class AsyncPaginatedPaneTest {
                 .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.STONE)
                     .build())
-                .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
-                .staticItem(0, 8, MenuItem.item().material(Material.BARRIER).build())
+                .item(0, 0, MenuItem.item().material(Material.BARRIER).build())
+                .item(0, 8, MenuItem.item().material(Material.BARRIER).build())
                 .build())
             .build();
 
@@ -731,8 +731,8 @@ class AsyncPaginatedPaneTest {
                     .material(Material.STONE)
                     .amount(item)
                     .build())
-                .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
-                .staticItem(0, 8, MenuItem.item().material(Material.BARRIER).build())
+                .item(0, 0, MenuItem.item().material(Material.BARRIER).build())
+                .item(0, 8, MenuItem.item().material(Material.BARRIER).build())
                 .build())
             .build();
 

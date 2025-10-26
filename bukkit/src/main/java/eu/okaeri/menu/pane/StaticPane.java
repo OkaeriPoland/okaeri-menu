@@ -155,6 +155,7 @@ public class StaticPane extends AbstractPane {
         private Map<Integer, MenuItem> items = new HashMap<>();  // Populated in build()
         private List<MenuItem> autoItems = new ArrayList<>();  // Auto-positioned items
         private MenuItem fillerItem = null;
+        private PaneTemplate template = null;  // Visual template for item placement
 
         @NonNull
         public Builder name(@NonNull String name) {
@@ -163,14 +164,52 @@ public class StaticPane extends AbstractPane {
         }
 
         @NonNull
-        public Builder bounds(int y, int x, int height, int width) {
-            this.bounds = PaneBounds.of(y, x, height, width);
+        public Builder bounds(int row, int col, int height, int width) {
+            this.bounds = PaneBounds.of(row, col, height, width);
             return this;
         }
 
         @NonNull
         public Builder bounds(@NonNull PaneBounds bounds) {
             this.bounds = bounds;
+            return this;
+        }
+
+        /**
+         * Sets bounds using a visual ASCII template.
+         * The template defines both dimensions and item positions.
+         * Height and width are automatically derived from the template.
+         *
+         * <p>Template format:
+         * <ul>
+         *   <li>Spaces are formatting-only (ignored)</li>
+         *   <li>'.' marks empty slots (available for auto items)</li>
+         *   <li>Any other character is a marker for fixed item positions</li>
+         * </ul>
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .bounds(0, 0, """
+         *     F S . . . . . < >
+         *     . . . . . . . . .
+         *     . . . . . . . . .
+         *     """)
+         * .item('F', filterButton())   // Places at row 0, col 0
+         * .item('S', sortButton())     // Places at row 0, col 1
+         * .item('<', prevButton())     // Places at row 0, col 7
+         * .item('>', nextButton())     // Places at row 0, col 8
+         * .item(shopItem())            // Auto items fill remaining '.' slots
+         * }</pre>
+         *
+         * @param row      Starting row position
+         * @param col      Starting column position
+         * @param template The ASCII template string (height/width auto-derived)
+         * @return This builder
+         */
+        @NonNull
+        public Builder bounds(int row, int col, @NonNull String template) {
+            this.template = PaneTemplate.parse(template);
+            this.bounds = PaneBounds.of(row, col, this.template.getRows(), this.template.getColumns());
             return this;
         }
 
@@ -184,6 +223,46 @@ public class StaticPane extends AbstractPane {
         @NonNull
         public Builder filler(@NonNull MenuItem filler) {
             this.fillerItem = filler;
+            return this;
+        }
+
+        /**
+         * Adds an item at all positions marked with the specified character in the template.
+         * The same item instance will be placed at every position with this marker.
+         * Only valid after calling {@link #template(String)}.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .template("""
+         *     X X X X X
+         *     X . . . X
+         *     X X X X X
+         *     """)
+         * .item('X', borderItem())  // Places borderItem at all 14 'X' positions
+         * }</pre>
+         *
+         * @param marker The character marker from the template
+         * @param item   The menu item to place at all marker positions
+         * @return This builder
+         * @throws IllegalStateException    if no template has been defined
+         * @throws IllegalArgumentException if marker not found in template
+         */
+        @NonNull
+        public Builder item(char marker, @NonNull MenuItem item) {
+            if (this.template == null) {
+                throw new IllegalStateException("Template must be defined before using item(char, MenuItem). Call .template() first.");
+            }
+
+            if (!this.template.hasMarker(marker)) {
+                throw new IllegalArgumentException("Marker '" + marker + "' not found in template");
+            }
+
+            // Place item at all positions for this marker
+            List<PaneTemplate.Position> positions = this.template.getPositions(marker);
+            for (PaneTemplate.Position pos : positions) {
+                this.item(pos.row(), pos.col(), item);
+            }
+
             return this;
         }
 

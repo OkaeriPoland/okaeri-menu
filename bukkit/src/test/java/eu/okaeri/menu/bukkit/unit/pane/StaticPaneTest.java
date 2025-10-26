@@ -966,4 +966,136 @@ class StaticPaneTest {
         assertThat(pane.getItemByGlobalSlot(1, this.context)).isEqualTo(item2);
         assertThat(pane.getItemByGlobalSlot(2, this.context)).isEqualTo(item3);
     }
+
+    // ========================================
+    // TEMPLATE TESTS
+    // ========================================
+
+    @Test
+    @DisplayName("Should place items using template markers")
+    void testTemplateBasicPlacement() {
+        MenuItem filterItem = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem sortItem = MenuItem.item().material(Material.EMERALD).build();
+        MenuItem closeItem = MenuItem.item().material(Material.BARRIER).build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, """
+                F S . . . . . . C
+                . . . . . . . . .
+                . . . . . . . . .
+                """)
+            .item('F', filterItem)
+            .item('S', sortItem)
+            .item('C', closeItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Check template positions
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);   // F at (0,0) = slot 0
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.EMERALD);   // S at (0,1) = slot 1
+        assertThat(inventory.getItem(8).getType()).isEqualTo(Material.BARRIER);   // C at (0,8) = slot 8
+
+        // Empty slots should be null
+        assertThat(inventory.getItem(2)).isNull();
+        assertThat(inventory.getItem(9)).isNull();
+    }
+
+    @Test
+    @DisplayName("Should place same item at all marker positions")
+    void testTemplateDuplicateMarkers() {
+        MenuItem borderItem = MenuItem.item().material(Material.BLACK_STAINED_GLASS_PANE).build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, """
+                X X X X X
+                X . . . X
+                X X X X X
+                """)
+            .item('X', borderItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Top border (row 0)
+        for (int col = 0; col < 5; col++) {
+            assertThat(inventory.getItem(col).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE);
+        }
+
+        // Middle row - sides only
+        assertThat(inventory.getItem(9).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE);   // Left
+        assertThat(inventory.getItem(13).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE);  // Right
+        assertThat(inventory.getItem(10)).isNull();  // Interior
+        assertThat(inventory.getItem(11)).isNull();
+        assertThat(inventory.getItem(12)).isNull();
+
+        // Bottom border (row 2)
+        for (int col = 0; col < 5; col++) {
+            assertThat(inventory.getItem(18 + col).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE);
+        }
+    }
+
+    @Test
+    @DisplayName("Should work with auto items filling empty slots")
+    void testTemplateWithAutoItems() {
+        MenuItem controlItem = MenuItem.item().material(Material.ARROW).build();
+        MenuItem contentItem = MenuItem.item().material(Material.DIAMOND).build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, """
+                < . . . >
+                . . . . .
+                """)
+            .item('<', controlItem)
+            .item('>', controlItem)
+            .item(contentItem)  // Auto item
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Template items
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.ARROW);  // < at (0,0)
+        assertThat(inventory.getItem(4).getType()).isEqualTo(Material.ARROW);  // > at (0,4)
+
+        // Auto item fills first available '.' slot
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.DIAMOND);  // First '.'
+    }
+
+    @Test
+    @DisplayName("Should throw when using template item before defining template")
+    void testTemplateRequiresTemplateFirst() {
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
+
+        assertThatThrownBy(() ->
+            staticPane()
+                .name("test")
+                .bounds(0, 0, 1, 9)  // Regular bounds, no template
+                .item('X', item)  // No template defined
+                .build()
+        ).isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Template must be defined");
+    }
+
+    @Test
+    @DisplayName("Should throw when marker not found in template")
+    void testTemplateInvalidMarker() {
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
+
+        assertThatThrownBy(() ->
+            staticPane()
+                .name("test")
+                .bounds(0, 0, """
+                    X . . . .
+                    """)
+                .item('Y', item)  // Y not in template
+                .build()
+        ).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Marker 'Y' not found");
+    }
 }

@@ -101,8 +101,8 @@ public class PaginationExample {
                         &eClick to view profile!""")
                     .build())
                 // Static buttons in the paginated area
-                .staticItem(3, 7, PaginationUtils.previousPageButton("players").build())
-                .staticItem(3, 8, PaginationUtils.nextPageButton("players").build())
+                .item(3, 7, PaginationUtils.previousPageButton("players").build())
+                .item(3, 8, PaginationUtils.nextPageButton("players").build())
                 .build())
             .build();
     }

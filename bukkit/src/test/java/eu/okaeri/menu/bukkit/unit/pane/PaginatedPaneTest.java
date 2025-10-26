@@ -142,7 +142,7 @@ class PaginatedPaneTest {
             .bounds(0, 0, 5, 9)  // 45 slots
             .items(List.of("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
-            .staticItem(4, 8, MenuItem.item().material(Material.BARRIER).build())  // 1 static item
+            .item(4, 8, MenuItem.item().material(Material.BARRIER).build())  // 1 static item
             .build();
 
         assertThat(pane.getItemsPerPage()).isEqualTo(44);  // 45 - 1 = 44
@@ -258,7 +258,7 @@ class PaginatedPaneTest {
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .build())
-            .staticItem(0, 8, MenuItem.item()
+            .item(0, 8, MenuItem.item()
                 .material(Material.BARRIER)
                 .name("Static Button")
                 .build())
@@ -290,7 +290,7 @@ class PaginatedPaneTest {
                 .name(item)
                 .amount(index + 1)  // Use amount to track index
                 .build())
-            .staticItem(0, 2, MenuItem.item()  // Block position 2
+            .item(0, 2, MenuItem.item()  // Block position 2
                 .material(Material.BARRIER)
                 .build())
             .itemsPerPage(5)
@@ -323,7 +323,7 @@ class PaginatedPaneTest {
                 .material(Material.STONE)
                 .amount(itemId)  // Use amount to identify which item (1,2,3,4,5)
                 .build())
-            .staticItem(0, 2, MenuItem.item()  // Static at position 2
+            .item(0, 2, MenuItem.item()  // Static at position 2
                 .material(Material.BARRIER)
                 .build())
             .itemsPerPage(5)
@@ -391,8 +391,8 @@ class PaginatedPaneTest {
                 .material(Material.STONE)
                 .amount(item)
                 .build())
-            .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
-            .staticItem(0, 8, MenuItem.item().material(Material.BARRIER).build())
+            .item(0, 0, MenuItem.item().material(Material.BARRIER).build())
+            .item(0, 8, MenuItem.item().material(Material.BARRIER).build())
             .build();
 
         MenuContext context = new MenuContext(this.menu, this.player);
@@ -427,8 +427,8 @@ class PaginatedPaneTest {
                 .material(Material.STONE)
                 .amount(item)
                 .build())
-            .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
-            .staticItem(0, 8, MenuItem.item().material(Material.BARRIER).build())
+            .item(0, 0, MenuItem.item().material(Material.BARRIER).build())
+            .item(0, 8, MenuItem.item().material(Material.BARRIER).build())
             .build();
 
         MenuContext context = new MenuContext(this.menu, this.player);
@@ -630,7 +630,7 @@ class PaginatedPaneTest {
             .bounds(0, 0, 1, 9)
             .items(Arrays.asList("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
-            .staticItem(0, 5, staticItem)  // Slot 5
+            .item(0, 5, staticItem)  // Slot 5
             .build();
 
         MenuItem result = pane.getItemByGlobalSlot(5);
@@ -661,7 +661,7 @@ class PaginatedPaneTest {
             .bounds(1, 2, 2, 5)  // Limited bounds
             .items(List.of("A"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
-            .staticItem(0, 0, staticItem)
+            .item(0, 0, staticItem)
             .build();
 
         // Slot 0 (top-left corner of inventory) is outside pane bounds
@@ -906,5 +906,140 @@ class PaginatedPaneTest {
             .isNotNull();
         assertThat(inventory.getItem(9).getType())
             .isEqualTo(Material.GOLD_INGOT);
+    }
+
+    // ========================================
+    // TEMPLATE TESTS
+    // ========================================
+
+    @Test
+    @DisplayName("Should place static items using template markers")
+    void testTemplateWithStaticItems() {
+        MenuItem prevButton = MenuItem.item().material(Material.ARROW).name("Previous").build();
+        MenuItem nextButton = MenuItem.item().material(Material.ARROW).name("Next").build();
+        MenuItem pageIndicator = MenuItem.item().material(Material.PAPER).name("Page").build();
+
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(0, 0, """
+                . . . . . . . . .
+                . . . . . . . . .
+                . . . . . . . . .
+                < . . . I . . . >
+                """)
+            .items(List.of("Item1", "Item2", "Item3"))
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.DIAMOND)
+                .name(item)
+                .build())
+            .item('<', prevButton)
+            .item('>', nextButton)
+            .item('I', pageIndicator)
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, context);
+
+        // Check static items from template
+        assertThat(inventory.getItem(27).getType()).isEqualTo(Material.ARROW);   // < at row 3, col 0
+        assertThat(inventory.getItem(35).getType()).isEqualTo(Material.ARROW);   // > at row 3, col 8
+        assertThat(inventory.getItem(31).getType()).isEqualTo(Material.PAPER);   // I at row 3, col 4
+
+        // Check paginated items fill the '.' slots
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);  // First item
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.DIAMOND);  // Second item
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.DIAMOND);  // Third item
+    }
+
+    @Test
+    @DisplayName("Should auto-derive dimensions from template")
+    void testTemplateAutoDimensions() {
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(1, 2, """
+                . . .
+                . . .
+                """)  // 2 rows × 3 cols, starting at (1,2)
+            .items(List.of("A", "B", "C"))
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.EMERALD)
+                .name(item)
+                .build())
+            .build();
+
+        // Verify bounds were derived correctly
+        assertThat(pane.getBounds().getY()).isEqualTo(1);
+        assertThat(pane.getBounds().getX()).isEqualTo(2);
+        assertThat(pane.getBounds().getHeight()).isEqualTo(2);
+        assertThat(pane.getBounds().getWidth()).isEqualTo(3);
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, context);
+
+        // Items should be at global positions starting from row 1, col 2
+        // Row 1, col 2 = slot 11 (1*9 + 2)
+        assertThat(inventory.getItem(11).getType()).isEqualTo(Material.EMERALD);
+        assertThat(inventory.getItem(12).getType()).isEqualTo(Material.EMERALD);
+        assertThat(inventory.getItem(13).getType()).isEqualTo(Material.EMERALD);
+    }
+
+    @Test
+    @DisplayName("Should throw when using staticItem with marker before template")
+    void testTemplateRequiredForMarker() {
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
+
+        assertThatThrownBy(() ->
+            PaginatedPane.<String>pane("test", String.class)
+                .bounds(0, 0, 3, 9)  // Regular bounds, no template
+                .item('X', item)  // No template defined
+                .build()
+        ).isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Template must be defined");
+    }
+
+    @Test
+    @DisplayName("Should throw when marker not found in template")
+    void testTemplateInvalidMarker() {
+        MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
+
+        assertThatThrownBy(() ->
+            PaginatedPane.<String>pane("test", String.class)
+                .bounds(0, 0, """
+                    . . . . .
+                    < . . . >
+                    """)
+                .item('X', item)  // X not in template
+                .build()
+        ).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Marker 'X' not found");
+    }
+
+    @Test
+    @DisplayName("Should support duplicate markers for repeated static items")
+    void testTemplateDuplicateMarkers() {
+        MenuItem divider = MenuItem.item().material(Material.BLACK_STAINED_GLASS_PANE).name("").build();
+
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(0, 0, """
+                . . . | . . . | .
+                . . . | . . . | .
+                """)
+            .items(List.of("A", "B", "C"))
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.GOLD_INGOT)
+                .name(item)
+                .build())
+            .item('|', divider)  // Places dividers at all '|' positions
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, context);
+
+        // Check dividers at col 3 and col 7 in both rows
+        assertThat(inventory.getItem(3).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE);  // Row 0, col 3
+        assertThat(inventory.getItem(7).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE);  // Row 0, col 7
+        assertThat(inventory.getItem(12).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE); // Row 1, col 3
+        assertThat(inventory.getItem(16).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE); // Row 1, col 7
     }
 }

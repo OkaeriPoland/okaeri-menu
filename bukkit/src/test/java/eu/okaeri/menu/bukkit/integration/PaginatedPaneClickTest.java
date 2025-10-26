@@ -79,7 +79,7 @@ class PaginatedPaneClickTest extends MenuListenerTestBase {
                     .material(Material.DIAMOND)
                     .onClick(event -> paginatedClicks.incrementAndGet())
                     .build())
-                .staticItem(2, 8, item()  // Bottom-right corner
+                .item(2, 8, item()  // Bottom-right corner
                     .material(Material.ARROW)
                     .name("Next Page")
                     .onClick(event -> staticClicks.incrementAndGet())
@@ -117,7 +117,7 @@ class PaginatedPaneClickTest extends MenuListenerTestBase {
                     .name(item)
                     .onClick(event -> clickedItemIndex.set(index))
                     .build())
-                .staticItem(0, 2, item()  // Static at slot 2
+                .item(0, 2, item()  // Static at slot 2
                     .material(Material.BARRIER)
                     .name("Static")
                     .onClick(event -> staticClicks.incrementAndGet())
@@ -264,7 +264,7 @@ class PaginatedPaneClickTest extends MenuListenerTestBase {
                     .material(Material.DIAMOND)
                     .onClick(event -> paginatedClicks.incrementAndGet())
                     .build())
-                .staticItem(2, 8, item()
+                .item(2, 8, item()
                     .material(Material.ARROW)
                     .name("Next Page")
                     .visible(false)  // Invisible static item
@@ -305,7 +305,7 @@ class PaginatedPaneClickTest extends MenuListenerTestBase {
                 .renderer((ctx, item, index) -> item()
                     .material(Material.DIAMOND)
                     .build())
-                .staticItem(2, 8, item()
+                .item(2, 8, item()
                     .material(Material.ARROW)
                     .name("Button")
                     .visible(staticVisible::get)
