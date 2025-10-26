@@ -180,7 +180,7 @@ class MenuLifecycleTest {
         // Create a test pane for pagination
         PaginatedPane<String> testPane = PaginatedPane.<String>pane()
             .name("test_pane")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of("Item1", "Item2", "Item3"))
             .itemsPerPage(5)
             .renderer((ctx, item, i) -> null)
@@ -240,7 +240,7 @@ class MenuLifecycleTest {
         // Create test panes for each player
         PaginatedPane<String> pane1 = PaginatedPane.<String>pane()
             .name("pane1")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of("A", "B", "C"))
             .itemsPerPage(5)
             .renderer((ctx, item, i) -> null)
@@ -248,7 +248,7 @@ class MenuLifecycleTest {
 
         PaginatedPane<String> pane2 = PaginatedPane.<String>pane()
             .name("pane1")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of("X", "Y", "Z"))
             .itemsPerPage(5)
             .renderer((ctx, item, i) -> null)
@@ -301,7 +301,7 @@ class MenuLifecycleTest {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .item(0, 0, item()
                     .material(() -> {
                         renderCount.incrementAndGet();
@@ -400,7 +400,7 @@ class MenuLifecycleTest {
         // Create test pane
         PaginatedPane<String> testPane = PaginatedPane.<String>pane()
             .name("test_pane")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of("Item1", "Item2"))
             .itemsPerPage(5)
             .renderer((ctx, item, i) -> null)
@@ -427,7 +427,7 @@ class MenuLifecycleTest {
         // Create test panes
         PaginatedPane<String> pane1 = PaginatedPane.<String>pane()
             .name("test_pane")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of("Item1", "Item2"))
             .itemsPerPage(5)
             .renderer((ctx, item, i) -> null)
@@ -435,7 +435,7 @@ class MenuLifecycleTest {
 
         PaginatedPane<String> pane2 = PaginatedPane.<String>pane()
             .name("test_pane")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of("Item3", "Item4"))
             .itemsPerPage(3)
             .renderer((ctx, item, i) -> null)
@@ -464,7 +464,7 @@ class MenuLifecycleTest {
         // Create test panes
         PaginatedPane<String> pane1 = PaginatedPane.<String>pane()
             .name("pane1")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of("Item1", "Item2"))
             .itemsPerPage(5)
             .renderer((ctx, item, i) -> null)
@@ -472,7 +472,7 @@ class MenuLifecycleTest {
 
         PaginatedPane<String> pane2 = PaginatedPane.<String>pane()
             .name("pane2")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of("Item3", "Item4"))
             .itemsPerPage(5)
             .renderer((ctx, item, i) -> null)
@@ -514,7 +514,7 @@ class MenuLifecycleTest {
             })
             .rows(3)
             .pane(PaginatedPane.pane("items")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .items(List.of("A", "B", "C", "D", "E"))
                 .renderer((ctx, item, index) -> item()
                     .material(Material.STONE)
@@ -555,7 +555,7 @@ class MenuLifecycleTest {
             })
             .rows(3)
             .pane(PaginatedPane.<String>pane("items")
-                .bounds(0, 0, 9, 2)  // 18 slots
+                .bounds(0, 0, 2, 9)  // 18 slots
                 .items(items)
                 .itemsPerPage(5)
                 .renderer((ctx, item, index) -> item()
@@ -594,7 +594,7 @@ class MenuLifecycleTest {
             })
             .rows(3)
             .pane(staticPane("static")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .item(0, 0, item()
                     .material(Material.DIAMOND)
                     .build())

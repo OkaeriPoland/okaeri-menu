@@ -36,8 +36,8 @@ public class ShopExample {
             // Filter buttons with declarative filters
             .pane(staticPane()
                 .name("filters")
-                .bounds(0, 0, 9, 1)
-                .item(1, 0, MenuItem.item()
+                .bounds(0, 0, 1, 9)
+                .item(0, 1, MenuItem.item()
                     .material(ctx -> ctx.getBool("filter:weapon") ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
                     .name(ctx -> ctx.getBool("filter:weapon") ? "&a✓ Weapons" : "&7Weapons")
                     .lore("""
@@ -54,7 +54,7 @@ public class ShopExample {
                         event.set("filter:weapon", !event.getBool("filter:weapon"));
                     })
                     .build())
-                .item(3, 0, MenuItem.item()
+                .item(0, 3, MenuItem.item()
                     .material(ctx -> ctx.getBool("filter:armor") ? Material.DIAMOND_CHESTPLATE : Material.LEATHER_CHESTPLATE)
                     .name(ctx -> ctx.getBool("filter:armor") ? "&a✓ Armor" : "&7Armor")
                     .lore("""
@@ -71,7 +71,7 @@ public class ShopExample {
                         event.set("filter:armor", !event.getBool("filter:armor"));
                     })
                     .build())
-                .item(5, 0, MenuItem.item()
+                .item(0, 5, MenuItem.item()
                     .material(ctx -> ctx.getBool("filter:expensive") ? Material.GOLD_INGOT : Material.IRON_INGOT)
                     .name(ctx -> ctx.getBool("filter:expensive") ? "&a✓ Expensive (>100)" : "&7Expensive (>100)")
                     .lore("""
@@ -88,7 +88,7 @@ public class ShopExample {
                         event.set("filter:expensive", !event.getBool("filter:expensive"));
                     })
                     .build())
-                .item(7, 0, MenuItem.item()
+                .item(0, 7, MenuItem.item()
                     .material(Material.PAPER)
                     .name("&eFilter Info")
                     .lore("""
@@ -106,7 +106,7 @@ public class ShopExample {
                             return Map.of("active_count", activeCount);
                         })
                     .build())
-                .item(8, 0, MenuItem.item()
+                .item(0, 8, MenuItem.item()
                     .material(Material.BARRIER)
                     .name("&cClear All")
                     .onClick(event -> {
@@ -119,7 +119,7 @@ public class ShopExample {
             // Shop items
             .pane(PaginatedPane.<ShopItem>pane()
                 .name("shop")
-                .bounds(0, 1, 9, 4)
+                .bounds(1, 0, 4, 9)
                 .items(items)
                 // itemsPerPage defaults to pane size (9x4 = 36 slots)
                 .renderer((ctx, item, index) -> MenuItem.item()
@@ -144,11 +144,11 @@ public class ShopExample {
             // Navigation
             .pane(staticPane()
                 .name("nav")
-                .bounds(0, 5, 9, 1)
-                .item(3, 0, PaginationUtils.previousPageButton("shop").build())
-                .item(4, 0, PaginationUtils.pageIndicator("shop").build())
-                .item(5, 0, PaginationUtils.nextPageButton("shop").build())
-                .item(8, 0, NavigationUtils.closeButton().build())
+                .bounds(5, 0, 1, 9)
+                .item(0, 3, PaginationUtils.previousPageButton("shop").build())
+                .item(0, 4, PaginationUtils.pageIndicator("shop").build())
+                .item(0, 5, PaginationUtils.nextPageButton("shop").build())
+                .item(0, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }

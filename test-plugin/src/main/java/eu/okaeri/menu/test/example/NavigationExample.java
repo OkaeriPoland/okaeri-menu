@@ -23,7 +23,7 @@ public class NavigationExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 // Navigate to Shop
                 .item(1, 1, item()
                     .material(Material.EMERALD)
@@ -37,7 +37,7 @@ public class NavigationExample {
                     })
                     .build())
                 // Navigate to Settings
-                .item(4, 1, item()
+                .item(1, 4, item()
                     .material(Material.COMPARATOR)
                     .name("&b&lSettings")
                     .lore("""
@@ -49,7 +49,7 @@ public class NavigationExample {
                     })
                     .build())
                 // Navigate to Profile
-                .item(7, 1, item()
+                .item(1, 7, item()
                     .material(Material.PLAYER_HEAD)
                     .name("&d&lProfile")
                     .lore("""
@@ -61,7 +61,7 @@ public class NavigationExample {
                     })
                     .build())
                 // Close button (no back button since this is main menu)
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -75,7 +75,7 @@ public class NavigationExample {
             .rows(4)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 4)
+                .bounds(0, 0, 4, 9)
                 // Shop categories
                 .item(1, 1, item()
                     .material(Material.DIAMOND_SWORD)
@@ -88,7 +88,7 @@ public class NavigationExample {
                         event.open(createWeaponsMenu(event.getMenu().getPlugin()));
                     })
                     .build())
-                .item(4, 1, item()
+                .item(1, 4, item()
                     .material(Material.DIAMOND_CHESTPLATE)
                     .name("&9&lArmor")
                     .lore("""
@@ -99,7 +99,7 @@ public class NavigationExample {
                         event.open(createArmorMenu(event.getMenu().getPlugin()));
                     })
                     .build())
-                .item(7, 1, item()
+                .item(1, 7, item()
                     .material(Material.GOLDEN_APPLE)
                     .name("&6&lConsumables")
                     .lore("""
@@ -111,9 +111,9 @@ public class NavigationExample {
                     })
                     .build())
                 // Navigation: Back button (visible because we came from main menu)
-                .item(0, 3, NavigationUtils.backButton().build())
+                .item(3, 0, NavigationUtils.backButton().build())
                 // Close button
-                .item(8, 3, NavigationUtils.closeButton().build())
+                .item(3, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -127,7 +127,7 @@ public class NavigationExample {
             .rows(4)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 4)
+                .bounds(0, 0, 4, 9)
                 // Weapons
                 .item(1, 1, item()
                     .material(Material.DIAMOND_SWORD)
@@ -141,7 +141,7 @@ public class NavigationExample {
                         event.sendMessage("&aPurchased Diamond Sword!");
                     })
                     .build())
-                .item(2, 1, item()
+                .item(1, 2, item()
                     .material(Material.IRON_SWORD)
                     .name("&f&lIron Sword")
                     .lore("""
@@ -153,7 +153,7 @@ public class NavigationExample {
                         event.sendMessage("&aPurchased Iron Sword!");
                     })
                     .build())
-                .item(3, 1, item()
+                .item(1, 3, item()
                     .material(Material.BOW)
                     .name("&e&lBow")
                     .lore("""
@@ -166,9 +166,9 @@ public class NavigationExample {
                     })
                     .build())
                 // Navigation: Back button (visible, goes to Shop menu)
-                .item(0, 3, NavigationUtils.backButton().build())
+                .item(3, 0, NavigationUtils.backButton().build())
                 // Close button
-                .item(8, 3, NavigationUtils.closeButton().build())
+                .item(3, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -182,7 +182,7 @@ public class NavigationExample {
             .rows(4)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 4)
+                .bounds(0, 0, 4, 9)
                 // Armor pieces
                 .item(1, 1, item()
                     .material(Material.DIAMOND_HELMET)
@@ -191,21 +191,21 @@ public class NavigationExample {
                         &7Defense: &a+3
                         &7Price: &6150 coins""")
                     .build())
-                .item(2, 1, item()
+                .item(1, 2, item()
                     .material(Material.DIAMOND_CHESTPLATE)
                     .name("&b&lDiamond Chestplate")
                     .lore("""
                         &7Defense: &a+8
                         &7Price: &6300 coins""")
                     .build())
-                .item(3, 1, item()
+                .item(1, 3, item()
                     .material(Material.DIAMOND_LEGGINGS)
                     .name("&b&lDiamond Leggings")
                     .lore("""
                         &7Defense: &a+6
                         &7Price: &6250 coins""")
                     .build())
-                .item(4, 1, item()
+                .item(1, 4, item()
                     .material(Material.DIAMOND_BOOTS)
                     .name("&b&lDiamond Boots")
                     .lore("""
@@ -213,8 +213,8 @@ public class NavigationExample {
                         &7Price: &6150 coins""")
                     .build())
                 // Navigation
-                .item(0, 3, NavigationUtils.backButton().build())
-                .item(8, 3, NavigationUtils.closeButton().build())
+                .item(3, 0, NavigationUtils.backButton().build())
+                .item(3, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -228,7 +228,7 @@ public class NavigationExample {
             .rows(4)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 4)
+                .bounds(0, 0, 4, 9)
                 // Consumables
                 .item(1, 1, item()
                     .material(Material.GOLDEN_APPLE)
@@ -237,14 +237,14 @@ public class NavigationExample {
                         &7Restores &c4 hearts
                         &7Price: &625 coins""")
                     .build())
-                .item(2, 1, item()
+                .item(1, 2, item()
                     .material(Material.COOKED_BEEF)
                     .name("&e&lSteak")
                     .lore("""
                         &7Restores &c4 hunger
                         &7Price: &65 coins""")
                     .build())
-                .item(3, 1, item()
+                .item(1, 3, item()
                     .material(Material.POTION)
                     .name("&d&lHealing Potion")
                     .lore("""
@@ -252,8 +252,8 @@ public class NavigationExample {
                         &7Price: &650 coins""")
                     .build())
                 // Navigation
-                .item(0, 3, NavigationUtils.backButton().build())
-                .item(8, 3, NavigationUtils.closeButton().build())
+                .item(3, 0, NavigationUtils.backButton().build())
+                .item(3, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -267,8 +267,8 @@ public class NavigationExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(4, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 4, item()
                     .material(Material.COMPARATOR)
                     .name("&b&lSettings")
                     .lore("""
@@ -276,8 +276,8 @@ public class NavigationExample {
                         &7(Work in progress)""")
                     .build())
                 // Navigation
-                .item(0, 2, NavigationUtils.backButton().build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 0, NavigationUtils.backButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -291,8 +291,8 @@ public class NavigationExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(4, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 4, item()
                     .material(Material.PLAYER_HEAD)
                     .name(ctx -> "&d&l" + ctx.getEntity().getName())
                     .lore("""
@@ -301,8 +301,8 @@ public class NavigationExample {
                         &7Playtime: &e12h 34m""")
                     .build())
                 // Navigation
-                .item(0, 2, NavigationUtils.backButton().build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 0, NavigationUtils.backButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -317,8 +317,8 @@ public class NavigationExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(4, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 4, item()
                     .material(Material.COMPASS)
                     .name("&e&lNavigation Info")
                     .lore("""
@@ -333,13 +333,13 @@ public class NavigationExample {
                         ))
                     .build())
                 // Conditional back button - automatically hidden if no history
-                .item(0, 2, NavigationUtils.backButton()
+                .item(2, 0, NavigationUtils.backButton()
                     .lore("""
                         &7Go back to the previous menu
                         
                         &eClick to go back!""")
                     .build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }

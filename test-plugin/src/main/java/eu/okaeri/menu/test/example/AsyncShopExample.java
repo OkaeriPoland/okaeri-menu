@@ -78,7 +78,7 @@ public class AsyncShopExample {
             // Balance display (async item)
             .pane(StaticPane.staticPane()
                 .name("balance")
-                .bounds(0, 0, 2, 1)
+                .bounds(0, 0, 1, 2)
                 .item(0, 0, AsyncMenuItem.itemAsync()
                     .key("balance-item")
                     .data(ctx -> {
@@ -120,7 +120,7 @@ public class AsyncShopExample {
                             ))
                         .build())
                     .build())
-                .item(1, 0, item()
+                .item(0, 1, item()
                     .material(Material.PAPER)
                     .name("<yellow><b>📊 Statistics")
                     .lore("""
@@ -153,7 +153,7 @@ public class AsyncShopExample {
             // Filter controls
             .pane(StaticPane.staticPane()
                 .name("filters")
-                .bounds(2, 0, 7, 1)
+                .bounds(0, 2, 1, 7)
                 .item(0, 0, item()
                     .material(ctx -> ctx.getBool("filter:weapon") ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
                     .name(ctx -> ctx.getBool("filter:weapon") ? "<green>✓ Weapons" : "<gray>Weapons")
@@ -175,7 +175,7 @@ public class AsyncShopExample {
                         event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, newValue ? 1.5f : 1.0f);
                     })
                     .build())
-                .item(2, 0, item()
+                .item(0, 2, item()
                     .material(ctx -> ctx.getBool("filter:armor") ? Material.DIAMOND_CHESTPLATE : Material.LEATHER_CHESTPLATE)
                     .name(ctx -> ctx.getBool("filter:armor") ? "<green>✓ Armor" : "<gray>Armor")
                     .lore("""
@@ -196,7 +196,7 @@ public class AsyncShopExample {
                         event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, newValue ? 1.5f : 1.0f);
                     })
                     .build())
-                .item(4, 0, item()
+                .item(0, 4, item()
                     .material(ctx -> ctx.getBool("filter:expensive") ? Material.GOLD_INGOT : Material.IRON_INGOT)
                     .name(ctx -> ctx.getBool("filter:expensive") ? "<green>✓ Expensive (>100)" : "<gray>Expensive (>100)")
                     .lore("""
@@ -217,7 +217,7 @@ public class AsyncShopExample {
                         event.playSound(Sound.UI_BUTTON_CLICK, 0.5f, newValue ? 1.5f : 1.0f);
                     })
                     .build())
-                .item(6, 0, item()
+                .item(0, 6, item()
                     .material(Material.BARRIER)
                     .name("<red><b>Clear All Filters")
                     .lore("""
@@ -235,7 +235,7 @@ public class AsyncShopExample {
             // Async shop items (AsyncPaginatedPane)
             .pane(paneAsync(ShopItem.class)
                 .name("shop-pane")
-                .bounds(0, 1, 9, 3)
+                .bounds(1, 0, 3, 9)
                 .loader(ctx -> {
                     // Simulate async database query
                     try {
@@ -304,11 +304,11 @@ public class AsyncShopExample {
             // Navigation
             .pane(StaticPane.staticPane()
                 .name("nav")
-                .bounds(0, 5, 9, 1)
-                .item(2, 0, PaginationUtils.previousPageButton("shop-pane")
+                .bounds(5, 0, 1, 9)
+                .item(0, 2, PaginationUtils.previousPageButton("shop-pane")
                     .name("<yellow>← Previous Page")
                     .build())
-                .item(3, 0, item()
+                .item(0, 3, item()
                     .material(Material.COMPARATOR)
                     .name("<yellow><b>Reload Shop Data")
                     .lore("""
@@ -329,10 +329,10 @@ public class AsyncShopExample {
                         event.refresh();
                     })
                     .build())
-                .item(4, 0, PaginationUtils.pageIndicator("shop-pane")
+                .item(0, 4, PaginationUtils.pageIndicator("shop-pane")
                     .name("<gray>Page <yellow><current><gray>/<yellow><total>")
                     .build())
-                .item(5, 0, item()
+                .item(0, 5, item()
                     .material(Material.REDSTONE)
                     .name("<yellow><b>Filter Strategy")
                     .lore("""
@@ -357,10 +357,10 @@ public class AsyncShopExample {
                         event.refresh();
                     })
                     .build())
-                .item(6, 0, PaginationUtils.nextPageButton("shop-pane")
+                .item(0, 6, PaginationUtils.nextPageButton("shop-pane")
                     .name("<yellow>Next Page →")
                     .build())
-                .item(8, 0, NavigationUtils.closeButton().build())
+                .item(0, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }

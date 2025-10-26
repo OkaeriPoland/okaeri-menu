@@ -63,9 +63,9 @@ public class PaginatedPane<T> extends AbstractPane {
 
         while ((itemIndex < pageItems.size()) && (slotIndex < this.bounds.getSlotCount())) {
             // Calculate position in pane
-            int localX = slotIndex % this.bounds.getWidth();
-            int localY = slotIndex / this.bounds.getWidth();
-            int localSlot = (localY * this.bounds.getWidth()) + localX;
+            int localRow = slotIndex / this.bounds.getWidth();
+            int localCol = slotIndex % this.bounds.getWidth();
+            int localSlot = (localRow * this.bounds.getWidth()) + localCol;
 
             // Check if position is occupied by static item
             if (this.staticItems.containsKey(localSlot)) {
@@ -81,7 +81,7 @@ public class PaginatedPane<T> extends AbstractPane {
             if (menuItem != null) {
                 ItemStack itemStack = menuItem.render(context);
                 if (itemStack != null) {
-                    int globalSlot = this.bounds.toGlobalSlot(localX, localY);
+                    int globalSlot = this.bounds.toGlobalSlot(localRow, localCol);
                     inventory.setItem(globalSlot, itemStack);
                 }
                 // Track this item for click routing (per-player)
@@ -144,24 +144,24 @@ public class PaginatedPane<T> extends AbstractPane {
     }
 
     @Override
-    public MenuItem getItem(int localX, int localY) {
+    public MenuItem getItem(int localRow, int localCol) {
         // This method is used by StaticPane and for non-paginated operations
         // For PaginatedPane clicks, getItemByGlobalSlot(globalSlot, context) is used
-        int localSlot = this.localCoordinatesToSlot(localX, localY);
+        int localSlot = this.localCoordinatesToSlot(localRow, localCol);
         return this.staticItems.get(localSlot);
     }
 
     /**
      * Gets the menu item at local coordinates with context for per-player lookup.
      *
-     * @param localX  Local X coordinate
-     * @param localY  Local Y coordinate
-     * @param context The menu context (for per-player state)
+     * @param localRow Local Y coordinate
+     * @param localCol Local X coordinate
+     * @param context  The menu context (for per-player state)
      * @return The menu item, or null if not found
      */
     @Override
-    public MenuItem getItem(int localX, int localY, @NonNull MenuContext context) {
-        int localSlot = this.localCoordinatesToSlot(localX, localY);
+    public MenuItem getItem(int localRow, int localCol, @NonNull MenuContext context) {
+        int localSlot = this.localCoordinatesToSlot(localRow, localCol);
         // Check static items first (they have priority)
         MenuItem staticItem = this.staticItems.get(localSlot);
         if (staticItem != null) {
@@ -176,12 +176,12 @@ public class PaginatedPane<T> extends AbstractPane {
      * Adds a static item at a local position.
      * Static items are always rendered and don't get replaced by paginated content.
      *
-     * @param localX   Local X coordinate
-     * @param localY   Local Y coordinate
+     * @param localRow Local Y coordinate
+     * @param localCol Local X coordinate
      * @param menuItem The menu item
      */
-    public void setStaticItem(int localX, int localY, @NonNull MenuItem menuItem) {
-        int localSlot = (localY * this.bounds.getWidth()) + localX;
+    public void setStaticItem(int localRow, int localCol, @NonNull MenuItem menuItem) {
+        int localSlot = (localRow * this.bounds.getWidth()) + localCol;
         this.staticItems.put(localSlot, menuItem);
     }
 
@@ -252,15 +252,15 @@ public class PaginatedPane<T> extends AbstractPane {
         /**
          * Sets the pane bounds.
          *
-         * @param x      X position (0-8)
          * @param y      Y position (0-5)
-         * @param width  Width (1-9)
+         * @param x      X position (0-8)
          * @param height Height (1-6)
+         * @param width  Width (1-9)
          * @return This builder
          */
         @NonNull
-        public Builder<T> bounds(int x, int y, int width, int height) {
-            this.bounds = new PaneBounds(x, y, width, height);
+        public Builder<T> bounds(int y, int x, int height, int width) {
+            this.bounds = new PaneBounds(y, x, height, width);
             return this;
         }
 
@@ -318,18 +318,18 @@ public class PaginatedPane<T> extends AbstractPane {
          * Adds a static item that's always rendered (e.g., navigation buttons).
          * Coordinates are validated immediately and stored for conversion during build().
          *
-         * @param localX   Local X coordinate (0 to width-1)
-         * @param localY   Local Y coordinate (0 to height-1)
+         * @param localRow Local Y coordinate (0 to height-1)
+         * @param localCol Local X coordinate (0 to width-1)
          * @param menuItem The menu item
          * @return This builder
          * @throws IllegalArgumentException if coordinates are out of bounds
          */
         @NonNull
-        public Builder<T> staticItem(int localX, int localY, @NonNull MenuItem menuItem) {
+        public Builder<T> staticItem(int localRow, int localCol, @NonNull MenuItem menuItem) {
             // Validate immediately for better error reporting
-            this.bounds.validate(localX, localY);
+            this.bounds.validate(localRow, localCol);
             // Store coordinates for conversion during build()
-            this.staticItemEntries.add(new AbstractPane.ItemCoordinateEntry(localX, localY, menuItem));
+            this.staticItemEntries.add(new AbstractPane.ItemCoordinateEntry(localRow, localCol, menuItem));
             return this;
         }
 

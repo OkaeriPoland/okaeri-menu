@@ -32,7 +32,7 @@ public class WaitForDataExample {
             .rows(3)
             .pane(paneAsync(String.class)
                 .name("items")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .loader(ctx -> {
                     // Simulate database/API call with 500ms delay
                     try {

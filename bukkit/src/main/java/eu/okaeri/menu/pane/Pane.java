@@ -41,22 +41,22 @@ public interface Pane {
      * Gets a menu item at local coordinates (non-context version).
      * For static lookups that don't need per-player state.
      *
-     * @param localX Local X coordinate
-     * @param localY Local Y coordinate
+     * @param localRow Local Y coordinate
+     * @param localCol Local X coordinate
      * @return The menu item, or null if not found
      */
-    MenuItem getItem(int localX, int localY);
+    MenuItem getItem(int localRow, int localCol);
 
     /**
      * Gets a menu item at local coordinates with context for per-player lookup.
      * Used by panes to access per-player render caches.
      *
-     * @param localX  Local X coordinate
-     * @param localY  Local Y coordinate
-     * @param context The menu context (for per-player state)
+     * @param localRow Local Y coordinate
+     * @param localCol Local X coordinate
+     * @param context  The menu context (for per-player state)
      * @return The menu item, or null if not found
      */
-    MenuItem getItem(int localX, int localY, @NonNull MenuContext context);
+    MenuItem getItem(int localRow, int localCol, @NonNull MenuContext context);
 
     /**
      * Gets a menu item by global slot with context for per-player lookup.

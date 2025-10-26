@@ -42,8 +42,8 @@ public class FilterStrategyExample {
             // Strategy selector (top row)
             .pane(StaticPane.staticPane()
                 .name("strategy")
-                .bounds(0, 0, 9, 1)
-                .item(1, 0, item()
+                .bounds(0, 0, 1, 9)
+                .item(0, 1, item()
                     .material(ctx -> (ctx.get("strategy", FilterStrategy.class) == FilterStrategy.AND)
                         ? Material.LIME_WOOL
                         : Material.GRAY_WOOL)
@@ -59,7 +59,7 @@ public class FilterStrategyExample {
                         event.refresh();
                     })
                     .build())
-                .item(3, 0, item()
+                .item(0, 3, item()
                     .material(ctx -> (ctx.get("strategy", FilterStrategy.class) == FilterStrategy.OR)
                         ? Material.LIME_WOOL
                         : Material.GRAY_WOOL)
@@ -75,7 +75,7 @@ public class FilterStrategyExample {
                         event.refresh();
                     })
                     .build())
-                .item(8, 0, item()
+                .item(0, 8, item()
                     .material(Material.BARRIER)
                     .name("&cClear Filters")
                     .onClick(event -> {
@@ -88,8 +88,8 @@ public class FilterStrategyExample {
             // Filter controls (row 2)
             .pane(StaticPane.staticPane()
                 .name("filters")
-                .bounds(0, 1, 9, 1)
-                .item(1, 0, item()
+                .bounds(1, 0, 1, 9)
+                .item(0, 1, item()
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
                         .id("weapon")
@@ -111,7 +111,7 @@ public class FilterStrategyExample {
                         event.refresh();
                     })
                     .build())
-                .item(3, 0, item()
+                .item(0, 3, item()
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
                         .id("armor")
@@ -133,7 +133,7 @@ public class FilterStrategyExample {
                         event.refresh();
                     })
                     .build())
-                .item(5, 0, item()
+                .item(0, 5, item()
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
                         .id("expensive")
@@ -155,7 +155,7 @@ public class FilterStrategyExample {
                         event.refresh();
                     })
                     .build())
-                .item(7, 0, item()
+                .item(0, 7, item()
                     .filter(ItemFilter.<ShopItem>builder()
                         .target("shop")
                         .id("affordable")
@@ -181,7 +181,7 @@ public class FilterStrategyExample {
             // Shop items
             .pane(PaginatedPane.<ShopItem>pane()
                 .name("shop")
-                .bounds(0, 2, 9, 3)
+                .bounds(2, 0, 3, 9)
                 .items(items)
                 // itemsPerPage defaults to pane size (9x3 = 27 slots)
                 .renderer((ctx, item, index) -> item()
@@ -202,11 +202,11 @@ public class FilterStrategyExample {
             // Navigation
             .pane(StaticPane.staticPane()
                 .name("nav")
-                .bounds(0, 5, 9, 1)
-                .item(3, 0, PaginationUtils.previousPageButton("shop").build())
-                .item(4, 0, PaginationUtils.pageIndicator("shop").build())
-                .item(5, 0, PaginationUtils.nextPageButton("shop").build())
-                .item(8, 0, NavigationUtils.closeButton().build())
+                .bounds(5, 0, 1, 9)
+                .item(0, 3, PaginationUtils.previousPageButton("shop").build())
+                .item(0, 4, PaginationUtils.pageIndicator("shop").build())
+                .item(0, 5, PaginationUtils.nextPageButton("shop").build())
+                .item(0, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }

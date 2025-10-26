@@ -49,23 +49,24 @@ public abstract class AbstractPane implements Pane {
             return null;
         }
 
-        int globalX = globalSlot % 9;
         int globalY = globalSlot / 9;
-        int localX = globalX - this.bounds.getX();
-        int localY = globalY - this.bounds.getY();
+        int globalX = globalSlot % 9;
 
-        return new int[]{localX, localY};
+        int localRow = globalY - this.bounds.getY();
+        int localCol = globalX - this.bounds.getX();
+
+        return new int[]{localRow, localCol};
     }
 
     /**
      * Converts local coordinates to local slot index.
      *
-     * @param localX Local X coordinate
-     * @param localY Local Y coordinate
+     * @param localRow Local Y coordinate
+     * @param localCol Local X coordinate
      * @return The local slot index
      */
-    protected int localCoordinatesToSlot(int localX, int localY) {
-        return (localY * this.bounds.getWidth()) + localX;
+    protected int localCoordinatesToSlot(int localRow, int localCol) {
+        return (localRow * this.bounds.getWidth()) + localCol;
     }
 
     /**
@@ -110,12 +111,12 @@ public abstract class AbstractPane implements Pane {
      * Gets the menu item at local coordinates.
      * Subclasses implement this to return items from their storage.
      *
-     * @param localX Local X coordinate
-     * @param localY Local Y coordinate
+     * @param localRow Local Y coordinate
+     * @param localCol Local X coordinate
      * @return The menu item, or null if none
      */
     @Override
-    public abstract MenuItem getItem(int localX, int localY);
+    public abstract MenuItem getItem(int localRow, int localCol);
 
     /**
      * Gets items that can have filtering behavior (for declarative filters).
@@ -162,9 +163,9 @@ public abstract class AbstractPane implements Pane {
         Map<Integer, MenuItem> result = new HashMap<>();
         for (ItemCoordinateEntry entry : entries) {
             // Validate coordinates against bounds
-            bounds.validate(entry.getLocalX(), entry.getLocalY());
+            bounds.validate(entry.getLocalRow(), entry.getLocalCol());
 
-            int localSlot = bounds.coordinatesToLocalSlot(entry.getLocalX(), entry.getLocalY());
+            int localSlot = bounds.coordinatesToLocalSlot(entry.getLocalRow(), entry.getLocalCol());
             result.put(localSlot, entry.getMenuItem());
         }
         return result;
@@ -177,8 +178,8 @@ public abstract class AbstractPane implements Pane {
     @Value
     @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
     protected static class ItemCoordinateEntry {
-        int localX;
-        int localY;
+        int localRow;
+        int localCol;
         MenuItem menuItem;
     }
 }

@@ -63,7 +63,7 @@ class PaginatedPaneTest {
     @DisplayName("Should require name in builder")
     void testBuilderRequiresName() {
         assertThatThrownBy(() -> pane(String.class)
-            .bounds(0, 0, 9, 5)
+            .bounds(0, 0, 5, 9)
             .items(List.of("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build())
@@ -88,7 +88,7 @@ class PaginatedPaneTest {
     void testBuilderRequiresItemsSupplier() {
         assertThatThrownBy(() -> pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 5)
+            .bounds(0, 0, 5, 9)
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build())
             .isInstanceOf(IllegalStateException.class)
@@ -100,7 +100,7 @@ class PaginatedPaneTest {
     void testBuilderRequiresRenderer() {
         assertThatThrownBy(() -> pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 5)
+            .bounds(0, 0, 5, 9)
             .items(List.of("A", "B"))
             .build())
             .isInstanceOf(IllegalStateException.class)
@@ -112,7 +112,7 @@ class PaginatedPaneTest {
     void testDefaultItemsPerPage() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 5)  // 9 * 5 = 45 slots
+            .bounds(0, 0, 5, 9)  // 9 * 5 = 45 slots
             .items(List.of("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
@@ -125,7 +125,7 @@ class PaginatedPaneTest {
     void testCustomItemsPerPage() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 5)
+            .bounds(0, 0, 5, 9)
             .items(List.of("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .itemsPerPage(10)
@@ -139,10 +139,10 @@ class PaginatedPaneTest {
     void testItemsPerPageWithStaticItems() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 5)  // 45 slots
+            .bounds(0, 0, 5, 9)  // 45 slots
             .items(List.of("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
-            .staticItem(8, 4, MenuItem.item().material(Material.BARRIER).build())  // 1 static item
+            .staticItem(4, 8, MenuItem.item().material(Material.BARRIER).build())  // 1 static item
             .build();
 
         assertThat(pane.getItemsPerPage()).isEqualTo(44);  // 45 - 1 = 44
@@ -155,7 +155,7 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)  // 1 row = 9 slots
+            .bounds(0, 0, 1, 9)  // 1 row = 9 slots
             .items(items)
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
@@ -187,7 +187,7 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(items)
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
@@ -221,7 +221,7 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(items)
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
@@ -253,12 +253,12 @@ class PaginatedPaneTest {
     void testRenderStaticItems() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(Arrays.asList("A", "B", "C"))
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .build())
-            .staticItem(8, 0, MenuItem.item()
+            .staticItem(0, 8, MenuItem.item()
                 .material(Material.BARRIER)
                 .name("Static Button")
                 .build())
@@ -283,14 +283,14 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(items)
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .name(item)
                 .amount(index + 1)  // Use amount to track index
                 .build())
-            .staticItem(2, 0, MenuItem.item()  // Block position 2
+            .staticItem(0, 2, MenuItem.item()  // Block position 2
                 .material(Material.BARRIER)
                 .build())
             .itemsPerPage(5)
@@ -317,13 +317,13 @@ class PaginatedPaneTest {
 
         PaginatedPane<Integer> pane = pane(Integer.class)
             .name("test")
-            .bounds(0, 0, 9, 1)  // 9 slots wide
+            .bounds(0, 0, 1, 9)  // 9 slots wide
             .items(items)
             .renderer((ctx, itemId, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .amount(itemId)  // Use amount to identify which item (1,2,3,4,5)
                 .build())
-            .staticItem(2, 0, MenuItem.item()  // Static at position 2
+            .staticItem(0, 2, MenuItem.item()  // Static at position 2
                 .material(Material.BARRIER)
                 .build())
             .itemsPerPage(5)
@@ -385,14 +385,14 @@ class PaginatedPaneTest {
 
         PaginatedPane<Integer> pane = pane(Integer.class)
             .name("test")
-            .bounds(0, 0, 9, 1)  // 9 slots
+            .bounds(0, 0, 1, 9)  // 9 slots
             .items(items)
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .amount(item)
                 .build())
             .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
-            .staticItem(8, 0, MenuItem.item().material(Material.BARRIER).build())
+            .staticItem(0, 8, MenuItem.item().material(Material.BARRIER).build())
             .build();
 
         MenuContext context = new MenuContext(this.menu, this.player);
@@ -421,14 +421,14 @@ class PaginatedPaneTest {
 
         PaginatedPane<Integer> pane = pane(Integer.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(items)
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
                 .amount(item)
                 .build())
             .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
-            .staticItem(8, 0, MenuItem.item().material(Material.BARRIER).build())
+            .staticItem(0, 8, MenuItem.item().material(Material.BARRIER).build())
             .build();
 
         MenuContext context = new MenuContext(this.menu, this.player);
@@ -505,7 +505,7 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(() -> dynamicList)  // Supplier
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
@@ -538,7 +538,7 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(Arrays.asList("A", "B", "C"))
             .renderer((ctx, item, index) -> {
                 receivedIndices.add(index);
@@ -557,7 +557,7 @@ class PaginatedPaneTest {
     void testNullRendererResult() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(Arrays.asList("A", "B", "C"))
             .renderer((ctx, item, index) -> null)  // Returns null
             .build();
@@ -579,7 +579,7 @@ class PaginatedPaneTest {
     void testNullItemStackFromMenuItem() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(Arrays.asList("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.AIR)  // AIR renders as null
@@ -599,7 +599,7 @@ class PaginatedPaneTest {
     void testPaneBounds() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(2, 1, 5, 2)  // x=2, y=1, width=5, height=2
+            .bounds(1, 2, 2, 5)  // x=2, y=1, width=5, height=2
             .items(Arrays.asList("A", "B", "C", "D", "E"))
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
@@ -627,10 +627,10 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(Arrays.asList("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
-            .staticItem(5, 0, staticItem)  // Slot 5
+            .staticItem(0, 5, staticItem)  // Slot 5
             .build();
 
         MenuItem result = pane.getItemByGlobalSlot(5);
@@ -642,7 +642,7 @@ class PaginatedPaneTest {
     void testGetItemByGlobalSlotNonStatic() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(Arrays.asList("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
@@ -658,7 +658,7 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(2, 1, 5, 2)  // Limited bounds
+            .bounds(1, 2, 2, 5)  // Limited bounds
             .items(List.of("A"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .staticItem(0, 0, staticItem)
@@ -674,7 +674,7 @@ class PaginatedPaneTest {
     void testSetStaticItemAfterConstruction() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(Arrays.asList("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
@@ -683,7 +683,7 @@ class PaginatedPaneTest {
             .material(Material.BARRIER)
             .build();
 
-        pane.setStaticItem(5, 0, newStaticItem);
+        pane.setStaticItem(0, 5, newStaticItem);
 
         MenuItem result = pane.getItemByGlobalSlot(5);
         assertThat(result).isSameAs(newStaticItem);
@@ -694,7 +694,7 @@ class PaginatedPaneTest {
     void testInvalidateOnSetStaticItem() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of("A"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
@@ -703,7 +703,7 @@ class PaginatedPaneTest {
         pane.render(this.inventory, context);
 
         // Add static item (should invalidate)
-        pane.setStaticItem(5, 0, MenuItem.item().material(Material.BARRIER).build());
+        pane.setStaticItem(0, 5, MenuItem.item().material(Material.BARRIER).build());
 
         // Render should work without issues
         assertThatCode(() -> pane.render(this.inventory, context))
@@ -715,7 +715,7 @@ class PaginatedPaneTest {
     void testEmptyItemsList() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(List.of())  // Empty list
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
@@ -741,7 +741,7 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 3)  // 3 rows = 27 slots
+            .bounds(0, 0, 3, 9)  // 3 rows = 27 slots
             .items(items)
             .renderer((ctx, item, index) -> MenuItem.item()
                 .material(Material.STONE)
@@ -773,7 +773,7 @@ class PaginatedPaneTest {
 
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(items)
             .renderer((ctx, item, index) -> {
                 callCount.incrementAndGet();
@@ -794,7 +794,7 @@ class PaginatedPaneTest {
     void testInvalidation() {
         PaginatedPane<String> pane = pane(String.class)
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(Arrays.asList("A", "B"))
             .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
             .build();
@@ -814,7 +814,7 @@ class PaginatedPaneTest {
             .rows(4)
             .pane(StaticPane.staticPane()
                 .name("failingFilters")
-                .bounds(0, 0, 9, 1)
+                .bounds(0, 0, 1, 9)
                 .item(0, 0, MenuItem.item()
                     .material(Material.BARRIER)
                     .filter(ItemFilter.builder()
@@ -828,7 +828,7 @@ class PaginatedPaneTest {
                 .build())
             .pane(pane(String.class)
                 .name("failingPane")
-                .bounds(0, 1, 9, 1)
+                .bounds(1, 0, 1, 9)
                 .items(Arrays.asList("Should", "Not", "Appear"))
                 .renderer((ctx, item, index) -> MenuItem.item()
                     .material(Material.DIAMOND)
@@ -836,7 +836,7 @@ class PaginatedPaneTest {
                 .build())
             .pane(StaticPane.staticPane()
                 .name("workingPane")
-                .bounds(0, 2, 9, 1)
+                .bounds(2, 0, 1, 9)
                 .item(0, 0, MenuItem.item()
                     .material(Material.EMERALD)
                     .name("Working Item")
@@ -872,7 +872,7 @@ class PaginatedPaneTest {
             .rows(3)
             .pane(pane(String.class)
                 .name("failingPane")
-                .bounds(0, 0, 9, 1)
+                .bounds(0, 0, 1, 9)
                 .items(Arrays.asList("A", "B", "C"))
                 .renderer((ctx, item, index) -> {
                     throw new RuntimeException("Renderer failed!");
@@ -880,7 +880,7 @@ class PaginatedPaneTest {
                 .build())
             .pane(StaticPane.staticPane()
                 .name("workingPane")
-                .bounds(0, 1, 9, 1)
+                .bounds(1, 0, 1, 9)
                 .item(0, 0, MenuItem.item()
                     .material(Material.GOLD_INGOT)
                     .name("Working Item")

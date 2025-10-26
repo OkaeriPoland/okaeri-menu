@@ -70,9 +70,9 @@ public class StaticPane extends AbstractPane {
             ItemStack rendered = item.render(context);
             if (rendered != null) {
                 // Calculate position from slot index
-                int localX = slotIndex % this.bounds.getWidth();
-                int localY = slotIndex / this.bounds.getWidth();
-                int globalSlot = this.bounds.toGlobalSlot(localX, localY);
+                int localRow = slotIndex / this.bounds.getWidth();
+                int localCol = slotIndex % this.bounds.getWidth();
+                int globalSlot = this.bounds.toGlobalSlot(localRow, localCol);
 
                 if (globalSlot < inventory.getSize()) {
                     inventory.setItem(globalSlot, rendered);
@@ -102,15 +102,15 @@ public class StaticPane extends AbstractPane {
      * Gets the menu item at the specified local coordinates.
      * Checks static items first, then looks up auto-item from the render cache.
      *
-     * @param localX Column within this pane
-     * @param localY Row within this pane
+     * @param localRow Row within this pane
+     * @param localCol Column within this pane
      * @return The menu item, or null if none
      */
     @Override
-    public MenuItem getItem(int localX, int localY) {
+    public MenuItem getItem(int localRow, int localCol) {
         // This method is used by non-context-aware code
         // For click routing, getItemByGlobalSlot(globalSlot, context) is used
-        int localCoord = (localY * this.bounds.getWidth()) + localX;
+        int localCoord = (localRow * this.bounds.getWidth()) + localCol;
         // Only return static items (auto-items need context)
         return this.staticItems.get(localCoord);
     }
@@ -118,14 +118,14 @@ public class StaticPane extends AbstractPane {
     /**
      * Gets the menu item at local coordinates with context for per-player lookup.
      *
-     * @param localX  Local X coordinate
-     * @param localY  Local Y coordinate
-     * @param context The menu context (for per-player state)
+     * @param localRow Local Y coordinate
+     * @param localCol Local X coordinate
+     * @param context  The menu context (for per-player state)
      * @return The menu item, or null if not found
      */
     @Override
-    public MenuItem getItem(int localX, int localY, @NonNull MenuContext context) {
-        int localCoord = (localY * this.bounds.getWidth()) + localX;
+    public MenuItem getItem(int localRow, int localCol, @NonNull MenuContext context) {
+        int localCoord = (localRow * this.bounds.getWidth()) + localCol;
 
         // Check static items first
         MenuItem staticItem = this.staticItems.get(localCoord);
@@ -163,8 +163,8 @@ public class StaticPane extends AbstractPane {
         }
 
         @NonNull
-        public Builder bounds(int x, int y, int width, int height) {
-            this.bounds = PaneBounds.of(x, y, width, height);
+        public Builder bounds(int y, int x, int height, int width) {
+            this.bounds = PaneBounds.of(y, x, height, width);
             return this;
         }
 
@@ -191,18 +191,18 @@ public class StaticPane extends AbstractPane {
          * Adds an item at the specified local coordinates.
          * Coordinates are validated immediately and stored for conversion during build().
          *
-         * @param localX Column within the pane (0 to width-1)
-         * @param localY Row within the pane (0 to height-1)
-         * @param item   The menu item
+         * @param localRow Row within the pane (0 to height-1)
+         * @param localCol Column within the pane (0 to width-1)
+         * @param item     The menu item
          * @return This builder
          * @throws IllegalArgumentException if coordinates are out of bounds
          */
         @NonNull
-        public Builder item(int localX, int localY, @NonNull MenuItem item) {
+        public Builder item(int localRow, int localCol, @NonNull MenuItem item) {
             // Validate immediately for better error reporting
-            this.bounds.validate(localX, localY);
+            this.bounds.validate(localRow, localCol);
             // Store coordinates for conversion during build()
-            this.itemEntries.add(new AbstractPane.ItemCoordinateEntry(localX, localY, item));
+            this.itemEntries.add(new AbstractPane.ItemCoordinateEntry(localRow, localCol, item));
             return this;
         }
 

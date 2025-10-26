@@ -296,13 +296,13 @@ public class MenuContext {
      * Must be called from main thread.
      *
      * @param paneName The name of the pane
-     * @param localX   The local X coordinate (column) within the pane
-     * @param localY   The local Y coordinate (row) within the pane
+     * @param localRow The local Y coordinate (row) within the pane
+     * @param localCol The local X coordinate (column) within the pane
      * @param item     The item to set (can be null to clear)
      * @throws IllegalArgumentException if the pane doesn't exist or slot is not interactive
      * @throws IllegalStateException    if called from async thread
      */
-    public void setSlotItem(@NonNull String paneName, int localX, int localY, ItemStack item) {
+    public void setSlotItem(@NonNull String paneName, int localRow, int localCol, ItemStack item) {
         this.requireMainThread("setSlotItem");
         Pane pane = this.menu.getPanes().get(paneName);
         if (pane == null) {
@@ -313,21 +313,21 @@ public class MenuContext {
             throw new IllegalArgumentException("setSlotItem only supports StaticPane, not " + pane.getClass().getSimpleName());
         }
 
-        MenuItem menuItem = staticPane.getItem(localX, localY);
+        MenuItem menuItem = staticPane.getItem(localRow, localCol);
 
         if (menuItem == null) {
-            throw new IllegalArgumentException("No item at local coordinates (" + localX + ", " + localY + ") in pane " + paneName);
+            throw new IllegalArgumentException("No item at local coordinates (" + localCol + ", " + localRow + ") in pane " + paneName);
         }
 
         if (!menuItem.isInteractive()) {
             throw new IllegalArgumentException(
-                "Cannot set item at (" + localX + ", " + localY + ") - slot is not interactive. " +
+                "Cannot set item at (" + localCol + ", " + localRow + ") - slot is not interactive. " +
                     "Use .interactive(), .allowPlacement(true), or .allowPickup(true) on the MenuItem."
             );
         }
 
         // Convert local coordinates to global slot
-        int globalSlot = staticPane.getBounds().toGlobalSlot(localX, localY);
+        int globalSlot = staticPane.getBounds().toGlobalSlot(localRow, localCol);
 
         // Get the inventory for this viewer
         ViewerState viewerState = this.menu.getViewerStates().get(this.entity.getUniqueId());

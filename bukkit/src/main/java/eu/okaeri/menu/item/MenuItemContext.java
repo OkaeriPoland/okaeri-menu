@@ -76,12 +76,12 @@ public abstract class MenuItemContext extends MenuContext {
      * This is a convenience method for the common case where you want to update slots in the
      * same pane that triggered the event.
      *
-     * @param localX The local X coordinate (column) within the source pane
-     * @param localY The local Y coordinate (row) within the source pane
-     * @param item   The item to set (can be null to clear)
+     * @param localRow The local Y coordinate (row) within the source pane
+     * @param localCol The local X coordinate (column) within the source pane
+     * @param item     The item to set (can be null to clear)
      * @throws IllegalArgumentException if the source pane cannot be determined or slot is not interactive
      */
-    public void setSlotItem(int localX, int localY, ItemStack item) {
+    public void setSlotItem(int localRow, int localCol, ItemStack item) {
         // Find which pane contains the current slot
         String sourcePaneName = this.findSourcePane();
         if (sourcePaneName == null) {
@@ -92,7 +92,7 @@ public abstract class MenuItemContext extends MenuContext {
         }
 
         // Delegate to the explicit version
-        this.setSlotItem(sourcePaneName, localX, localY, item);
+        this.setSlotItem(sourcePaneName, localRow, localCol, item);
     }
 
     /**

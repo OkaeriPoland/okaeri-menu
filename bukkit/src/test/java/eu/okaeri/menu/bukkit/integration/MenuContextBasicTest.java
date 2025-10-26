@@ -55,7 +55,7 @@ class MenuContextBasicTest {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .build())
             .build();
 

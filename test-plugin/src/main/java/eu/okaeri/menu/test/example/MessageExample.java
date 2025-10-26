@@ -39,9 +39,9 @@ public class MessageExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 // Simple colors
-                .item(0, 1, item()
+                .item(1, 0, item()
                     .material(Material.RED_WOOL)
                     .name("<red>Red Text")
                     .lore("""
@@ -49,7 +49,7 @@ public class MessageExample {
                         <gray>for text formatting!""")
                     .build())
                 // Gradient
-                .item(2, 1, item()
+                .item(1, 2, item()
                     .material(Material.NETHER_STAR)
                     .name("<gradient:red:blue>Rainbow Gradient</gradient>")
                     .lore("""
@@ -57,7 +57,7 @@ public class MessageExample {
                         <gradient:gold:yellow>beautiful gradients!</gradient>""")
                     .build())
                 // Formatting
-                .item(4, 1, item()
+                .item(1, 4, item()
                     .material(Material.DIAMOND)
                     .name("<bold><blue>Bold & Blue")
                     .lore("""
@@ -67,7 +67,7 @@ public class MessageExample {
                         <obfuscated>Obfuscated""")
                     .build())
                 // Placeholders with reactive values
-                .item(6, 1, item()
+                .item(1, 6, item()
                     .material(Material.CLOCK)
                     .name(
                         "<gold>Time: <time>",
@@ -80,7 +80,7 @@ public class MessageExample {
                     )
                     .onClick(MenuContext::refresh)
                     .build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -95,8 +95,8 @@ public class MessageExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(2, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 2, item()
                     .material(Material.REDSTONE)
                     .name("§c§lRed Title")  // § codes
                     .lore("""
@@ -107,7 +107,7 @@ public class MessageExample {
                         §9Blue text
                         &6Gold text""")
                     .build())
-                .item(4, 1, item()
+                .item(1, 4, item()
                     .material(Material.PAPER)
                     .name("&6Price: <price> coins", Map.of("price", "100"))  // Mixed & and placeholder
                     .lore("""
@@ -119,7 +119,7 @@ public class MessageExample {
                         Map.of("player", "Steve", "balance", "500")
                     )
                     .build())
-                .item(6, 1, item()
+                .item(1, 6, item()
                     .material(Material.ENCHANTED_BOOK)
                     .name("§b&lFormatting Codes")  // Mix § and &
                     .lore("""
@@ -129,7 +129,7 @@ public class MessageExample {
                         &m&7Strikethrough Gray
                         &k&dObfuscated Purple""")
                     .build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -144,7 +144,7 @@ public class MessageExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .item(1, 1, item()
                     .material(Material.EMERALD)
                     .name("§aLegacy §b<gradient:gold:yellow>MiniMessage</gradient>")
@@ -152,7 +152,7 @@ public class MessageExample {
                         &7Mix § codes, & codes,
                         <gradient:red:blue>and MiniMessage tags!</gradient>""")
                     .build())
-                .item(4, 1, item()
+                .item(1, 4, item()
                     .material(Material.DIAMOND)
                     .name("<bold>&6Gold <gradient:blue:aqua>Gradient</gradient>")
                     .lore("""
@@ -163,14 +163,14 @@ public class MessageExample {
                         
                         &eNo need to choose!""")
                     .build())
-                .item(7, 1, item()
+                .item(1, 7, item()
                     .material(Material.NETHER_STAR)
                     .name("§b<rainbow>Rainbow §6Gold &cRed")
                     .lore("""
                         &7The universal provider
                         <gradient:gold:yellow>handles everything!</gradient>""")
                     .build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -185,9 +185,9 @@ public class MessageExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 // Reactive name with context-aware placeholders
-                .item(3, 1, item()
+                .item(1, 3, item()
                     .material(Material.DIAMOND)
                     .name(
                         "<gradient:blue:aqua>Clicks: <count></gradient>",
@@ -212,7 +212,7 @@ public class MessageExample {
                     })
                     .build())
                 // Dynamic color based on value
-                .item(5, 1, item()
+                .item(1, 5, item()
                     .material(ctx -> (ctx.getInt("clickCount") > 5) ? Material.EMERALD : Material.COAL)
                     .name(
                         "<color>Status Indicator",
@@ -227,7 +227,7 @@ public class MessageExample {
                         ctx -> Map.of("count", ctx.getInt("clickCount"))
                     )
                     .build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -242,7 +242,7 @@ public class MessageExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 // Diamond Sword with locale-specific name and lore
                 .item(1, 1, item()
                     .material(Material.DIAMOND_SWORD)
@@ -278,7 +278,7 @@ public class MessageExample {
                     .onClick(event -> event.sendMessage("<green>Purchased Diamond Sword!"))
                     .build())
                 // Health Potion with locale map and dynamic variables
-                .item(3, 1, item()
+                .item(1, 3, item()
                     .material(Material.POTION)
                     .vars(Map.of("healing", 4))
                     .name(Map.of(
@@ -311,7 +311,7 @@ public class MessageExample {
                     ))
                     .build())
                 // Golden Apple with method-level variable override
-                .item(5, 1, item()
+                .item(1, 5, item()
                     .material(Material.GOLDEN_APPLE)
                     .vars(Map.of("price", 100))  // Item-level price
                     .name(Map.of(
@@ -344,7 +344,7 @@ public class MessageExample {
                     ), Map.of("sale", 75))  // Method-level override for sale price
                     .build())
                 // Info button
-                .item(8, 1, item()
+                .item(1, 8, item()
                     .material(Material.BOOK)
                     .name(Map.of(
                         Locale.ENGLISH, "<yellow>Language Info",
@@ -399,7 +399,7 @@ public class MessageExample {
                             <yellow>Votre langue détermine le texte!"""
                     ))
                     .build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -418,8 +418,8 @@ public class MessageExample {
             .messageProvider(i18nProvider)  // Set custom provider at menu level
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(3, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 3, item()
                     .material(Material.DIAMOND_SWORD)
                     .name("menu.shop.sword.name")  // Resolves via i18n
                     .lore("""
@@ -431,7 +431,7 @@ public class MessageExample {
                     )
                     .onClick(event -> event.sendMessage("&aPurchased Diamond Sword for 150 coins!"))
                     .build())
-                .item(5, 1, item()
+                .item(1, 5, item()
                     .material(Material.BOOK)
                     .name("menu.info.title")
                     .lore("""
@@ -445,7 +445,7 @@ public class MessageExample {
                         )
                     )
                     .build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -512,8 +512,8 @@ public class MessageExample {
             .messageProvider(papiProvider)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(4, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 4, item()
                     .material(Material.PLAYER_HEAD)
                     .name("<gradient:blue:aqua><player_name>")  // Custom placeholder
                     .lore("""
@@ -523,7 +523,7 @@ public class MessageExample {
                         
                         <yellow>Placeholders auto-update!""")
                     .build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -571,7 +571,7 @@ public class MessageExample {
             .rows(5)
             .pane(PaginatedPane.<String>pane()
                 .name("items")
-                .bounds(0, 1, 9, 3)
+                .bounds(1, 0, 3, 9)
                 .items(items)
                 .itemsPerPage(9)
                 .renderer((ctx, item, index) -> item()
@@ -581,7 +581,7 @@ public class MessageExample {
                 .build())
             .pane(staticPane()
                 .name("controls")
-                .bounds(0, 0, 9, 1)
+                .bounds(0, 0, 1, 9)
                 // Custom i18n pagination buttons
                 .item(0, 0, PaginationUtils.previousPageButton(
                     "items",
@@ -610,7 +610,7 @@ public class MessageExample {
                             <yellow>Aller à la page précédente"""
                     )
                 ).build())
-                .item(4, 0, PaginationUtils.pageIndicator(
+                .item(0, 4, PaginationUtils.pageIndicator(
                     "items",
                     Map.of(
                         Locale.ENGLISH, "<yellow>Page <current>/<total>",
@@ -633,7 +633,7 @@ public class MessageExample {
                             <gray>Total: <white><total_items>"""
                     )
                 ).build())
-                .item(8, 0, PaginationUtils.nextPageButton(
+                .item(0, 8, PaginationUtils.nextPageButton(
                     "items",
                     Map.of(
                         Locale.ENGLISH, "<green>Next →",
@@ -663,7 +663,7 @@ public class MessageExample {
                 .build())
             .pane(staticPane()
                 .name("navigation")
-                .bounds(0, 4, 9, 1)
+                .bounds(4, 0, 1, 9)
                 // Custom i18n back button
                 .item(0, 0, eu.okaeri.menu.navigation.NavigationUtils.backButton(
                     Map.of(
@@ -692,7 +692,7 @@ public class MessageExample {
                     )
                 ).build())
                 // Custom i18n close button
-                .item(8, 0, eu.okaeri.menu.navigation.NavigationUtils.closeButton(
+                .item(0, 8, eu.okaeri.menu.navigation.NavigationUtils.closeButton(
                     Map.of(
                         Locale.ENGLISH, "<red>❌ Close",
                         new Locale("pl"), "<red>❌ Zamknij",

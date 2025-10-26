@@ -90,7 +90,7 @@ class StaticPaneTest {
     void testBuilderBoundsInt() {
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(1, 2, 5, 3)
+            .bounds(2, 1, 3, 5)
             .build();
 
         PaneBounds bounds = pane.getBounds();
@@ -103,7 +103,7 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should set bounds via builder (PaneBounds object)")
     void testBuilderBoundsObject() {
-        PaneBounds customBounds = PaneBounds.of(2, 1, 7, 4);
+        PaneBounds customBounds = PaneBounds.of(1, 2, 4, 7);
         StaticPane pane = staticPane()
             .name("test")
             .bounds(customBounds)
@@ -121,11 +121,11 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
-            .item(4, 1, item)
+            .bounds(0, 0, 3, 9)
+            .item(1, 4, item)
             .build();
 
-        assertThat(pane.getItem(4, 1)).isEqualTo(item);
+        assertThat(pane.getItem(1, 4)).isEqualTo(item);
     }
 
     @Test
@@ -137,15 +137,15 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(0, 0, item1)
-            .item(4, 1, item2)
-            .item(8, 2, item3)
+            .item(1, 4, item2)
+            .item(2, 8, item3)
             .build();
 
         assertThat(pane.getItem(0, 0)).isEqualTo(item1);
-        assertThat(pane.getItem(4, 1)).isEqualTo(item2);
-        assertThat(pane.getItem(8, 2)).isEqualTo(item3);
+        assertThat(pane.getItem(1, 4)).isEqualTo(item2);
+        assertThat(pane.getItem(2, 8)).isEqualTo(item3);
     }
 
     @Test
@@ -153,11 +153,11 @@ class StaticPaneTest {
     void testAddItemOutsideWidthBounds() {
         StaticPane.Builder builder = staticPane()
             .name("test")
-            .bounds(0, 0, 5, 3);
+            .bounds(0, 0, 3, 5);
 
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
-        assertThatThrownBy(() -> builder.item(5, 0, item))
+        assertThatThrownBy(() -> builder.item(0, 5, item))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Local X out of bounds: 5");
     }
@@ -167,11 +167,11 @@ class StaticPaneTest {
     void testAddItemOutsideHeightBounds() {
         StaticPane.Builder builder = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3);
+            .bounds(0, 0, 3, 9);
 
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
-        assertThatThrownBy(() -> builder.item(0, 3, item))
+        assertThatThrownBy(() -> builder.item(3, 0, item))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Local Y out of bounds: 3");
     }
@@ -181,11 +181,11 @@ class StaticPaneTest {
     void testAddItemNegativeX() {
         StaticPane.Builder builder = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3);
+            .bounds(0, 0, 3, 9);
 
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
-        assertThatThrownBy(() -> builder.item(-1, 0, item))
+        assertThatThrownBy(() -> builder.item(0, -1, item))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Local X out of bounds: -1");
     }
@@ -195,11 +195,11 @@ class StaticPaneTest {
     void testAddItemNegativeY() {
         StaticPane.Builder builder = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3);
+            .bounds(0, 0, 3, 9);
 
         MenuItem item = MenuItem.item().material(Material.DIAMOND).build();
 
-        assertThatThrownBy(() -> builder.item(0, -1, item))
+        assertThatThrownBy(() -> builder.item(-1, 0, item))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Local Y out of bounds: -1");
     }
@@ -218,9 +218,9 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(0, 0, item1)  // Slot 0
-            .item(4, 1, item2)  // Slot 13 (9 + 4)
+            .item(1, 4, item2)  // Slot 13 (9 + 4)
             .build();
 
         Inventory inventory = this.server.createInventory(null, 54);
@@ -252,7 +252,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 2)  // 2 rows
+            .bounds(0, 0, 2, 9)  // 2 rows
             .item(0, 0, item)
             .build();
 
@@ -277,8 +277,8 @@ class StaticPaneTest {
         // Pane starts at (2, 1) with size (3, 2)
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(2, 1, 3, 2)
-            .item(1, 0, item)  // Local (1, 0) -> Global (3, 1) -> Slot 12
+            .bounds(1, 2, 2, 3)
+            .item(0, 1, item)  // Local (1, 0) -> Global (3, 1) -> Slot 12
             .build();
 
         Inventory inventory = this.server.createInventory(null, 54);
@@ -298,13 +298,13 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
-            .item(4, 1, item)
+            .bounds(0, 0, 3, 9)
+            .item(1, 4, item)
             .build();
 
-        assertThat(pane.getItem(4, 1)).isEqualTo(item);
+        assertThat(pane.getItem(1, 4)).isEqualTo(item);
         assertThat(pane.getItem(0, 0)).isNull();
-        assertThat(pane.getItem(8, 2)).isNull();
+        assertThat(pane.getItem(2, 8)).isNull();
     }
 
     @Test
@@ -314,8 +314,8 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
-            .item(4, 1, item)  // Local (4, 1) -> Global slot 13
+            .bounds(0, 0, 3, 9)
+            .item(1, 4, item)  // Local (4, 1) -> Global slot 13
             .build();
 
         assertThat(pane.getItemByGlobalSlot(13)).isEqualTo(item);
@@ -330,7 +330,7 @@ class StaticPaneTest {
         // Pane covers only rows 0-2
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(0, 0, item)
             .build();
 
@@ -346,8 +346,8 @@ class StaticPaneTest {
         // Pane at (2, 1) with size (5, 2)
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(2, 1, 5, 2)
-            .item(1, 0, item)  // Local (1, 0) -> Global (3, 1) -> Slot 12
+            .bounds(1, 2, 2, 5)
+            .item(0, 1, item)  // Local (1, 0) -> Global (3, 1) -> Slot 12
             .build();
 
         assertThat(pane.getItemByGlobalSlot(12)).isEqualTo(item);
@@ -368,7 +368,7 @@ class StaticPaneTest {
         StaticPane pane = staticPane()
             .name("test")
             .item(0, 0, item1)
-            .item(1, 0, item2)
+            .item(0, 1, item2)
             .build();
 
         // Render once to cache reactive properties
@@ -390,7 +390,7 @@ class StaticPaneTest {
     void testEmptyPaneRendering() {
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .build();
 
         Inventory inventory = this.server.createInventory(null, 54);
@@ -407,12 +407,12 @@ class StaticPaneTest {
     void testFullInventoryPane() {
         StaticPane.Builder builder = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 6);
+            .bounds(0, 0, 6, 9);
 
         // Fill entire inventory
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 9; x++) {
-                builder.item(x, y, MenuItem.item()
+                builder.item(y, x, MenuItem.item()
                     .material(Material.STONE)
                     .build());
             }
@@ -444,9 +444,9 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(0, 0, visibleItem)
-            .item(1, 0, invisibleItem)
+            .item(0, 1, invisibleItem)
             .build();
 
         Inventory inventory = this.server.createInventory(null, 54);
@@ -469,9 +469,9 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(0, 0, airItem)
-            .item(1, 0, normalItem)
+            .item(0, 1, normalItem)
             .build();
 
         Inventory inventory = this.server.createInventory(null, 54);
@@ -490,7 +490,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(0, 0, item1)
             .build();
 
@@ -523,7 +523,7 @@ class StaticPaneTest {
         // Add two items at same position (second should overwrite)
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(0, 0, item1)
             .item(0, 0, item2)
             .build();
@@ -542,7 +542,7 @@ class StaticPaneTest {
             .title("Render Error Test")
             .rows(3)
             .pane(staticPane("failingPane")
-                .bounds(0, 0, 9, 1)
+                .bounds(0, 0, 1, 9)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
                         throw new RuntimeException("Material supplier failed!");
@@ -550,7 +550,7 @@ class StaticPaneTest {
                     .build())
                 .build())
             .pane(staticPane("workingPane")
-                .bounds(0, 1, 9, 1)
+                .bounds(1, 0, 1, 9)
                 .item(0, 0, MenuItem.item()
                     .material(Material.EMERALD)
                     .name("Working Item")
@@ -591,7 +591,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(item1)  // Auto: slot 0
             .item(item2)  // Auto: slot 1
             .item(item3)  // Auto: slot 2
@@ -619,7 +619,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(item1)
             .item(item2)
             .item(item3)
@@ -653,8 +653,8 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
-            .item(1, 0, staticItem)  // Occupy slot 1
+            .bounds(0, 0, 3, 9)
+            .item(0, 1, staticItem)  // Occupy slot 1
             .item(autoItem1)         // Auto: slot 0
             .item(autoItem2)         // Auto: slot 2 (skip 1)
             .build();
@@ -677,9 +677,9 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 3, 2)  // 3x2 = 6 slots
-            .item(1, 0, static1)  // Slot 1
-            .item(2, 1, static2)  // Slot 11 (row 1, col 2)
+            .bounds(0, 0, 2, 3)  // 3x2 = 6 slots
+            .item(0, 1, static1)  // Slot 1
+            .item(1, 2, static2)  // Slot 11 (row 1, col 2)
             .item(auto1)          // Slot 0
             .item(auto2)          // Slot 2 (skip 1)
             .build();
@@ -704,7 +704,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 1)  // Single row
+            .bounds(0, 0, 1, 9)  // Single row
             .filler(fillerItem)
             .item(autoItem1)     // Slot 0
             .item(autoItem2)     // Slot 1
@@ -728,7 +728,7 @@ class StaticPaneTest {
     void testAutoItemsOverflow() {
         StaticPane.Builder builder = staticPane()
             .name("test")
-            .bounds(0, 0, 2, 1);  // Only 2 slots
+            .bounds(0, 0, 1, 2);  // Only 2 slots
 
         // Add 5 auto items (more than slots available)
         for (int i = 0; i < 5; i++) {
@@ -758,7 +758,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(item1)
             .item(item2)
             .item(item3)
@@ -788,7 +788,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(invisibleItem)
             .item(visibleItem)
             .build();
@@ -819,7 +819,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(item1)
             .item(item2)
             .item(item3)
@@ -867,7 +867,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(item1)
             .item(item2)
             .item(item3)
@@ -898,8 +898,8 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
-            .item(1, 0, staticItem)  // Static at slot 1
+            .bounds(0, 0, 3, 9)
+            .item(0, 1, staticItem)  // Static at slot 1
             .item(autoItem1)         // Auto at slot 0
             .item(autoItem2)         // Auto at slot 2 (skips slot 1)
             .build();
@@ -932,7 +932,7 @@ class StaticPaneTest {
 
         StaticPane pane = staticPane()
             .name("test")
-            .bounds(0, 0, 9, 3)
+            .bounds(0, 0, 3, 9)
             .item(item1)
             .item(item2)
             .item(item3)

@@ -38,8 +38,8 @@ public class DynamicTitleExample {
             .updateInterval(Duration.ofSeconds(1))
             .pane(StaticPane.staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(4, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 4, item()
                     .material(ctx -> {
                         int remaining = ctx.getInt("countdown");
                         if (remaining > 10) return Material.LIME_CONCRETE;
@@ -90,8 +90,8 @@ public class DynamicTitleExample {
             .updateInterval(Duration.ofMillis(500))
             .pane(StaticPane.staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(3, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 3, item()
                     .material(Material.RED_WOOL)
                     .name("<red><b>Decrease Progress")
                     .lore("""
@@ -104,7 +104,7 @@ public class DynamicTitleExample {
                         event.refresh();
                     })
                     .build())
-                .item(4, 1, item()
+                .item(1, 4, item()
                     .material(Material.PAPER)
                     .name(ctx -> "<yellow><b>" + ctx.getInt("progress") + "% Complete")
                     .lore("""
@@ -113,7 +113,7 @@ public class DynamicTitleExample {
                         
                         <gray>Use the buttons to change it.""")
                     .build())
-                .item(5, 1, item()
+                .item(1, 5, item()
                     .material(Material.LIME_WOOL)
                     .name("<green><b>Increase Progress")
                     .lore("""
@@ -143,8 +143,8 @@ public class DynamicTitleExample {
             .updateInterval(Duration.ofSeconds(1))
             .pane(StaticPane.staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(4, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 4, item()
                     .material(Material.CLOCK)
                     .name("<gradient:yellow:gold><b>Current Date & Time")
                     .lore("""

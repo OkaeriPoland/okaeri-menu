@@ -26,7 +26,7 @@ public class ItemVarsExample {
             .rows(3)
             .pane(StaticPane.staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 // Example 1: Simple vars shared between name and lore
                 .item(1, 1, item()
                     .material(Material.DIAMOND)
@@ -41,7 +41,7 @@ public class ItemVarsExample {
                     .onClick(event -> event.sendMessage("&aPurchased for " + 100 + " coins!"))
                     .build())
                 // Example 2: Reactive vars with context-aware vars
-                .item(3, 1, item()
+                .item(1, 3, item()
                     .material(Material.CLOCK)
                     .vars(ctx -> Map.of("count", ctx.getInt("counter")))  // Context-aware vars!
                     .name("&eCounter: <count>")
@@ -55,7 +55,7 @@ public class ItemVarsExample {
                     })
                     .build())
                 // Example 3: Method-level vars override item-level vars
-                .item(5, 1, item()
+                .item(1, 5, item()
                     .material(Material.EMERALD)
                     .vars(Map.of(
                         "item", "Emerald",
@@ -70,7 +70,7 @@ public class ItemVarsExample {
                         Map.of("price", 25))  // Override item-level price for lore
                     .build())
                 // Example 4: Multiple placeholders from item-level vars
-                .item(7, 1, item()
+                .item(1, 7, item()
                     .material(Material.ENCHANTED_BOOK)
                     .vars(Map.of(
                         "name", "Sharpness V",
@@ -86,7 +86,7 @@ public class ItemVarsExample {
                         
                         &eClick to purchase!""")
                     .build())
-                .item(8, 2, NavigationUtils.closeButton().build())
+                .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }

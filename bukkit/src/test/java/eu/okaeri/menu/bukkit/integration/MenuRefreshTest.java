@@ -57,7 +57,7 @@ class MenuRefreshTest {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
                         renderCount.incrementAndGet();
@@ -129,7 +129,7 @@ class MenuRefreshTest {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("pane1")
-                .bounds(0, 0, 4, 3)
+                .bounds(0, 0, 3, 4)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
                         pane1RenderCount.incrementAndGet();
@@ -138,7 +138,7 @@ class MenuRefreshTest {
                     .build())
                 .build())
             .pane(staticPane("pane2")
-                .bounds(5, 0, 4, 3)
+                .bounds(0, 5, 3, 4)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
                         pane2RenderCount.incrementAndGet();
@@ -189,7 +189,7 @@ class MenuRefreshTest {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("pane1")
-                .bounds(0, 0, 4, 3)
+                .bounds(0, 0, 3, 4)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
                         pane1RenderCount.incrementAndGet();
@@ -198,7 +198,7 @@ class MenuRefreshTest {
                     .build())
                 .build())
             .pane(staticPane("pane2")
-                .bounds(5, 0, 4, 3)
+                .bounds(0, 5, 3, 4)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
                         pane2RenderCount.incrementAndGet();
@@ -229,7 +229,7 @@ class MenuRefreshTest {
             .title(title::get)
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .build())
             .build();
 
@@ -253,7 +253,7 @@ class MenuRefreshTest {
             .title("Static Title")
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .build())
             .build();
 
@@ -276,7 +276,7 @@ class MenuRefreshTest {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .build())
             .build();
 
@@ -294,7 +294,7 @@ class MenuRefreshTest {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .build())
             .build();
 
@@ -318,7 +318,7 @@ class MenuRefreshTest {
             .title(title::get)
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .item(0, 0, MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
@@ -346,7 +346,7 @@ class MenuRefreshTest {
             .title(title::get)
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .item(0, 0, MenuItem.item()
                     .material(Material.DIAMOND)
                     .build())
@@ -378,7 +378,7 @@ class MenuRefreshTest {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .item(0, 0, MenuItem.item()
                     .material(material::get)
                     .build())
@@ -406,7 +406,7 @@ class MenuRefreshTest {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .item(0, 0, MenuItem.item()
                     .material(Material.DIAMOND)
                     .visible(visible::get)

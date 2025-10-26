@@ -70,7 +70,7 @@ class PaginationContextTest {
     private PaginatedPane<String> createPane(List<String> items, int itemsPerPage) {
         return PaginatedPane.<String>pane()
             .name("test-pane")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(items)
             .itemsPerPage(itemsPerPage)
             .renderer((ctx, item, i) -> null)
@@ -84,7 +84,7 @@ class PaginationContextTest {
     private PaginatedPane<String> createDynamicPane(List<String> dynamicItems, int itemsPerPage) {
         return PaginatedPane.<String>pane()
             .name("dynamic-pane")  // Different name to avoid cache conflicts
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(() -> dynamicItems)  // Supplier reads from mutable list
             .itemsPerPage(itemsPerPage)
             .renderer((ctx, item, i) -> null)

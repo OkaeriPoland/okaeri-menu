@@ -47,7 +47,7 @@ public class PaginationExample {
             .rows(6)
             .pane(PaginatedPane.<String>pane()
                 .name("content")
-                .bounds(0, 0, 9, 5)  // 5 rows for content
+                .bounds(0, 0, 5, 9)  // 5 rows for content
                 .items(items)
                 // itemsPerPage defaults to pane size (9x5 = 45 slots)
                 .renderer((ctx, fruit, index) -> item()
@@ -65,11 +65,11 @@ public class PaginationExample {
             // Navigation row (bottom row)
             .pane(staticPane()
                 .name("nav")
-                .bounds(0, 5, 9, 1)
-                .item(3, 0, PaginationUtils.previousPageButton("content").build())
-                .item(4, 0, PaginationUtils.pageIndicator("content").build())
-                .item(5, 0, PaginationUtils.nextPageButton("content").build())
-                .item(8, 0, NavigationUtils.closeButton().build())
+                .bounds(5, 0, 1, 9)
+                .item(0, 3, PaginationUtils.previousPageButton("content").build())
+                .item(0, 4, PaginationUtils.pageIndicator("content").build())
+                .item(0, 5, PaginationUtils.nextPageButton("content").build())
+                .item(0, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }
@@ -90,7 +90,7 @@ public class PaginationExample {
             .rows(4)
             .pane(PaginatedPane.<String>pane()
                 .name("players")
-                .bounds(0, 0, 9, 4)
+                .bounds(0, 0, 4, 9)
                 .items(players)
                 .renderer((ctx, playerName, index) -> item()
                     .material(Material.PLAYER_HEAD)
@@ -101,8 +101,8 @@ public class PaginationExample {
                         &eClick to view profile!""")
                     .build())
                 // Static buttons in the paginated area
-                .staticItem(7, 3, PaginationUtils.previousPageButton("players").build())
-                .staticItem(8, 3, PaginationUtils.nextPageButton("players").build())
+                .staticItem(3, 7, PaginationUtils.previousPageButton("players").build())
+                .staticItem(3, 8, PaginationUtils.nextPageButton("players").build())
                 .build())
             .build();
     }
@@ -119,32 +119,32 @@ public class PaginationExample {
             // Filter controls
             .pane(staticPane()
                 .name("filters")
-                .bounds(0, 0, 9, 1)
-                .item(1, 0, PaginationUtils.<PlayerProfile>filterButton(
+                .bounds(0, 0, 1, 9)
+                .item(0, 1, PaginationUtils.<PlayerProfile>filterButton(
                     "profiles",
                     "online",
                     "&aOnline Only",
                     profile -> profile.isOnline()
                 ).build())
-                .item(2, 0, PaginationUtils.<PlayerProfile>filterButton(
+                .item(0, 2, PaginationUtils.<PlayerProfile>filterButton(
                     "profiles",
                     "vip",
                     "&6VIP Players",
                     profile -> profile.isVip()
                 ).build())
-                .item(3, 0, PaginationUtils.<PlayerProfile>filterButton(
+                .item(0, 3, PaginationUtils.<PlayerProfile>filterButton(
                     "profiles",
                     "highlevel",
                     "&bLevel 50+",
                     PaginationFilter.min(PlayerProfile::getLevel, 50)
                 ).build())
-                .item(7, 0, PaginationUtils.clearFiltersButton("profiles").build())
-                .item(8, 0, PaginationUtils.emptyIndicator("profiles").build())
+                .item(0, 7, PaginationUtils.clearFiltersButton("profiles").build())
+                .item(0, 8, PaginationUtils.emptyIndicator("profiles").build())
                 .build())
             // Player list
             .pane(PaginatedPane.<PlayerProfile>pane()
                 .name("profiles")
-                .bounds(0, 1, 9, 4)
+                .bounds(1, 0, 4, 9)
                 .items(profiles)
                 // itemsPerPage defaults to pane size (9x4 = 36 slots)
                 .renderer((ctx, profile, index) -> item()
@@ -166,11 +166,11 @@ public class PaginationExample {
             // Navigation
             .pane(staticPane()
                 .name("nav")
-                .bounds(0, 5, 9, 1)
-                .item(3, 0, PaginationUtils.previousPageButton("profiles").build())
-                .item(4, 0, PaginationUtils.pageIndicator("profiles").build())
-                .item(5, 0, PaginationUtils.nextPageButton("profiles").build())
-                .item(8, 0, NavigationUtils.closeButton().build())
+                .bounds(5, 0, 1, 9)
+                .item(0, 3, PaginationUtils.previousPageButton("profiles").build())
+                .item(0, 4, PaginationUtils.pageIndicator("profiles").build())
+                .item(0, 5, PaginationUtils.nextPageButton("profiles").build())
+                .item(0, 8, NavigationUtils.closeButton().build())
                 .build())
             .build();
     }

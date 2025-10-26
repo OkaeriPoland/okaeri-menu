@@ -20,19 +20,14 @@ import java.util.Set;
 public class PaneBounds {
 
     /**
-     * Column (x) position of the pane's top-left corner
-     */
-    private final int x;
-
-    /**
      * Row (y) position of the pane's top-left corner
      */
     private final int y;
 
     /**
-     * Width of the pane in columns
+     * Column (x) position of the pane's top-left corner
      */
-    private final int width;
+    private final int x;
 
     /**
      * Height of the pane in rows
@@ -40,43 +35,48 @@ public class PaneBounds {
     private final int height;
 
     /**
+     * Width of the pane in columns
+     */
+    private final int width;
+
+    /**
      * Creates pane bounds with validation.
      *
-     * @param x      Column position
      * @param y      Row position
-     * @param width  Width in columns
+     * @param x      Column position
      * @param height Height in rows
+     * @param width  Width in columns
      * @throws IllegalArgumentException if any parameter is invalid
      */
-    public PaneBounds(int x, int y, int width, int height) {
-        if ((x < 0) || (y < 0)) {
+    public PaneBounds(int y, int x, int height, int width) {
+        if ((y < 0) || (x < 0)) {
             throw new IllegalArgumentException("Pane position cannot be negative: (" + x + ", " + y + ")");
         }
-        if ((width <= 0) || (height <= 0)) {
+        if ((height <= 0) || (width <= 0)) {
             throw new IllegalArgumentException("Pane size must be positive: " + width + "x" + height);
         }
         if ((x + width) > 9) {
             throw new IllegalArgumentException("Pane exceeds inventory width: x=" + x + " + width=" + width + " > 9");
         }
-        this.x = x;
         this.y = y;
-        this.width = width;
+        this.x = x;
         this.height = height;
+        this.width = width;
     }
 
     /**
      * Creates pane bounds (convenience factory method).
      *
-     * @param x      Column position (0-8 for standard chest)
      * @param y      Row position (0-5 for 6-row chest)
-     * @param width  Width in columns (1-9)
+     * @param x      Column position (0-8 for standard chest)
      * @param height Height in rows (1-6)
+     * @param width  Width in columns (1-9)
      * @return The pane bounds
      * @throws IllegalArgumentException if any parameter is invalid
      */
     @NonNull
-    public static PaneBounds of(int x, int y, int width, int height) {
-        return new PaneBounds(x, y, width, height);
+    public static PaneBounds of(int y, int x, int height, int width) {
+        return new PaneBounds(y, x, height, width);
     }
 
     /**
@@ -86,26 +86,26 @@ public class PaneBounds {
      */
     @NonNull
     public static PaneBounds fullInventory() {
-        return new PaneBounds(0, 0, 9, 6);
+        return new PaneBounds(0, 0, 6, 9);
     }
 
     /**
      * Converts pane-local coordinates to global slot index.
      *
-     * @param localX Column within this pane (0 to width-1)
-     * @param localY Row within this pane (0 to height-1)
+     * @param localRow Row within this pane (0 to height-1)
+     * @param localCol Column within this pane (0 to width-1)
      * @return Global slot index in the inventory
      */
-    public int toGlobalSlot(int localX, int localY) {
-        if ((localX < 0) || (localX >= this.width)) {
-            throw new IllegalArgumentException("Local X out of pane bounds: " + localX + " (width=" + this.width + ")");
+    public int toGlobalSlot(int localRow, int localCol) {
+        if ((localRow < 0) || (localRow >= this.height)) {
+            throw new IllegalArgumentException("Local Y out of pane bounds: " + localRow + " (height=" + this.height + ")");
         }
-        if ((localY < 0) || (localY >= this.height)) {
-            throw new IllegalArgumentException("Local Y out of pane bounds: " + localY + " (height=" + this.height + ")");
+        if ((localCol < 0) || (localCol >= this.width)) {
+            throw new IllegalArgumentException("Local X out of pane bounds: " + localCol + " (width=" + this.width + ")");
         }
 
-        int globalX = this.x + localX;
-        int globalY = this.y + localY;
+        int globalY = this.y + localRow;
+        int globalX = this.x + localCol;
         return (globalY * 9) + globalX;
     }
 
@@ -113,12 +113,12 @@ public class PaneBounds {
      * Converts local coordinates to a local slot index.
      * Local slot is calculated as (localY * width) + localX.
      *
-     * @param localX Column within this pane (0 to width-1)
-     * @param localY Row within this pane (0 to height-1)
+     * @param localRow Row within this pane (0 to height-1)
+     * @param localCol Column within this pane (0 to width-1)
      * @return Local slot index within this pane
      */
-    public int coordinatesToLocalSlot(int localX, int localY) {
-        return (localY * this.width) + localX;
+    public int coordinatesToLocalSlot(int localRow, int localCol) {
+        return (localRow * this.width) + localCol;
     }
 
     /**
@@ -129,9 +129,9 @@ public class PaneBounds {
      * @return Global slot index in the inventory
      */
     public int localSlotToGlobal(int localSlot) {
-        int localX = localSlot % this.width;
-        int localY = localSlot / this.width;
-        return this.toGlobalSlot(localX, localY);
+        int localRow = localSlot / this.width;
+        int localCol = localSlot % this.width;
+        return this.toGlobalSlot(localRow, localCol);
     }
 
     /**
@@ -160,16 +160,16 @@ public class PaneBounds {
      * Validates that local coordinates are within this pane's bounds.
      * Throws an exception with a descriptive message if validation fails.
      *
-     * @param localX Local X coordinate to validate (0 to width-1)
-     * @param localY Local Y coordinate to validate (0 to height-1)
+     * @param localRow Local Y coordinate to validate (0 to height-1)
+     * @param localCol Local X coordinate to validate (0 to width-1)
      * @throws IllegalArgumentException if coordinates are out of bounds
      */
-    public void validate(int localX, int localY) {
-        if ((localX < 0) || (localX >= this.width)) {
-            throw new IllegalArgumentException("Local X out of bounds: " + localX + " (width=" + this.width + ")");
+    public void validate(int localRow, int localCol) {
+        if ((localRow < 0) || (localRow >= this.height)) {
+            throw new IllegalArgumentException("Local Y out of bounds: " + localRow + " (height=" + this.height + ")");
         }
-        if ((localY < 0) || (localY >= this.height)) {
-            throw new IllegalArgumentException("Local Y out of bounds: " + localY + " (height=" + this.height + ")");
+        if ((localCol < 0) || (localCol >= this.width)) {
+            throw new IllegalArgumentException("Local X out of bounds: " + localCol + " (width=" + this.width + ")");
         }
     }
 
@@ -245,17 +245,17 @@ public class PaneBounds {
          * @param action The action to perform for each slot
          */
         public void forEach(@NonNull TriConsumer<Integer, Integer, Integer> action) {
-            for (int localY = 0; localY < this.bounds.height; localY++) {
-                for (int localX = 0; localX < this.bounds.width; localX++) {
-                    int localSlot = (localY * this.bounds.width) + localX;
+            for (int localRow = 0; localRow < this.bounds.height; localRow++) {
+                for (int localCol = 0; localCol < this.bounds.width; localCol++) {
+                    int localSlot = (localRow * this.bounds.width) + localCol;
 
                     // Skip excluded slots
                     if ((this.excludedLocalSlots != null) && this.excludedLocalSlots.contains(localSlot)) {
                         continue;
                     }
 
-                    int globalSlot = this.bounds.toGlobalSlot(localX, localY);
-                    action.accept(localX, localY, globalSlot);
+                    int globalSlot = this.bounds.toGlobalSlot(localRow, localCol);
+                    action.accept(localRow, localCol, globalSlot);
                 }
             }
         }
@@ -283,7 +283,7 @@ public class PaneBounds {
          * @param item      The item to place in each slot
          */
         public void fill(@NonNull Inventory inventory, ItemStack item) {
-            this.forEach((localX, localY, globalSlot) -> {
+            this.forEach((localRow, localCol, globalSlot) -> {
                 inventory.setItem(globalSlot, item);
             });
         }
@@ -294,7 +294,7 @@ public class PaneBounds {
          * @param inventory The inventory to clear
          */
         public void clear(@NonNull Inventory inventory) {
-            this.forEach((localX, localY, globalSlot) -> {
+            this.forEach((localRow, localCol, globalSlot) -> {
                 inventory.setItem(globalSlot, null);
             });
         }

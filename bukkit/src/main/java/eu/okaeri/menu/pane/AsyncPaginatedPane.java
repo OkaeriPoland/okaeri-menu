@@ -61,8 +61,8 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         PaginatedPane.Builder<T> parentBuilder = PaginatedPane.pane();
         parentBuilder
             .name(asyncBuilder.name)
-            .bounds(asyncBuilder.bounds.getX(), asyncBuilder.bounds.getY(),
-                asyncBuilder.bounds.getWidth(), asyncBuilder.bounds.getHeight())
+            .bounds(asyncBuilder.bounds.getY(), asyncBuilder.bounds.getX(),
+                asyncBuilder.bounds.getHeight(), asyncBuilder.bounds.getWidth())
             .renderer(asyncBuilder.itemRenderer);
 
         // Items supplier reads from currentItems container
@@ -76,7 +76,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
         // Copy static items
         asyncBuilder.staticItems.forEach(entry ->
-            parentBuilder.staticItem(entry.getLocalX(), entry.getLocalY(), entry.getMenuItem()));
+            parentBuilder.staticItem(entry.getLocalRow(), entry.getLocalCol(), entry.getMenuItem()));
 
         return parentBuilder;
     }
@@ -282,15 +282,15 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         /**
          * Sets the pane bounds.
          *
-         * @param x      X position (0-8)
          * @param y      Y position (0-5)
-         * @param width  Width (1-9)
+         * @param x      X position (0-8)
          * @param height Height (1-6)
+         * @param width  Width (1-9)
          * @return This builder
          */
         @NonNull
-        public Builder<T> bounds(int x, int y, int width, int height) {
-            this.bounds = new PaneBounds(x, y, width, height);
+        public Builder<T> bounds(int y, int x, int height, int width) {
+            this.bounds = new PaneBounds(y, x, height, width);
             return this;
         }
 
@@ -362,14 +362,14 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         /**
          * Adds a static item that's always rendered (e.g., navigation buttons).
          *
-         * @param localX   Local X coordinate
-         * @param localY   Local Y coordinate
+         * @param localRow Local Y coordinate
+         * @param localCol Local X coordinate
          * @param menuItem The menu item
          * @return This builder
          */
         @NonNull
-        public Builder<T> staticItem(int localX, int localY, @NonNull MenuItem menuItem) {
-            this.staticItems.add(new AbstractPane.ItemCoordinateEntry(localX, localY, menuItem));
+        public Builder<T> staticItem(int localRow, int localCol, @NonNull MenuItem menuItem) {
+            this.staticItems.add(new AbstractPane.ItemCoordinateEntry(localRow, localCol, menuItem));
             return this;
         }
 

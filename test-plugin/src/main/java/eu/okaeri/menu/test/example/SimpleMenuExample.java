@@ -26,13 +26,13 @@ public class SimpleMenuExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)  // Full 3-row inventory
+                .bounds(0, 0, 3, 9)  // Full 3-row inventory
                 .item(0, 0, item()
                     .material(Material.DIAMOND)
                     .name("Static Diamond")
                     .onClick(event -> event.sendMessage("You clicked a diamond!"))
                     .build())
-                .item(1, 0, item()
+                .item(0, 1, item()
                     .material(Material.GOLD_INGOT)
                     .name(() -> "Dynamic: " + System.currentTimeMillis())  // Reactive!
                     .onClick(event -> {
@@ -40,7 +40,7 @@ public class SimpleMenuExample {
                         event.refresh();
                     })
                     .build())
-                .item(8, 2, item()
+                .item(2, 8, item()
                     .material(Material.BARRIER)
                     .name("Close")
                     .onClick(MenuContext::closeInventory)
@@ -56,12 +56,12 @@ public class SimpleMenuExample {
             // Top navigation pane
             .pane(staticPane()
                 .name("nav")
-                .bounds(0, 0, 9, 1)
-                .item(4, 0, item()
+                .bounds(0, 0, 1, 9)
+                .item(0, 4, item()
                     .material(Material.COMPASS)
                     .name("Navigation")
                     .build())
-                .item(8, 0, item()
+                .item(0, 8, item()
                     .material(Material.BARRIER)
                     .name("Close")
                     .onClick(MenuContext::closeInventory)
@@ -70,8 +70,8 @@ public class SimpleMenuExample {
             // Content pane
             .pane(staticPane()
                 .name("content")
-                .bounds(0, 1, 9, 5)
-                .item(4, 2, item()
+                .bounds(1, 0, 5, 9)
+                .item(2, 4, item()
                     .material(Material.EMERALD)
                     .name("Content Item")
                     .onClick(event -> {
@@ -92,8 +92,8 @@ public class SimpleMenuExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
-                .item(4, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 4, item()
                     .material(Material.DIAMOND)
                     .name(ctx -> "Clicks: " + ctx.getInt("clickCount"))  // Reactive!
                     .amount(ctx -> Math.min(64, ctx.getInt("clickCount") + 1))  // Reactive amount!
@@ -119,7 +119,7 @@ public class SimpleMenuExample {
             .updateInterval(Duration.ofSeconds(1))  // Update every second
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 // Clock display - updates automatically
                 .item(1, 1, item()
                     .material(Material.CLOCK)
@@ -133,7 +133,7 @@ public class SimpleMenuExample {
                         ))
                     .build())
                 // Online players count - updates automatically
-                .item(4, 1, item()
+                .item(1, 4, item()
                     .material(Material.PLAYER_HEAD)
                     .name(() -> "Online Players")
                     .amount(() -> Math.max(1, Bukkit.getOnlinePlayers().size()))  // Min 1 for visibility
@@ -143,7 +143,7 @@ public class SimpleMenuExample {
                         ctx -> Map.of("count", Bukkit.getOnlinePlayers().size()))
                     .build())
                 // Dynamic material - cycles through colors
-                .item(7, 1, item()
+                .item(1, 7, item()
                     .material(() -> {
                         long seconds = Duration.between(startTime, Instant.now()).getSeconds();
                         Material[] materials = {
@@ -163,7 +163,7 @@ public class SimpleMenuExample {
                         &7every second automatically!""")
                     .build())
                 // Close button
-                .item(8, 2, item()
+                .item(2, 8, item()
                     .material(Material.BARRIER)
                     .name("Close")
                     .onClick(event -> event.closeInventory())

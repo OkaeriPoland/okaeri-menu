@@ -80,8 +80,8 @@ public class SimpleMenuExample {
             .title("<green>My First Menu")
             .rows(3)  // Optional - auto-calculated from pane bounds if omitted
             .pane(staticPane("main")
-                .bounds(0, 0, 9, 3)
-                .item(4, 1, item()
+                .bounds(0, 0, 3, 9)  // row, col, height, width
+                .item(1, 4, item()   // row, col
                     .material(Material.DIAMOND)
                     .name("<aqua><b>Click Me!")
                     .lore("""
@@ -92,7 +92,7 @@ public class SimpleMenuExample {
                         ctx.playSound(Sound.ENTITY_EXPERIENCE_ORB_PICKUP);
                     })
                     .build())
-                .item(8, 2, item()
+                .item(2, 8, item()   // row, col
                     .material(Material.BARRIER)
                     .name("<red>Close")
                     .onClick(ctx -> ctx.closeInventory())
@@ -111,8 +111,8 @@ public static Menu createReactiveMenu(Plugin plugin) {
         .title("<yellow>Reactive Menu")
         // .state(s -> s.define("clickCount", 0))  // Optional - integers default to 0
         .pane(staticPane("main")
-            .bounds(0, 0, 9, 3)
-            .item(4, 1, item()
+            .bounds(0, 0, 3, 9)  // row, col, height, width
+            .item(1, 4, item()   // row, col
                 .material(ctx -> (ctx.getInt("clickCount") > 10) ? Material.DIAMOND : Material.COAL)
                 .name("<gold>Clicks: <count>")
                 .vars(ctx -> Map.of("count", ctx.getInt("clickCount")))
@@ -186,8 +186,8 @@ Menu.builder(plugin)
         .define("favoriteColor", "blue")
         .define("premium", false))
     .pane("main", staticPane()
-        .bounds(0, 0, 9, 3)
-        .item(4, 1, item()
+        .bounds(0, 0, 3, 9)  // row, col, height, width
+        .item(1, 4, item()   // row, col
             // Get state with automatic defaults
             .name(ctx -> "<gold>Clicks: " + ctx.getInt("clicks"))
             .onClick(ctx -> {
@@ -252,7 +252,7 @@ public static Menu createShopMenu(Plugin plugin) {
     return Menu.builder(plugin)
         .title("<yellow>⚡ Shop")
         .pane(pane("items", ShopItem.class)
-            .bounds(0, 1, 9, 4)
+            .bounds(1, 0, 4, 9)  // row, col, height, width
             .items(() -> loadShopItems())  // Your data source
             .renderer((ctx, item, index) -> item()
                 .material(item.getMaterial())
@@ -266,10 +266,10 @@ public static Menu createShopMenu(Plugin plugin) {
                 .build())
             .build())
         .pane(staticPane("controls")
-            .bounds(0, 5, 9, 1)
-            .item(2, 0, previousPageButton("items").build())
-            .item(4, 0, pageIndicator("items").build())
-            .item(6, 0, nextPageButton("items").build())
+            .bounds(5, 0, 1, 9)  // row, col, height, width
+            .item(0, 2, previousPageButton("items").build())  // row, col
+            .item(0, 4, pageIndicator("items").build())
+            .item(0, 6, nextPageButton("items").build())
             .build())
         .build();
 }
@@ -284,7 +284,7 @@ public static Menu createAsyncShopMenu(Plugin plugin) {
     return Menu.builder(plugin)
         .title("<yellow>⚡ Async Shop")
         .pane(paneAsync("items", ShopItem.class)
-            .bounds(0, 1, 9, 4)
+            .bounds(1, 0, 4, 9)  // row, col, height, width
             .loader(ctx -> {
                 // Runs async - fetch from database
                 int page = ctx.getCurrentPage();
@@ -324,8 +324,8 @@ Menu.builder(plugin)
     .title("<yellow>Shop with Filters")
     // Filter controls - toggle items with declarative filters
     .pane(staticPane("controls")
-        .bounds(0, 0, 9, 1)
-        .item(2, 0, item()
+        .bounds(0, 0, 1, 9)  // row, col, height, width
+        .item(0, 2, item()   // row, col
             .material(ctx -> ctx.getBool("weaponFilter") ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
             .name(ctx -> ctx.getBool("weaponFilter") ? "<green>✓ Weapons" : "<gray>Weapons")
             .lore("<gray>Show weapons only\n<yellow>Click to toggle!")
@@ -341,7 +341,7 @@ Menu.builder(plugin)
                 ctx.playSound(Sound.UI_BUTTON_CLICK);
             })
             .build())
-        .item(4, 0, item()
+        .item(0, 4, item()   // row, col
             .material(ctx -> ctx.getBool("expensiveFilter") ? Material.GOLD_INGOT : Material.IRON_INGOT)
             .name(ctx -> ctx.getBool("expensiveFilter") ? "<green>✓ Expensive" : "<gray>Expensive")
             .lore("<gray>Show items over 100 coins\n<yellow>Click to toggle!")
@@ -359,7 +359,7 @@ Menu.builder(plugin)
         .build())
     // Items pane - filters are applied automatically
     .pane(pane("items" ShopItem.class)
-        .bounds(0, 1, 9, 4)
+        .bounds(1, 0, 4, 9)  // row, col, height, width
         .items(() -> loadShopItems())
         .renderer((ctx, item, index) -> item()
             .material(item.getMaterial())
@@ -381,8 +381,8 @@ Menu.builder(plugin)
     .title("<yellow>Database-Filtered Shop")
     // Filter controls with value-only filters
     .pane(staticPane("controls")
-        .bounds(0, 0, 9, 1)
-        .item(2, 0, item()
+        .bounds(0, 0, 1, 9)  // row, col, height, width
+        .item(0, 2, item()   // row, col
             .material(ctx -> ctx.getBool("weaponFilter") ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
             .name(ctx -> ctx.getBool("weaponFilter") ? "<green>✓ Weapons" : "<gray>Weapons")
             .lore("<gray>Filter by category\n<yellow>Click to toggle!")
@@ -395,7 +395,7 @@ Menu.builder(plugin)
                 .build())
             .onClick(ctx -> ctx.set("weaponFilter", !ctx.getBool("weaponFilter")))
             .build())
-        .item(4, 0, item()
+        .item(0, 4, item()   // row, col
             .material(Material.GOLD_INGOT)
             .name("<yellow>Min Price: <white><price>")
             .vars(ctx -> Map.of("price", ctx.getInt("minPrice")))
@@ -417,7 +417,7 @@ Menu.builder(plugin)
         .build())
     // Async pane - filters are extracted in loader
     .pane(paneAsync("items", ShopItem.class)
-        .bounds(0, 1, 9, 4)
+        .bounds(1, 0, 4, 9)  // row, col, height, width
         .loader(ctx -> {
             // Extract filter values from context
             String category = ctx.getFilter("category", String.class).orElse(null);

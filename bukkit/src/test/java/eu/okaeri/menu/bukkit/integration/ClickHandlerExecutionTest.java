@@ -30,7 +30,7 @@ class ClickHandlerExecutionTest extends MenuListenerTestBase {
             .title("Test Menu")
             .rows(1)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 1)
+                .bounds(0, 0, 1, 9)
                 .item(0, 0, item()
                     .material(Material.STONE)
                     .onClick(event -> clickCount.incrementAndGet())
@@ -65,7 +65,7 @@ class ClickHandlerExecutionTest extends MenuListenerTestBase {
             .title("Test Menu")
             .rows(1)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 1)
+                .bounds(0, 0, 1, 9)
                 .item(0, 0, item()
                     .material(Material.EMERALD)
                     .onLeftClick(event -> leftClicks.incrementAndGet())
@@ -109,8 +109,8 @@ class ClickHandlerExecutionTest extends MenuListenerTestBase {
             .title("Test Menu")
             .rows(2)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 2)
-                .item(5, 1, item()  // Slot 14
+                .bounds(0, 0, 2, 9)
+                .item(1, 5, item()  // Slot 14
                     .material(Material.GOLD_INGOT)
                     .onClick(event -> capturedSlot.set(event.getSlot()))
                     .build())

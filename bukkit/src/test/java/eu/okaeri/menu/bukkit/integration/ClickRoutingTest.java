@@ -35,8 +35,8 @@ class ClickRoutingTest extends MenuListenerTestBase {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
-                .item(2, 1, item()
+                .bounds(0, 0, 3, 9)
+                .item(1, 2, item()
                     .material(Material.DIAMOND)
                     .onClick(event -> clicked.set(true))
                     .build())
@@ -68,7 +68,7 @@ class ClickRoutingTest extends MenuListenerTestBase {
             .title("Test Menu")
             .rows(3)
             .pane(staticPane("test")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .build())
             .build();
 
@@ -144,7 +144,7 @@ class ClickRoutingTest extends MenuListenerTestBase {
             .rows(3)
             .pane(staticPane()
                 .name("top")
-                .bounds(0, 0, 9, 1)  // First row
+                .bounds(0, 0, 1, 9)  // First row
                 .item(0, 0, item()
                     .material(Material.DIAMOND)
                     .onClick(event -> topPaneClicks.incrementAndGet())
@@ -152,7 +152,7 @@ class ClickRoutingTest extends MenuListenerTestBase {
                 .build())
             .pane(staticPane()
                 .name("bottom")
-                .bounds(0, 2, 9, 1)  // Third row
+                .bounds(2, 0, 1, 9)  // Third row
                 .item(0, 0, item()
                     .material(Material.EMERALD)
                     .onClick(event -> bottomPaneClicks.incrementAndGet())
@@ -197,8 +197,8 @@ class ClickRoutingTest extends MenuListenerTestBase {
             .title("Test Menu")
             .rows(2)
             .pane(staticPane("test")
-                .bounds(0, 0, 5, 1)
-                .item(2, 0, item()
+                .bounds(0, 0, 1, 5)
+                .item(0, 2, item()
                     .material(Material.GOLD_INGOT)
                     .onClick(event -> firstPaneClicks.incrementAndGet())
                     .build())

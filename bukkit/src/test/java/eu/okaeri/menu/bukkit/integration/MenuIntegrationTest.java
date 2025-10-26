@@ -81,12 +81,12 @@ class MenuIntegrationTest {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .item(0, 0, MenuItem.item()
                     .material(Material.DIAMOND)
                     .name("Diamond")
                     .build())
-                .item(4, 1, MenuItem.item()
+                .item(1, 4, MenuItem.item()
                     .material(Material.EMERALD)
                     .name("Emerald")
                     .build())
@@ -115,11 +115,11 @@ class MenuIntegrationTest {
                 .rows(3)
                 .pane(staticPane()
                     .name("pane1")
-                    .bounds(0, 0, 5, 2)
+                    .bounds(0, 0, 2, 5)
                     .build())
                 .pane(staticPane()
                     .name("pane2")
-                    .bounds(3, 1, 4, 2) // Overlaps with pane1
+                    .bounds(1, 3, 2, 4) // Overlaps with pane1
                     .build())
                 .build()
         );
@@ -134,7 +134,7 @@ class MenuIntegrationTest {
                 .rows(3)
                 .pane(staticPane()
                     .name("pane1")
-                    .bounds(0, 2, 9, 2) // Ends at row 4, but menu has only 3 rows
+                    .bounds(2, 0, 2, 9) // Ends at row 4, but menu has only 3 rows
                     .build())
                 .build()
         );

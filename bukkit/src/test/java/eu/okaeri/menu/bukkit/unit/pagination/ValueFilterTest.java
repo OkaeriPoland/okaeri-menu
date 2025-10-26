@@ -68,7 +68,7 @@ class ValueFilterTest {
     private <T> PaginationContext<T> createContext(List<T> items) {
         PaginatedPane<T> testPane = PaginatedPane.<T>pane()
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(items)
             .itemsPerPage(10)
             .renderer((ctx, item, i) -> null)

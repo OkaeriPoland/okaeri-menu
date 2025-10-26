@@ -31,7 +31,7 @@ public class InteractiveSlotExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .filler(Fillers.GRAY_GLASS_PANE)
                 // Slot 1: Fully interactive (pickup + placement)
                 // No material/name specified - starts empty, displays whatever item is placed
@@ -56,15 +56,15 @@ public class InteractiveSlotExample {
                     })
                     .build())
                 // Slot 2: Another interactive slot
-                .item(3, 1, item()
+                .item(1, 3, item()
                     .interactive()
                     .build())
                 // Slot 3: Another interactive slot
-                .item(5, 1, item()
+                .item(1, 5, item()
                     .interactive()
                     .build())
                 // Info button
-                .item(8, 0, item()
+                .item(0, 8, item()
                     .material(Material.BOOK)
                     .name("<yellow>Info")
                     .lore("""
@@ -86,7 +86,7 @@ public class InteractiveSlotExample {
             .rows(4)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 4)
+                .bounds(0, 0, 4, 9)
                 .filler(Fillers.GRAY_GLASS_PANE)
                 // Info button
                 .item(0, 0, item()
@@ -108,12 +108,12 @@ public class InteractiveSlotExample {
                     .build())
                 // Input slots (placement only)
                 .item(1, 1, createSellSlot())
-                .item(2, 1, createSellSlot())
-                .item(3, 1, createSellSlot())
-                .item(4, 1, createSellSlot())
-                .item(5, 1, createSellSlot())
+                .item(1, 2, createSellSlot())
+                .item(1, 3, createSellSlot())
+                .item(1, 4, createSellSlot())
+                .item(1, 5, createSellSlot())
                 // Value display
-                .item(7, 1, item()
+                .item(1, 7, item()
                     .material(Material.EMERALD)
                     .name("<green>Total Value")
                     .lore("""
@@ -123,7 +123,7 @@ public class InteractiveSlotExample {
                         ctx -> Map.of("value", ctx.getInt("totalValue")))
                     .build())
                 // Sell button
-                .item(7, 2, item()
+                .item(2, 7, item()
                     .material(Material.LIME_CONCRETE)
                     .name("<green><b>Sell All Items")
                     .lore("""
@@ -176,7 +176,7 @@ public class InteractiveSlotExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .filler(Fillers.CYAN_GLASS_PANE)
                 // Info button
                 .item(0, 0, item()
@@ -195,29 +195,29 @@ public class InteractiveSlotExample {
                         <gray>Result appears on the right!""")
                     .build())
                 // Input slot 1 - can place and remove
-                .item(2, 1, item()
+                .item(1, 2, item()
                     .interactive()
                     .onItemChange(ctx -> {
                         // Clone the new item to track it independently
                         inputSlots[0] = ctx.getNewItem() != null ? ctx.getNewItem().clone() : null;
                         ItemStack output = processItems(inputSlots);
                         // Auto-detect pane from event context - no need to specify "main"
-                        ctx.setSlotItem(6, 1, output);
+                        ctx.setSlotItem(1, 6, output);
                     })
                     .build())
                 // Input slot 2 - can place and remove
-                .item(3, 1, item()
+                .item(1, 3, item()
                     .interactive()
                     .onItemChange(ctx -> {
                         // Clone the new item to track it independently
                         inputSlots[1] = ctx.getNewItem() != null ? ctx.getNewItem().clone() : null;
                         ItemStack output = processItems(inputSlots);
                         // Auto-detect pane from event context - no need to specify "main"
-                        ctx.setSlotItem(6, 1, output);
+                        ctx.setSlotItem(1, 6, output);
                     })
                     .build())
                 // Process arrow
-                .item(4, 1, item()
+                .item(1, 4, item()
                     .material(Material.ARROW)
                     .name("<yellow>Processing...")
                     .lore("""
@@ -229,30 +229,30 @@ public class InteractiveSlotExample {
                         <yellow>Diamond + Stick = Diamond Sword""")
                     .build())
                 // Output slot - can only take
-                .item(6, 1, item()
+                .item(1, 6, item()
                     .allowPickup(true)  // Can only take, not place
                     .onItemChange(ctx -> {
                         if (ctx.wasItemRemoved()) {
                             // Consume 1 item from each input slot
                             if (inputSlots[0] != null && inputSlots[0].getAmount() > 1) {
                                 inputSlots[0].setAmount(inputSlots[0].getAmount() - 1);
-                                ctx.setSlotItem(2, 1, inputSlots[0]);
+                                ctx.setSlotItem(1, 2, inputSlots[0]);
                             } else {
                                 inputSlots[0] = null;
-                                ctx.setSlotItem(2, 1, null);
+                                ctx.setSlotItem(1, 2, null);
                             }
 
                             if (inputSlots[1] != null && inputSlots[1].getAmount() > 1) {
                                 inputSlots[1].setAmount(inputSlots[1].getAmount() - 1);
-                                ctx.setSlotItem(3, 1, inputSlots[1]);
+                                ctx.setSlotItem(1, 3, inputSlots[1]);
                             } else {
                                 inputSlots[1] = null;
-                                ctx.setSlotItem(3, 1, null);
+                                ctx.setSlotItem(1, 3, null);
                             }
 
                             // Recalculate output for remaining items
                             ItemStack newOutput = processItems(inputSlots);
-                            ctx.setSlotItem(6, 1, newOutput);
+                            ctx.setSlotItem(1, 6, newOutput);
 
                             ctx.sendMessage("<green>✓ Crafted item! <gray>(<gold><remaining><gray> materials remaining)",
                                 Map.of("remaining", (inputSlots[0] != null ? inputSlots[0].getAmount() : 0) +
@@ -275,7 +275,7 @@ public class InteractiveSlotExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .filler(Fillers.GRAY_GLASS_PANE)
                 // Info button
                 .item(0, 0, item()
@@ -291,7 +291,7 @@ public class InteractiveSlotExample {
                         <yellow>Try equipping armor!""")
                     .build())
                 // Helmet slot
-                .item(2, 1, item()
+                .item(1, 2, item()
                     .interactive()
                     .onItemChange(ctx -> {
                         player.getInventory().setHelmet(ctx.getNewItem());
@@ -299,7 +299,7 @@ public class InteractiveSlotExample {
                     })
                     .build())
                 // Chestplate slot
-                .item(3, 1, item()
+                .item(1, 3, item()
                     .interactive()
                     .onItemChange(ctx -> {
                         player.getInventory().setChestplate(ctx.getNewItem());
@@ -307,7 +307,7 @@ public class InteractiveSlotExample {
                     })
                     .build())
                 // Leggings slot
-                .item(5, 1, item()
+                .item(1, 5, item()
                     .interactive()
                     .onItemChange(ctx -> {
                         player.getInventory().setLeggings(ctx.getNewItem());
@@ -315,7 +315,7 @@ public class InteractiveSlotExample {
                     })
                     .build())
                 // Boots slot
-                .item(6, 1, item()
+                .item(1, 6, item()
                     .interactive()
                     .onItemChange(ctx -> {
                         player.getInventory().setBoots(ctx.getNewItem());
@@ -335,7 +335,7 @@ public class InteractiveSlotExample {
             .rows(3)
             .pane(staticPane()
                 .name("main")
-                .bounds(0, 0, 9, 3)
+                .bounds(0, 0, 3, 9)
                 .filler(Fillers.RED_GLASS_PANE)
                 // Info button
                 .item(0, 0, item()
@@ -356,7 +356,7 @@ public class InteractiveSlotExample {
                         <red>Try placing invalid items!""")
                     .build())
                 // Only accepts diamonds
-                .item(2, 1, item()
+                .item(1, 2, item()
                     .allowPlacement(true)
                     .onItemChange(ctx -> {
                         if (ctx.wasItemPlaced()) {
@@ -374,7 +374,7 @@ public class InteractiveSlotExample {
                     })
                     .build())
                 // Only accepts max stack size of 1
-                .item(6, 1, item()
+                .item(1, 6, item()
                     .allowPlacement(true)
                     .onItemChange(ctx -> {
                         if (ctx.wasItemPlaced()) {

@@ -62,7 +62,7 @@ class FilterStrategyTest {
     private PaginationContext<Item> createContext(List<Item> items) {
         PaginatedPane<Item> testPane = PaginatedPane.<Item>pane()
             .name("test")
-            .bounds(0, 0, 9, 1)
+            .bounds(0, 0, 1, 9)
             .items(items)
             .itemsPerPage(10)
             .renderer((ctx, item, i) -> null)
