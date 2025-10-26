@@ -14,10 +14,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -36,7 +33,7 @@ import java.util.function.Function;
 @Getter
 public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
-    private final Function<LoaderContext, List<T>> asyncLoader;
+    private final Function<LoaderContext, ? extends Collection<T>> asyncLoader;
     private final Duration ttl;
     private final MenuItem loadingItem;
     private final MenuItem errorItem;
@@ -113,8 +110,12 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
             LoaderContext loaderContext = LoaderContext.from(pagination);
 
             // Start async load (or background reload if stale data exists)
-            // Wrap Function<LoaderContext, List<T>> as Supplier<List<T>>
-            context.loadAsync(cacheKey, () -> this.asyncLoader.apply(loaderContext), this.ttl);
+            // Wrap loader and convert Collection<T> to List<T> for cache storage
+            context.loadAsync(cacheKey, () -> {
+                Collection<T> result = this.asyncLoader.apply(loaderContext);
+                return (result instanceof List) ? (List<T>) result : new ArrayList<>(result);
+            }, this.ttl);
+
             // Re-check state after starting load
             asyncState = cache.getState(cacheKey);
         }
@@ -230,7 +231,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
         private String name;
         private PaneBounds bounds;
-        private Function<LoaderContext, List<T>> asyncLoader;
+        private Function<LoaderContext, ? extends Collection<T>> asyncLoader;
         private Duration ttl = Duration.ofSeconds(30);  // Default TTL
         private TriFunction<MenuContext, T, Integer, MenuItem> itemRenderer;
         private int itemsPerPage;
@@ -284,12 +285,13 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         /**
          * Sets the async data loader with LoaderContext.
          * The loader receives pagination state and filter values for database queries.
+         * Accepts any Collection type (List, Set, etc.) - automatically converted to List internally.
          *
          * @param loader The function that loads data with LoaderContext
          * @return This builder
          */
         @NonNull
-        public Builder<T> loader(@NonNull Function<LoaderContext, List<T>> loader) {
+        public Builder<T> loader(@NonNull Function<LoaderContext, ? extends Collection<T>> loader) {
             this.asyncLoader = loader;
             return this;
         }
