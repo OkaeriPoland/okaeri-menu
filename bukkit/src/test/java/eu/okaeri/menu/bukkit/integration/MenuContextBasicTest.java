@@ -226,11 +226,11 @@ class MenuContextBasicTest {
         Computed<String> before = context.computed("test_key");
         assertThat(before.isPresent()).isTrue();
 
-        // Invalidate
+        // Invalidate (stale-while-revalidate: value still present but expired)
         context.invalidate("test_key");
 
         Computed<String> after = context.computed("test_key");
-        assertThat(after.isPresent()).isFalse();
+        assertThat(after.isPresent()).isTrue();  // Value still present during stale-while-revalidate
     }
 
     @Test

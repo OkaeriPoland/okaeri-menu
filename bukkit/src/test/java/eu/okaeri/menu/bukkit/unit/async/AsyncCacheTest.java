@@ -180,15 +180,20 @@ class AsyncCacheTest {
     // ========================================
 
     @Test
-    @DisplayName("Should invalidate single key")
+    @DisplayName("Should invalidate single key (stale-while-revalidate)")
     void testInvalidateSingleKey() {
         this.cache.put("key1", "value1", Duration.ofSeconds(30));
         this.cache.put("key2", "value2", Duration.ofSeconds(30));
 
         this.cache.invalidate("key1");
 
-        assertThat(this.cache.get("key1", String.class)).isEmpty();
+        // Stale-while-revalidate: value still present but marked as expired
+        assertThat(this.cache.get("key1", String.class)).contains("value1");
+        assertThat(this.cache.isExpired("key1")).isTrue();
+
+        // Other key unaffected
         assertThat(this.cache.get("key2", String.class)).contains("value2");
+        assertThat(this.cache.isExpired("key2")).isFalse();
     }
 
     @Test
