@@ -241,13 +241,27 @@ public class MenuListener implements Listener {
             return;
         }
 
-        // Handle the click
+        // Handle sync click handlers
         try {
             clickedItem.handleClick(clickContext);
         } catch (Exception exception) {
             // Exception in user click handler
             // Event is already cancelled, so we're safe
             this.plugin.getLogger().log(Level.WARNING, "Exception in menu item click handler (slot " + rawSlot + ")", exception);
+        }
+
+        // Handle async click handlers (if any)
+        if (clickedItem.hasAsyncClickHandler()) {
+            MenuContext menuContext = new MenuContext(menu, player);
+            menu.getAsyncExecutor().execute(() -> {
+                try {
+                    clickedItem.handleAsyncClick(clickContext);
+                } catch (Exception exception) {
+                    // Exception in async click handler
+                    this.plugin.getLogger().log(Level.WARNING, "Exception in async menu item click handler (slot " + rawSlot + ")", exception);
+                }
+                return null;
+            });
         }
     }
 

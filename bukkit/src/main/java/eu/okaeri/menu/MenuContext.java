@@ -40,6 +40,26 @@ public class MenuContext {
     protected final HumanEntity entity;
 
     // ========================================
+    // THREAD SAFETY
+    // ========================================
+
+    /**
+     * Ensures the current thread is the main server thread.
+     * Throws IllegalStateException if called from async thread.
+     *
+     * @param methodName The name of the method requiring main thread
+     * @throws IllegalStateException if not on main thread
+     */
+    private void requireMainThread(@NonNull String methodName) {
+        if (!Bukkit.isPrimaryThread()) {
+            throw new IllegalStateException(
+                methodName + "() must be called from main thread. " +
+                "Called from async context - use Bukkit.getScheduler().runTask() to schedule main-thread work."
+            );
+        }
+    }
+
+    // ========================================
     // CONVENIENCE ACCESSORS
     // ========================================
 
@@ -101,8 +121,12 @@ public class MenuContext {
 
     /**
      * Closes this menu for the player.
+     * Must be called from main thread.
+     *
+     * @throws IllegalStateException if called from async thread
      */
     public void closeInventory() {
+        this.requireMainThread("closeInventory");
         this.menu.close(this.entity);
         this.entity.closeInventory();
     }
@@ -161,30 +185,39 @@ public class MenuContext {
     /**
      * Opens another menu and tracks it in navigation history.
      * The player can navigate back to the current menu using back().
+     * Must be called from main thread.
      *
      * @param targetMenu The menu to open
+     * @throws IllegalStateException if called from async thread
      */
     public void open(@NonNull Menu targetMenu) {
+        this.requireMainThread("open");
         NavigationHistory.open(this.entity, targetMenu);
     }
 
     /**
      * Opens another menu with parameters and tracks it in navigation history.
+     * Must be called from main thread.
      *
      * @param targetMenu The menu to open
      * @param params     Parameters to pass to the menu
+     * @throws IllegalStateException if called from async thread
      */
     public void open(@NonNull Menu targetMenu, @NonNull Map<String, Object> params) {
+        this.requireMainThread("open");
         NavigationHistory.open(this.entity, targetMenu, params);
     }
 
     /**
      * Navigates back to the previous menu in history.
      * If there is no previous menu, closes the inventory.
+     * Must be called from main thread.
      *
      * @return true if navigated back, false if there was no history
+     * @throws IllegalStateException if called from async thread
      */
     public boolean back() {
+        this.requireMainThread("back");
         return NavigationHistory.back(this.entity);
     }
 
@@ -249,14 +282,17 @@ public class MenuContext {
     /**
      * Sets an item in an interactive slot using pane name and local coordinates.
      * This is a convenience method that handles coordinate conversion and validation.
+     * Must be called from main thread.
      *
      * @param paneName The name of the pane
      * @param localX   The local X coordinate (column) within the pane
      * @param localY   The local Y coordinate (row) within the pane
      * @param item     The item to set (can be null to clear)
      * @throws IllegalArgumentException if the pane doesn't exist or slot is not interactive
+     * @throws IllegalStateException if called from async thread
      */
     public void setSlotItem(@NonNull String paneName, int localX, int localY, ItemStack item) {
+        this.requireMainThread("setSlotItem");
         Pane pane = this.menu.getPanes().get(paneName);
         if (pane == null) {
             throw new IllegalArgumentException("Pane not found: " + paneName);
@@ -820,11 +856,14 @@ public class MenuContext {
      * Executes commands as the player who opened the menu.
      * <p>
      * This is a convenience method for menu items that execute commands.
+     * Must be called from main thread.
      *
      * @param log     whether to log the command execution to server log
      * @param command the command(s) to execute (without leading slash)
+     * @throws IllegalStateException if called from async thread
      */
     public void runCommand(boolean log, @NonNull String... command) {
+        this.requireMainThread("runCommand");
         for (String cmd : command) {
             if (log) {
                 this.getLogger().info(this.entity.getName() + " issued server command (via GUI): /" + cmd);

@@ -45,6 +45,12 @@ public class MenuItem {
     private Consumer<MenuItemClickContext> leftClickHandler;
     private Consumer<MenuItemClickContext> middleClickHandler;
 
+    // Async handlers (run in AsyncExecutor thread pool)
+    private Consumer<MenuItemClickContext> asyncClickHandler;
+    private Consumer<MenuItemClickContext> asyncLeftClickHandler;
+    private Consumer<MenuItemClickContext> asyncRightClickHandler;
+    private Consumer<MenuItemClickContext> asyncMiddleClickHandler;
+
     // Interactive slot properties
     private final boolean allowPickup;
     private final boolean allowPlacement;
@@ -68,6 +74,10 @@ public class MenuItem {
         this.rightClickHandler = builder.rightClickHandler;
         this.leftClickHandler = builder.leftClickHandler;
         this.middleClickHandler = builder.middleClickHandler;
+        this.asyncClickHandler = builder.asyncClickHandler;
+        this.asyncLeftClickHandler = builder.asyncLeftClickHandler;
+        this.asyncRightClickHandler = builder.asyncRightClickHandler;
+        this.asyncMiddleClickHandler = builder.asyncMiddleClickHandler;
         this.allowPickup = builder.allowPickup;
         this.allowPlacement = builder.allowPlacement;
         this.itemChangeHandler = builder.itemChangeHandler;
@@ -88,13 +98,13 @@ public class MenuItem {
         ItemStack base = this.baseItem.get(context);
         ItemStack stack;
 
-        if (base != null && base.getType() != Material.AIR) {
+        if ((base != null) && (base.getType() != Material.AIR)) {
             // Start from base ItemStack (preserves NBT, meta, custom model data, etc.)
             stack = base.clone();
 
             // Override material if explicitly set
             Material explicitMaterial = this.material.get(context);
-            if (explicitMaterial != null && explicitMaterial != Material.AIR) {
+            if ((explicitMaterial != null) && (explicitMaterial != Material.AIR)) {
                 stack.setType(explicitMaterial);
             }
         } else {
@@ -163,7 +173,8 @@ public class MenuItem {
     }
 
     /**
-     * Handles a click event on this item.
+     * Handles a click event on this item (sync handlers only).
+     * Async handlers are executed separately by MenuListener.
      *
      * @param context The click context
      */
@@ -178,6 +189,40 @@ public class MenuItem {
             this.rightClickHandler.accept(context);
         } else if (context.isMiddleClick() && (this.middleClickHandler != null)) {
             this.middleClickHandler.accept(context);
+        }
+    }
+
+    /**
+     * Checks if this item has any async click handlers.
+     *
+     * @return true if any async handler is set
+     */
+    public boolean hasAsyncClickHandler() {
+        return (this.asyncClickHandler != null) ||
+            (this.asyncLeftClickHandler != null) ||
+            (this.asyncRightClickHandler != null) ||
+            (this.asyncMiddleClickHandler != null);
+    }
+
+    /**
+     * Handles async click event on this item.
+     * Executes the appropriate async handler based on click type.
+     *
+     * @param context The click context (for click type detection)
+     */
+    public void handleAsyncClick(@NonNull MenuItemClickContext context) {
+        // General async handler runs for all click types
+        if (this.asyncClickHandler != null) {
+            this.asyncClickHandler.accept(context);
+        }
+
+        // Specific async handlers override general handler for their click type
+        if (context.isLeftClick() && (this.asyncLeftClickHandler != null)) {
+            this.asyncLeftClickHandler.accept(context);
+        } else if (context.isRightClick() && (this.asyncRightClickHandler != null)) {
+            this.asyncRightClickHandler.accept(context);
+        } else if (context.isMiddleClick() && (this.asyncMiddleClickHandler != null)) {
+            this.asyncMiddleClickHandler.accept(context);
         }
     }
 
@@ -255,6 +300,12 @@ public class MenuItem {
         private Consumer<MenuItemClickContext> rightClickHandler;
         private Consumer<MenuItemClickContext> leftClickHandler;
         private Consumer<MenuItemClickContext> middleClickHandler;
+
+        // Async handlers
+        private Consumer<MenuItemClickContext> asyncClickHandler;
+        private Consumer<MenuItemClickContext> asyncLeftClickHandler;
+        private Consumer<MenuItemClickContext> asyncRightClickHandler;
+        private Consumer<MenuItemClickContext> asyncMiddleClickHandler;
 
         // Interactive slot properties
         private boolean allowPickup = false;
@@ -339,7 +390,7 @@ public class MenuItem {
          */
         @NonNull
         private Component joinComponents(@NonNull List<Component> components) {
-            return components.size() == 1 ? components.get(0) : Component.join(JoinConfiguration.newlines(), components);
+            return (components.size() == 1) ? components.get(0) : Component.join(JoinConfiguration.newlines(), components);
         }
 
         // ========================================
@@ -1021,6 +1072,81 @@ public class MenuItem {
         @NonNull
         public Builder onMiddleClick(@NonNull Consumer<MenuItemClickContext> handler) {
             this.middleClickHandler = handler;
+            return this;
+        }
+
+        /**
+         * Sets an async handler for any click type.
+         * The handler runs in the AsyncExecutor thread pool (off main thread).
+         * Use this for database operations, file I/O, or other blocking operations.
+         * <p>
+         * The handler receives MenuContext with thread-safe operations:
+         * - State management (get/set) - thread-safe
+         * - Async data (computed/invalidate) - thread-safe
+         * - Pagination - thread-safe
+         * <p>
+         * Operations requiring main thread will throw IllegalStateException:
+         * - closeInventory(), open(), back()
+         * - setSlotItem()
+         * - runCommand()
+         * <p>
+         * Example usage:
+         * <pre>{@code
+         * .onClickAsync(ctx -> {
+         *     // Direct service calls - runs async!
+         *     UUID playerId = ctx.getPlayer().getUniqueId();
+         *     homeService.remove(playerId, homeName);
+         *
+         *     // Invalidate triggers auto-refresh on next tick
+         *     ctx.invalidate();
+         * })
+         * }</pre>
+         *
+         * @param handler The async click handler
+         * @return This builder
+         */
+        @NonNull
+        public Builder onClickAsync(@NonNull Consumer<MenuItemClickContext> handler) {
+            this.asyncClickHandler = handler;
+            return this;
+        }
+
+        /**
+         * Sets an async handler specifically for left-clicks.
+         * Runs in AsyncExecutor thread pool. See {@link #onClickAsync(Consumer)} for details.
+         *
+         * @param handler The async left-click handler
+         * @return This builder
+         */
+        @NonNull
+        public Builder onLeftClickAsync(@NonNull Consumer<MenuItemClickContext> handler) {
+            this.asyncLeftClickHandler = handler;
+            return this;
+        }
+
+        /**
+         * Sets an async handler specifically for right-clicks.
+         * Runs in AsyncExecutor thread pool. See {@link #onClickAsync(Consumer)} for details.
+         *
+         * @param handler The async right-click handler
+         * @return This builder
+         */
+        @NonNull
+        public Builder onRightClickAsync(@NonNull Consumer<MenuItemClickContext> handler) {
+            this.asyncRightClickHandler = handler;
+            return this;
+        }
+
+        /**
+         * Sets an async handler specifically for middle-clicks.
+         * Runs in AsyncExecutor thread pool. See {@link #onClickAsync(Consumer)} for details.
+         *
+         * @param handler The async middle-click handler
+         * @return This builder
+         */
+        @NonNull
+        public Builder onMiddleClickAsync(@NonNull Consumer<MenuItemClickContext> handler) {
+            this.asyncMiddleClickHandler = handler;
             return this;
         }
 

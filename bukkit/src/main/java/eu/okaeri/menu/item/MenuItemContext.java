@@ -7,6 +7,7 @@ import eu.okaeri.menu.pane.PaneBounds;
 import eu.okaeri.menu.pane.StaticPane;
 import lombok.Getter;
 import lombok.NonNull;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
@@ -39,6 +40,30 @@ public abstract class MenuItemContext extends MenuContext {
      */
     public void cancel() {
         this.event.setCancelled(true);
+    }
+
+    /**
+     * Gets the inventory click event.
+     * <p>
+     * <b>IMPORTANT:</b> This method is ONLY valid in synchronous click handlers (onClick, onLeftClick, etc.).
+     * <p>
+     * <b>DO NOT</b> use this in async click handlers (onClickAsync, onLeftClickAsync, etc.), even if you
+     * wrap the call in a sync task via Bukkit.getScheduler().runTask(). The event object is only valid
+     * during the immediate handling of the click - by the time your scheduled sync task runs, the event
+     * context will be gone.
+     *
+     * @return The inventory click event
+     * @throws IllegalStateException if called from an async context
+     */
+    public InventoryClickEvent getEvent() {
+        if (!Bukkit.isPrimaryThread()) {
+            throw new IllegalStateException(
+                "getEvent() can only be called in sync click handlers (onClick, onLeftClick, etc.). " +
+                    "Do NOT use in async handlers (onClickAsync, etc.), even with Bukkit.getScheduler().runTask() - " +
+                    "the event is only valid during immediate click handling."
+            );
+        }
+        return this.event;
     }
 
     // ========================================
