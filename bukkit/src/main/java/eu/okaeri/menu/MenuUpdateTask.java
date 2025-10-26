@@ -66,6 +66,7 @@ public class MenuUpdateTask {
     /**
      * Stops the update task.
      */
+    @Synchronized
     public void stop() {
         if (!this.running) {
             return;

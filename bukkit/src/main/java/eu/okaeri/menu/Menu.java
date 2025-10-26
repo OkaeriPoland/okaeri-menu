@@ -330,7 +330,7 @@ public class Menu implements InventoryHolder {
         this.viewerStates.remove(player.getUniqueId());  // Cleans up all state including pagination!
 
         // Stop update task if this was the last viewer
-        if (this.viewerStates.isEmpty() && (this.updateTask != null) && this.updateTask.isRunning()) {
+        if (this.viewerStates.isEmpty() && this.updateTask.isRunning()) {
             this.updateTask.stop();
         }
     }
