@@ -134,7 +134,65 @@ public static Menu createReactiveMenu(Plugin plugin) {
 
 **Automatic Refresh:** State changes (`ctx.set()`), async data updates, and pagination changes automatically trigger refresh on the next tick. Manual `ctx.refresh()` is only needed for immediate updates within the same tick.
 
-**Update Interval:** Use `.updateInterval(Duration)` only when you need periodic polling of external state (e.g., checking balance from database every 5 seconds). It's not required for reactive state changes!
+### Lazy Computation & Computed Values
+
+Use `.lazy()` to compute expensive values once per player and reuse them with `.computed()`:
+
+```java
+public static Menu createPlayerStatsMenu(Plugin plugin) {
+    return Menu.builder(plugin)
+        // Lazy: cached until ctx.invalidate() - for user-controlled changes
+        .lazy("playerRank", ctx -> calculatePlayerRank(ctx.getPlayer()))
+        // Reactive: auto-refreshes every 5 seconds - for external changes
+        .reactive("onlinePlayers", ctx -> Bukkit.getOnlinePlayers().size(), Duration.ofSeconds(5))
+        // Use computed values in reactive title
+        .title(ctx -> {
+            String rank = ctx.computed("playerRank").orElse("Unknown");
+            int online = ctx.computed("onlinePlayers").orElse(0);
+            return "<gold>Stats | Rank: " + rank + " | Online: " + online;
+        })
+        .pane(staticPane("stats")
+            .bounds(0, 0, "P . . . Y . . . U")  // 1 row × 9 columns
+            .item('P', item()
+                .material(Material.PLAYER_HEAD)
+                .name("<yellow>Online Players: <count>")
+                .vars(ctx -> Map.of("count", ctx.computed("onlinePlayers").orElse(0)))
+                .build())
+            .item('Y', item()
+                .material(Material.DIAMOND)
+                .name("<aqua>Your Rank: <rank>")
+                .vars(ctx -> Map.of("rank", ctx.computed("playerRank").orElse("Unknown")))
+                .build())
+            .item('U', item()
+                .material(Material.EMERALD)
+                .name("<green>Premium Upgrade")
+                .lore("<gray>Unlock exclusive features!")
+                // Functional style: hide if PREMIUM or not yet loaded
+                .visible(ctx -> ctx.computed("playerRank")
+                    .map(rank -> !"PREMIUM".equals(rank))
+                    .orElse(false))  // Hidden while loading/error/empty
+                .onClick(ctx -> {
+                    purchasePremium(ctx.getPlayer());
+                    ctx.invalidate();  // Mark lazy values for recomputation on next refresh
+                })
+                .build())
+            .build())
+        .build();
+}
+```
+
+**Key Benefits:**
+- **Performance**: Expensive operations (DB queries, calculations) run once, not on every refresh
+- **Reusability**: Access computed values in title, visibility conditions, display text, etc.
+- **Type-safe**: `ctx.computed("key", Type.class)` for typed retrieval
+
+**Lazy vs Reactive:**
+- **`.lazy()`** - No TTL, cached until explicitly invalidated with `ctx.invalidate()`
+- **`.reactive()`** - Has TTL (default 1 second), automatically re-computes when expired
+- Use `.lazy()` for values that only change on user action (rank, purchases, manual updates)
+- Use `.reactive()` for values that change externally (balance, online players, server stats)
+
+**Update Interval:** Only needed for item properties (`.name()`, `.visible()`, etc.) that directly access **external sources without caching** (e.g., `ctx -> player.getLevel()`). If properties use `ctx.computed()` or state API (`ctx.getInt()`), those have their own update mechanisms—no updateInterval needed! For values with TTL (`.reactive()`), the TTL handles updates automatically.
 
 ### Opening Menus
 
