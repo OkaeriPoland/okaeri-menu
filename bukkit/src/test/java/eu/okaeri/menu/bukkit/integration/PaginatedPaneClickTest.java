@@ -98,6 +98,80 @@ class PaginatedPaneClickTest extends MenuListenerTestBase {
     }
 
     @Test
+    @DisplayName("Should route clicks correctly when paginated items flow around static items")
+    void testPaginatedItemsFlowAroundStaticItemsClickRouting() {
+        AtomicInteger staticClicks = new AtomicInteger(0);
+        AtomicInteger clickedItemIndex = new AtomicInteger(-1);
+        List<String> items = Arrays.asList("A", "B", "C", "D", "E");
+
+        Menu menu = Menu.builder(this.plugin)
+            .title("Flow Around Static")
+            .rows(3)
+            .pane(pane(String.class)
+                .name("items")
+                .bounds(0, 0, 9, 2)  // 18 slots total
+                .items(items)
+                .renderer((ctx, item, index) -> item()
+                    .material(Material.DIAMOND)
+                    .name(item)
+                    .onClick(event -> clickedItemIndex.set(index))
+                    .build())
+                .staticItem(2, 0, item()  // Static at slot 2
+                    .material(Material.BARRIER)
+                    .name("Static")
+                    .onClick(event -> staticClicks.incrementAndGet())
+                    .build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        // Expected layout: [A, B, STATIC, C, D, E, ...]
+        //                  [0, 1,   2,    3, 4, 5, ...]
+
+        // Click slot 0 → Item A (index 0)
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 0));
+        assertThat(clickedItemIndex.get())
+            .as("Slot 0 should route to item A (index 0)")
+            .isEqualTo(0);
+
+        // Click slot 1 → Item B (index 1)
+        clickedItemIndex.set(-1);
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 1));
+        assertThat(clickedItemIndex.get())
+            .as("Slot 1 should route to item B (index 1)")
+            .isEqualTo(1);
+
+        // Click slot 2 → Static item
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 2));
+        assertThat(staticClicks.get())
+            .as("Slot 2 should route to static item")
+            .isEqualTo(1);
+
+        // CRITICAL: Click slot 3 → Item C (index 2), NOT item D!
+        // This verifies the fix: items flow around static items without being lost
+        clickedItemIndex.set(-1);
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 3));
+        assertThat(clickedItemIndex.get())
+            .as("Slot 3 should route to item C (index 2), not D - items must flow around static")
+            .isEqualTo(2);
+
+        // Click slot 4 → Item D (index 3)
+        clickedItemIndex.set(-1);
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 4));
+        assertThat(clickedItemIndex.get())
+            .as("Slot 4 should route to item D (index 3)")
+            .isEqualTo(3);
+
+        // Click slot 5 → Item E (index 4)
+        clickedItemIndex.set(-1);
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 5));
+        assertThat(clickedItemIndex.get())
+            .as("Slot 5 should route to item E (index 4)")
+            .isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Should route clicks to async paginated items after data loads")
     void testAsyncPaginatedItemClickRouting() {
         AtomicInteger clickedItemIndex = new AtomicInteger(-1);
