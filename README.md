@@ -79,8 +79,7 @@ public class SimpleMenuExample {
         return Menu.builder(plugin)
             .title("<green>My First Menu")
             .rows(3)  // Optional - auto-calculated from pane bounds if omitted
-            .pane("main", staticPane()
-                .name("main")
+            .pane(staticPane("main")
                 .bounds(0, 0, 9, 3)
                 .item(4, 1, item()
                     .material(Material.DIAMOND)
@@ -111,8 +110,7 @@ public static Menu createReactiveMenu(Plugin plugin) {
     return Menu.builder(plugin)
         .title("<yellow>Reactive Menu")
         // .state(s -> s.define("clickCount", 0))  // Optional - integers default to 0
-        .pane("main", staticPane()
-            .name("main")
+        .pane(staticPane("main")
             .bounds(0, 0, 9, 3)
             .item(4, 1, item()
                 .material(ctx -> (ctx.getInt("clickCount") > 10) ? Material.DIAMOND : Material.COAL)
@@ -253,8 +251,7 @@ import static eu.okaeri.menu.pane.PaginatedPane.pane;
 public static Menu createShopMenu(Plugin plugin) {
     return Menu.builder(plugin)
         .title("<yellow>⚡ Shop")
-        .pane("items", pane(ShopItem.class)
-            .name("items")
+        .pane(pane("items", ShopItem.class)
             .bounds(0, 1, 9, 4)
             .items(() -> loadShopItems())  // Your data source
             .renderer((ctx, item, index) -> item()
@@ -268,8 +265,7 @@ public static Menu createShopMenu(Plugin plugin) {
                 .onClick(ctx -> purchaseItem(ctx.getEntity(), item))
                 .build())
             .build())
-        .pane("controls", staticPane()
-            .name("controls")
+        .pane(staticPane("controls")
             .bounds(0, 5, 9, 1)
             .item(2, 0, previousPageButton("items").build())
             .item(4, 0, pageIndicator("items").build())
@@ -287,8 +283,7 @@ import static eu.okaeri.menu.pane.AsyncPaginatedPane.paneAsync;
 public static Menu createAsyncShopMenu(Plugin plugin) {
     return Menu.builder(plugin)
         .title("<yellow>⚡ Async Shop")
-        .pane("items", paneAsync(ShopItem.class)
-            .name("items")
+        .pane(paneAsync("items", ShopItem.class)
             .bounds(0, 1, 9, 4)
             .loader(ctx -> {
                 // Runs async - fetch from database
@@ -328,8 +323,7 @@ public static Menu createAsyncShopMenu(Plugin plugin) {
 Menu.builder(plugin)
     .title("<yellow>Shop with Filters")
     // Filter controls - toggle items with declarative filters
-    .pane("controls", staticPane()
-        .name("controls")
+    .pane(staticPane("controls")
         .bounds(0, 0, 9, 1)
         .item(2, 0, item()
             .material(ctx -> ctx.getBool("weaponFilter") ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
@@ -364,8 +358,7 @@ Menu.builder(plugin)
             .build())
         .build())
     // Items pane - filters are applied automatically
-    .pane("items", pane(ShopItem.class)
-        .name("items")
+    .pane(pane("items" ShopItem.class)
         .bounds(0, 1, 9, 4)
         .items(() -> loadShopItems())
         .renderer((ctx, item, index) -> item()
@@ -387,8 +380,7 @@ For async loaders, use value-only filters to pass filter parameters to your data
 Menu.builder(plugin)
     .title("<yellow>Database-Filtered Shop")
     // Filter controls with value-only filters
-    .pane("controls", staticPane()
-        .name("controls")
+    .pane(staticPane("controls")
         .bounds(0, 0, 9, 1)
         .item(2, 0, item()
             .material(ctx -> ctx.getBool("weaponFilter") ? Material.DIAMOND_SWORD : Material.WOODEN_SWORD)
@@ -424,8 +416,7 @@ Menu.builder(plugin)
             .build())
         .build())
     // Async pane - filters are extracted in loader
-    .pane("items", paneAsync(ShopItem.class)
-        .name("items")
+    .pane(paneAsync("items", ShopItem.class)
         .bounds(0, 1, 9, 4)
         .loader(ctx -> {
             // Extract filter values from context
