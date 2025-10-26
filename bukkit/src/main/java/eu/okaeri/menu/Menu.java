@@ -586,6 +586,35 @@ public class Menu implements InventoryHolder {
             return this.reactive(key, loader, Duration.ofSeconds(1));
         }
 
+        /**
+         * Declares a lazy menu-level data source that caches indefinitely.
+         * Data is loaded once and cached until menu is closed or viewer state is cleared.
+         * Useful for data that never changes during a menu session.
+         * Convenience method for {@link #reactive(String, Function, Duration)}.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * Menu.builder(plugin)
+         *     .lazy("userProfile", ctx -> database.getProfile(ctx.getEntity()))
+         *     .pane("main", staticPane()
+         *         .item(0, 0, item()
+         *             .name(ctx -> ctx.computed("userProfile")
+         *                 .map(profile -> "Welcome, " + profile.getName())
+         *                 .orElse("Guest"))
+         *             .build())
+         *         .build())
+         *     .build();
+         * }</pre>
+         *
+         * @param key    Unique identifier for this data source
+         * @param loader Function that loads the data (receives MenuContext)
+         * @return This builder
+         */
+        @NonNull
+        public Builder lazy(@NonNull String key, @NonNull Function<MenuContext, ?> loader) {
+            return this.reactive(key, loader, Duration.ofMillis(Long.MAX_VALUE));
+        }
+
         @NonNull
         public Menu build() {
             // Auto-calculate rows from panes if not explicitly set

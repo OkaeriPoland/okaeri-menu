@@ -1195,6 +1195,35 @@ public class MenuItem {
             return this.reactive(key, loader, Duration.ofSeconds(1));
         }
 
+        /**
+         * Declares a lazy item-level data source that caches indefinitely.
+         * Data is loaded once and cached until menu is closed or viewer state is cleared.
+         * Useful for data that never changes during a menu session.
+         * Convenience method for {@link #reactive(String, Supplier, Duration)}.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * MenuItem.item()
+         *     .lazy("itemDetails", () -> expensiveDatabase.getItemDetails(itemId))
+         *     .name(ctx -> ctx.computed("itemDetails")
+         *         .map(details -> details.getDisplayName())
+         *         .loading("Loading...")
+         *         .orElse("Unknown Item"))
+         *     .lore(ctx -> ctx.computed("itemDetails")
+         *         .map(details -> String.join("\n", details.getDescription()))
+         *         .orElse(""))
+         *     .build()
+         * }</pre>
+         *
+         * @param key    The data key
+         * @param loader The data loader
+         * @return This builder
+         */
+        @NonNull
+        public Builder lazy(@NonNull String key, @NonNull Supplier<?> loader) {
+            return this.reactive(key, loader, Duration.ofMillis(Long.MAX_VALUE));
+        }
+
         // ========================================
         // BUILD
         // ========================================
