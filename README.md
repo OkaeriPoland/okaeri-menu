@@ -1,5 +1,8 @@
 # Okaeri Menu
 
+![License](https://img.shields.io/github/license/OkaeriPoland/okaeri-menu?style=for-the-badge&color=blue)
+[![Discord](https://img.shields.io/discord/589089838200913930?style=for-the-badge&logo=discord&color=blue)](https://discord.gg/hASN5eX)
+
 Modern, reactive GUI framework for Minecraft (Paper) with pane-based architecture, async data loading, and advanced filtering.
 
 ## Features
@@ -28,9 +31,9 @@ Modern, reactive GUI framework for Minecraft (Paper) with pane-based architectur
 
 ## Installation
 
-![Version](https://img.shields.io/badge/version-2.0.1--beta.1-blue.svg)
-![Java](https://img.shields.io/badge/java-21-orange.svg)
-![Paper](https://img.shields.io/badge/platform-paper-00ADD8.svg)
+![Version](https://img.shields.io/badge/dynamic/xml?style=for-the-badge&label=version&logo=apachemaven&query=%2F*%5Blocal-name()%3D'project'%5D%2F*%5Blocal-name()%3D'version'%5D%2Ftext%28%29&url=https%3A%2F%2Fraw.githubusercontent.com%2FOkaeriPoland%2Fokaeri-menu%2Frefs%2Fheads%2Fmaster%2Fpom.xml)
+![Java](https://img.shields.io/badge/java-21-blue.svg?style=for-the-badge)
+![Paper](https://img.shields.io/badge/platform-paper-blue.svg?style=for-the-badge)
 
 ### Maven
 ```xml
