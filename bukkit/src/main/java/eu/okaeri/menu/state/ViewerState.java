@@ -66,7 +66,9 @@ public class ViewerState {
     }
 
     /**
-     * Initializes the inventory with evaluated title.
+     * Initializes the inventory with a placeholder title.
+     * The actual title will be evaluated and updated after first render
+     * to ensure pagination data (currentItems) is fresh.
      * Synchronized to prevent concurrent initialization by multiple threads.
      */
     @Synchronized
@@ -79,12 +81,12 @@ public class ViewerState {
         Menu menu = this.context.getMenu();
         Player player = this.context.getPlayer();
 
-        // Evaluate title (ctx.pagination() works - state is in map by now!)
-        String titleTemplate = menu.getTitle().get(this.context);
-        Component titleComponent = menu.getMessageProvider().resolveSingle(player, titleTemplate, Map.of());
+        // Use a placeholder title initially (will be updated after first render)
+        // This prevents reading stale pagination data (e.g., empty currentItems in AsyncPaginatedPane)
+        Component placeholderTitle = Component.text(" ");
 
-        // Create inventory
-        this.inventory = Bukkit.createInventory(menu, menu.getRows() * 9, titleComponent);
+        // Create inventory with placeholder
+        this.inventory = Bukkit.createInventory(menu, menu.getRows() * 9, placeholderTitle);
     }
 
     /**

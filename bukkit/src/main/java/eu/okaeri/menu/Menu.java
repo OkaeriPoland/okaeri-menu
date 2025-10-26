@@ -153,18 +153,85 @@ public class Menu implements InventoryHolder {
 
         // Create or get viewer state for this player
         ViewerState state = this.getOrCreateViewerState(player, context);
-        Inventory inventory = state.getInventory();
 
-        // Render all panes
-        this.render(inventory, context);
+        // Render and update title (no invalidate needed on first open)
+        this.renderAndUpdateTitle(state, context, false);
 
         // Open for player only if not already viewing this inventory
+        Inventory inventory = state.getInventory();
         if (player.getOpenInventory().getTopInventory() != inventory) {
             player.openInventory(inventory);
         }
 
         // Start update task after opening (so it doesn't refresh before first render)
         this.updateTask.start();
+    }
+
+    /**
+     * Renders panes and updates inventory title if needed.
+     * This is the core workflow for both initial open and refresh.
+     * <p>
+     * Workflow:
+     * 1. Invalidate title & panes (optional, controlled by parameter)
+     * 2. Render all panes (updates pagination data like currentItems)
+     * 3. Evaluate title with fresh pagination data
+     * 4. Create new inventory if title changed
+     * 5. Copy rendered items to new inventory
+     * 6. Update ViewerState with new inventory
+     *
+     * @param state           The viewer state
+     * @param context         The menu context
+     * @param invalidateFirst Whether to invalidate title & panes before rendering
+     * @return true if title changed and inventory was replaced
+     */
+    private boolean renderAndUpdateTitle(@NonNull ViewerState state, @NonNull MenuContext context, boolean invalidateFirst) {
+        Inventory inventory = state.getInventory();
+        Player player = context.getPlayer();
+
+        // Optionally invalidate before rendering (for refresh, not needed on first open)
+        if (invalidateFirst) {
+            this.title.invalidate();
+            for (Pane pane : this.panes.values()) {
+                pane.invalidate();
+            }
+        }
+
+        // Render BEFORE title evaluation so pagination data (currentItems) is fresh
+        this.render(inventory, context);
+
+        // Evaluate title with fresh pagination data
+        String titleTemplate = this.title.get(context);
+        Component titleComponent = this.messageProvider.resolveSingle(player, titleTemplate, Map.of());
+
+        // Check if title changed (compare with current inventory title)
+        Component currentTitle = player.getOpenInventory().title();
+        String newTitleSerialized = LegacyComponentSerializer.legacySection().serialize(titleComponent);
+        String currentTitleSerialized = LegacyComponentSerializer.legacySection().serialize(currentTitle);
+        boolean titleChanged = !newTitleSerialized.equals(currentTitleSerialized);
+
+        // Only create new inventory if title changed (avoids cursor reset)
+        if (titleChanged) {
+            // Create new inventory with updated title
+            Inventory newInventory = Bukkit.createInventory(this, this.rows * 9, titleComponent);
+
+            // Copy all rendered items to new inventory
+            for (int i = 0; i < inventory.getSize(); i++) {
+                newInventory.setItem(i, inventory.getItem(i));
+            }
+
+            // Update state with new inventory
+            state.setInventory(newInventory);
+
+            // Reopen inventory for player
+            player.openInventory(newInventory);
+
+            // Clean up old inventory for glitch safety
+            inventory.clear();
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -259,50 +326,10 @@ public class Menu implements InventoryHolder {
     public void refresh(@NonNull HumanEntity player) {
         ViewerState state = this.viewerStates.get(player.getUniqueId());
         if (state != null) {
-            Inventory inventory = state.getInventory();
             MenuContext context = new MenuContext(this, player);
 
-            // Invalidate title to ensure it re-evaluates
-            this.title.invalidate();
-
-            // Check if title has changed (compare serialized strings, not Component objects)
-            String newTitleTemplate = this.title.get(context);
-            Component newTitleComponent = this.messageProvider.resolveSingle(player, newTitleTemplate, Map.of());
-            Component currentTitle = player.getOpenInventory().title();
-
-            // Serialize both to legacy strings for accurate comparison
-            String newTitleSerialized = LegacyComponentSerializer.legacySection().serialize(newTitleComponent);
-            String currentTitleSerialized = LegacyComponentSerializer.legacySection().serialize(currentTitle);
-            boolean titleChanged = !newTitleSerialized.equals(currentTitleSerialized);
-
-            // Only reopen if title changed (to avoid cursor reset)
-            if (titleChanged) {
-
-                // Update inventory title by creating new one with same contents
-                Inventory newInventory = Bukkit.createInventory(this, this.rows * 9, newTitleComponent);
-
-                // Copy all items to new inventory
-                for (int i = 0; i < inventory.getSize(); i++) {
-                    newInventory.setItem(i, inventory.getItem(i));
-                }
-
-                // Update state with new inventory
-                state.setInventory(newInventory);
-
-                // Reopen with new inventory
-                player.openInventory(newInventory);
-
-                // Clean up the old inventory for glitch safety
-                inventory.clear();
-            }
-
-            // Invalidate all panes
-            for (Pane pane : this.panes.values()) {
-                pane.invalidate();
-            }
-
-            // Re-render (use current inventory from state)
-            this.render(state.getInventory(), context);
+            // Render and update title (with invalidate first)
+            this.renderAndUpdateTitle(state, context, true);
 
             // Record refresh timestamp for interval tracking
             state.recordRefresh();
