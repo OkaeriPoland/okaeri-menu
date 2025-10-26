@@ -76,7 +76,7 @@ public class AsyncShopExample {
             .rows(6)
             .updateInterval(Duration.ofMillis(500))  // Update frequently for loading states
             // Balance display (async item)
-            .pane("balance", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("balance")
                 .bounds(0, 0, 2, 1)
                 .item(0, 0, AsyncMenuItem.itemAsync()
@@ -151,7 +151,7 @@ public class AsyncShopExample {
                     .build())
                 .build())
             // Filter controls
-            .pane("filters", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("filters")
                 .bounds(2, 0, 7, 1)
                 .item(0, 0, item()
@@ -233,7 +233,7 @@ public class AsyncShopExample {
                     .build())
                 .build())
             // Async shop items (AsyncPaginatedPane)
-            .pane("shop-pane", paneAsync(ShopItem.class)
+            .pane(paneAsync(ShopItem.class)
                 .name("shop-pane")
                 .bounds(0, 1, 9, 3)
                 .loader(ctx -> {
@@ -302,7 +302,7 @@ public class AsyncShopExample {
                 ).build())
                 .build())
             // Navigation
-            .pane("nav", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("nav")
                 .bounds(0, 5, 9, 1)
                 .item(2, 0, PaginationUtils.previousPageButton("shop-pane")

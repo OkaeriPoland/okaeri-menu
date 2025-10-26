@@ -30,7 +30,7 @@ public class WaitForDataExample {
         return Menu.builder(plugin)
             .title("Async Shop Example")
             .rows(3)
-            .pane("items", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("items")
                 .bounds(0, 0, 9, 3)
                 .loader(ctx -> {

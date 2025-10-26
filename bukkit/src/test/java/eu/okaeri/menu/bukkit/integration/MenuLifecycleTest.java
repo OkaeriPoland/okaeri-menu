@@ -300,7 +300,7 @@ class MenuLifecycleTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .bounds(0, 0, 9, 3)
                 .item(0, 0, item()
                     .material(() -> {

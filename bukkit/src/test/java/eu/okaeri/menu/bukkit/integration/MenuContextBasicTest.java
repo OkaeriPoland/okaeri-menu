@@ -3,7 +3,6 @@ package eu.okaeri.menu.bukkit.integration;
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.Computed;
-import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.*;
@@ -15,6 +14,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static eu.okaeri.menu.pane.StaticPane.staticPane;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -54,7 +54,7 @@ class MenuContextBasicTest {
         Menu menu = Menu.builder(this.plugin)
             .title("Test Menu")
             .rows(3)
-            .pane("main", StaticPane.staticPane()
+            .pane(staticPane("main")
                 .bounds(0, 0, 9, 3)
                 .build())
             .build();

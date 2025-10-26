@@ -125,7 +125,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())  // Sync executor for instant completion
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)  // 3x2 = 6 slots
                 .loader(ctx -> testData)
@@ -167,7 +167,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())  // Sync executor for instant completion
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)  // 3x3 = 9 slots
                 .loader(ctx -> Collections.emptyList())
@@ -214,7 +214,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)  // 3x2 = 6 slots
                 .loader(ctx -> testData)
@@ -248,7 +248,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(pooledExecutor)  // Use pooled executor for real async
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)
                 .loader(ctx -> {
@@ -337,7 +337,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(pooledExecutor)  // Use pooled executor for real async
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)
                 .loader(ctx -> {
@@ -377,7 +377,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 2)
                 .loader(ctx -> Collections.singletonList("Only Item"))
@@ -411,7 +411,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 7, 2)  // 7x2 = 14 slots
                 .itemsPerPage(10)
@@ -500,7 +500,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(pooledExecutor)
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)
                 .loader(ctx -> {
@@ -538,7 +538,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)
                 .loader(ctx -> Collections.emptyList())  // Returns empty list
@@ -575,7 +575,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 3, 3)
                 .itemsPerPage(5)
@@ -606,7 +606,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("async-pane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("async-pane")
                 .bounds(0, 0, 9, 2)  // 9x2 = 18 slots
                 .itemsPerPage(10)
@@ -638,7 +638,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("filters", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, MenuItem.item()
@@ -660,7 +660,7 @@ class AsyncPaginatedPaneTest {
                         .build())
                     .build())
                 .build())
-            .pane("items", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("items")
                 .bounds(0, 1, 9, 2)
                 .loader(ctx -> {
@@ -696,7 +696,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("filters", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, MenuItem.item()
@@ -708,7 +708,7 @@ class AsyncPaginatedPaneTest {
                         .build())
                     .build())
                 .build())
-            .pane("items", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("items")
                 .bounds(0, 1, 9, 2)
                 .ttl(Duration.ofMillis(1))  // Very short TTL for refresh
@@ -755,7 +755,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("items", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("items")
                 .bounds(0, 0, 9, 3)
                 .loader(ctx -> {
@@ -786,7 +786,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("filters", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, MenuItem.item()
@@ -798,7 +798,7 @@ class AsyncPaginatedPaneTest {
                         .build())
                     .build())
                 .build())
-            .pane("items", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("items")
                 .bounds(0, 1, 9, 2)
                 .itemsPerPage(5)
@@ -837,7 +837,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("filters", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, MenuItem.item()
@@ -850,7 +850,7 @@ class AsyncPaginatedPaneTest {
                         .build())
                     .build())
                 .build())
-            .pane("items", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("items")
                 .bounds(0, 1, 9, 2)
                 .ttl(Duration.ofMillis(1))  // Very short TTL for refresh
@@ -905,7 +905,7 @@ class AsyncPaginatedPaneTest {
             .title("Async Menu")
             .rows(4)
             // First pane with category filter
-            .pane("categoryFilters", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("categoryFilters")
                 .bounds(0, 0, 5, 1)
                 .item(0, 0, MenuItem.item()
@@ -918,7 +918,7 @@ class AsyncPaginatedPaneTest {
                     .build())
                 .build())
             // Second pane with price filter
-            .pane("priceFilters", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("priceFilters")
                 .bounds(5, 0, 4, 1)
                 .item(0, 0, MenuItem.item()
@@ -931,7 +931,7 @@ class AsyncPaginatedPaneTest {
                     .build())
                 .build())
             // Target async pane
-            .pane("items", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("items")
                 .bounds(0, 1, 9, 3)
                 .loader(ctx -> {
@@ -968,7 +968,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Async Menu")
             .rows(3)
-            .pane("filters", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, MenuItem.item()
@@ -989,7 +989,7 @@ class AsyncPaginatedPaneTest {
                         .build())
                     .build())
                 .build())
-            .pane("items", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("items")
                 .bounds(0, 1, 9, 2)
                 .loader(ctx -> {
@@ -1027,7 +1027,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Error Test Menu")
             .rows(4)
-            .pane("failingFilters", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("failingFilters")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, MenuItem.item()
@@ -1041,7 +1041,7 @@ class AsyncPaginatedPaneTest {
                         .build())
                     .build())
                 .build())
-            .pane("failingPane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("failingPane")
                 .bounds(0, 1, 9, 1)
                 .loader(ctx -> {
@@ -1052,7 +1052,7 @@ class AsyncPaginatedPaneTest {
                     .material(Material.DIAMOND)
                     .build())
                 .build())
-            .pane("workingPane", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("workingPane")
                 .bounds(0, 2, 9, 1)
                 .item(0, 0, MenuItem.item()
@@ -1098,7 +1098,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Loader Error Test")
             .rows(3)
-            .pane("failingPane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("failingPane")
                 .bounds(0, 0, 9, 2)
                 .loader(ctx -> {
@@ -1112,7 +1112,7 @@ class AsyncPaginatedPaneTest {
                     .name("Error!")
                     .build())
                 .build())
-            .pane("workingPane", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("workingPane")
                 .bounds(0, 2, 9, 1)
                 .item(0, 0, MenuItem.item()
@@ -1153,7 +1153,7 @@ class AsyncPaginatedPaneTest {
             .asyncExecutor(SyncTestExecutor.create())
             .title("Renderer Error Test")
             .rows(3)
-            .pane("failingPane", paneAsync(String.class)
+            .pane(paneAsync(String.class)
                 .name("failingPane")
                 .bounds(0, 0, 9, 1)
                 .loader(ctx -> Arrays.asList("A", "B", "C"))  // Loader succeeds
@@ -1161,7 +1161,7 @@ class AsyncPaginatedPaneTest {
                     throw new RuntimeException("Renderer failed!");  // Renderer fails
                 })
                 .build())
-            .pane("workingPane", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("workingPane")
                 .bounds(0, 1, 9, 1)
                 .item(0, 0, MenuItem.item()

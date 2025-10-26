@@ -24,7 +24,7 @@ public class SimpleMenuExample {
         return Menu.builder(plugin)
             .title("Simple Menu")
             .rows(3)
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)  // Full 3-row inventory
                 .item(0, 0, item()
@@ -54,7 +54,7 @@ public class SimpleMenuExample {
             .title("Multi-Pane Example")
             .rows(6)
             // Top navigation pane
-            .pane("nav", staticPane()
+            .pane(staticPane()
                 .name("nav")
                 .bounds(0, 0, 9, 1)
                 .item(4, 0, item()
@@ -68,7 +68,7 @@ public class SimpleMenuExample {
                     .build())
                 .build())
             // Content pane
-            .pane("content", staticPane()
+            .pane(staticPane()
                 .name("content")
                 .bounds(0, 1, 9, 5)
                 .item(4, 2, item()
@@ -90,7 +90,7 @@ public class SimpleMenuExample {
         return Menu.builder(plugin)
             .title("Reactive Example")
             .rows(3)
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 .item(4, 1, item()
@@ -117,7 +117,7 @@ public class SimpleMenuExample {
             .title("Auto-Update Example")
             .rows(3)
             .updateInterval(Duration.ofSeconds(1))  // Update every second
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Clock display - updates automatically

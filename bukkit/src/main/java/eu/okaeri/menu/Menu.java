@@ -457,12 +457,11 @@ public class Menu implements InventoryHolder {
          * Adds a pane to this menu.
          * Validates that the pane doesn't overlap with existing panes.
          *
-         * @param name The pane name
          * @param pane The pane
          * @return This builder
          */
         @NonNull
-        public Builder pane(@NonNull String name, @NonNull Pane pane) {
+        public Builder pane(@NonNull Pane pane) {
             // Validate no overlap with existing panes
             PaneBounds newBounds = pane.getBounds();
 
@@ -470,7 +469,7 @@ public class Menu implements InventoryHolder {
                 PaneBounds existingBounds = entry.getValue().getBounds();
                 if (newBounds.overlaps(existingBounds)) {
                     throw new IllegalArgumentException(
-                        "Pane '" + name + "' overlaps with existing pane '" + entry.getKey() + "': " +
+                        "Pane '" + pane.getName() + "' overlaps with existing pane '" + entry.getKey() + "': " +
                             newBounds + " overlaps " + existingBounds
                     );
                 }
@@ -479,13 +478,13 @@ public class Menu implements InventoryHolder {
             // Validate pane fits within menu rows (only if rows explicitly set)
             if ((this.rows != -1) && ((newBounds.getY() + newBounds.getHeight()) > this.rows)) {
                 throw new IllegalArgumentException(
-                    "Pane '" + name + "' exceeds menu height: " +
+                    "Pane '" + pane.getName() + "' exceeds menu height: " +
                         "pane ends at row " + (newBounds.getY() + newBounds.getHeight()) +
                         " but menu has " + this.rows + " rows"
                 );
             }
 
-            this.panes.put(name, pane);
+            this.panes.put(pane.getName(), pane);
             return this;
         }
 

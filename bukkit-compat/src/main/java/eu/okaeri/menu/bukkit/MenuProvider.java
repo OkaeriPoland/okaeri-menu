@@ -279,7 +279,7 @@ public class MenuProvider {
         }
 
         // Build v2 menu
-        menuBuilder.pane("main", paneBuilder.build());
+        menuBuilder.pane(paneBuilder.build());
         Menu v2Menu = menuBuilder.build();
 
         return new OkaeriMenu(menu, itemMap, inputMap, providerMap, this, v2Menu);

@@ -138,8 +138,13 @@ public class StaticPane extends AbstractPane {
         return new Builder();
     }
 
+    @NonNull
+    public static Builder staticPane(@NonNull String name) {
+        return new Builder().name(name);
+    }
+
     public static class Builder {
-        private String name = "unnamed";
+        private String name;
         private PaneBounds bounds = PaneBounds.fullInventory();
         private List<AbstractPane.ItemCoordinateEntry> itemEntries = new ArrayList<>();
         private Map<Integer, MenuItem> items = new HashMap<>();  // Populated in build()
@@ -215,6 +220,11 @@ public class StaticPane extends AbstractPane {
 
         @NonNull
         public StaticPane build() {
+            // Validation
+            if (this.name == null) {
+                throw new IllegalStateException("Pane name is required");
+            }
+
             // Calculate slots from coordinates using final bounds with validation
             this.items = convertEntriesToSlotMap(this.itemEntries, this.bounds);
             return new StaticPane(this);

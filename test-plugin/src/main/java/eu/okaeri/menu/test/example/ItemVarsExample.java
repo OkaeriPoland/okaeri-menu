@@ -24,7 +24,7 @@ public class ItemVarsExample {
         return Menu.builder(plugin)
             .title("&6Item-Level Variables")
             .rows(3)
-            .pane("main", StaticPane.staticPane()
+            .pane(StaticPane.staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Example 1: Simple vars shared between name and lore

@@ -36,7 +36,7 @@ public class MessageExample {
         return Menu.builder(plugin)
             .title("<gradient:red:blue>MiniMessage Example</gradient>")
             .rows(3)
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Simple colors
@@ -92,7 +92,7 @@ public class MessageExample {
         return Menu.builder(plugin)
             .title("§6Legacy Colors")  // § codes work
             .rows(3)
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 .item(2, 1, item()
@@ -141,7 +141,7 @@ public class MessageExample {
         return Menu.builder(plugin)
             .title("§6Mixed &b<gradient:red:blue>Formats</gradient>")  // All three!
             .rows(3)
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 .item(1, 1, item()
@@ -182,7 +182,7 @@ public class MessageExample {
         return Menu.builder(plugin)
             .title("<gradient:blue:aqua>Reactive Messages</gradient>")
             .rows(3)
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Reactive name with context-aware placeholders
@@ -239,7 +239,7 @@ public class MessageExample {
         return Menu.builder(plugin)
             .title("<gold>Multi-Language Shop")
             .rows(3)
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 // Diamond Sword with locale-specific name and lore
@@ -415,7 +415,7 @@ public class MessageExample {
             .title("<gold>i18n Example")
             .rows(3)
             .messageProvider(i18nProvider)  // Set custom provider at menu level
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 .item(3, 1, item()
@@ -509,7 +509,7 @@ public class MessageExample {
             .title("<gradient:gold:yellow>PlaceholderAPI Example</gradient>")
             .rows(3)
             .messageProvider(papiProvider)
-            .pane("main", staticPane()
+            .pane(staticPane()
                 .name("main")
                 .bounds(0, 0, 9, 3)
                 .item(4, 1, item()
@@ -568,7 +568,7 @@ public class MessageExample {
         return Menu.builder(plugin)
             .title("<gold>i18n Buttons Demo")
             .rows(5)
-            .pane("items", PaginatedPane.<String>pane()
+            .pane(PaginatedPane.<String>pane()
                 .name("items")
                 .bounds(0, 1, 9, 3)
                 .items(items)
@@ -578,7 +578,7 @@ public class MessageExample {
                     .name("<yellow>" + item)
                     .build())
                 .build())
-            .pane("controls", staticPane()
+            .pane(staticPane()
                 .name("controls")
                 .bounds(0, 0, 9, 1)
                 // Custom i18n pagination buttons
@@ -660,7 +660,7 @@ public class MessageExample {
                     )
                 ).build())
                 .build())
-            .pane("navigation", staticPane()
+            .pane(staticPane()
                 .name("navigation")
                 .bounds(0, 4, 9, 1)
                 // Custom i18n back button

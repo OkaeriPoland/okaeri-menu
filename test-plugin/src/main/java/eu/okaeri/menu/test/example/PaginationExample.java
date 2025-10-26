@@ -45,7 +45,7 @@ public class PaginationExample {
         return Menu.builder(plugin)
             .title("&6Fruit List")
             .rows(6)
-            .pane("content", PaginatedPane.<String>pane()
+            .pane(PaginatedPane.<String>pane()
                 .name("content")
                 .bounds(0, 0, 9, 5)  // 5 rows for content
                 .items(items)
@@ -63,7 +63,7 @@ public class PaginationExample {
                     .build())
                 .build())
             // Navigation row (bottom row)
-            .pane("nav", staticPane()
+            .pane(staticPane()
                 .name("nav")
                 .bounds(0, 5, 9, 1)
                 .item(3, 0, PaginationUtils.previousPageButton("content").build())
@@ -88,7 +88,7 @@ public class PaginationExample {
         return Menu.builder(plugin)
             .title("&bPlayer List")
             .rows(4)
-            .pane("players", PaginatedPane.<String>pane()
+            .pane(PaginatedPane.<String>pane()
                 .name("players")
                 .bounds(0, 0, 9, 4)
                 .items(players)
@@ -117,7 +117,7 @@ public class PaginationExample {
             .title("&d&lPlayer Browser")
             .rows(6)
             // Filter controls
-            .pane("filters", staticPane()
+            .pane(staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(1, 0, PaginationUtils.<PlayerProfile>filterButton(
@@ -142,7 +142,7 @@ public class PaginationExample {
                 .item(8, 0, PaginationUtils.emptyIndicator("profiles").build())
                 .build())
             // Player list
-            .pane("profiles", PaginatedPane.<PlayerProfile>pane()
+            .pane(PaginatedPane.<PlayerProfile>pane()
                 .name("profiles")
                 .bounds(0, 1, 9, 4)
                 .items(profiles)
@@ -164,7 +164,7 @@ public class PaginationExample {
                     .build())
                 .build())
             // Navigation
-            .pane("nav", staticPane()
+            .pane(staticPane()
                 .name("nav")
                 .bounds(0, 5, 9, 1)
                 .item(3, 0, PaginationUtils.previousPageButton("profiles").build())

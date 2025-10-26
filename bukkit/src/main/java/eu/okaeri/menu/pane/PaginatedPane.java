@@ -171,6 +171,18 @@ public class PaginatedPane<T> extends AbstractPane {
     }
 
     /**
+     * Creates a new builder for PaginatedPane with a pre-set name.
+     *
+     * @param name The pane name
+     * @param <T>  The type of items to paginate
+     * @return A new builder instance with name pre-set
+     */
+    @NonNull
+    public static <T> Builder<T> pane(@NonNull String name) {
+        return new Builder<T>().name(name);
+    }
+
+    /**
      * Creates a new builder for PaginatedPane with explicit type.
      * This avoids the need for type parameter specification at the call site.
      *
@@ -181,6 +193,19 @@ public class PaginatedPane<T> extends AbstractPane {
     @NonNull
     public static <T> Builder<T> pane(@NonNull Class<T> type) {
         return new Builder<>();
+    }
+
+    /**
+     * Creates a new builder for PaginatedPane with both name and type.
+     *
+     * @param name The pane name
+     * @param type The class of items to paginate (not used at runtime, only for type inference)
+     * @param <T>  The type of items to paginate
+     * @return A new builder instance with name pre-set
+     */
+    @NonNull
+    public static <T> Builder<T> pane(@NonNull String name, @NonNull Class<T> type) {
+        return new Builder<T>().name(name);
     }
 
     public static class Builder<T> {

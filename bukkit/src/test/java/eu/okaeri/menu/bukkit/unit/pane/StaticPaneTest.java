@@ -54,9 +54,9 @@ class StaticPaneTest {
     @Test
     @DisplayName("Should create empty pane with default values")
     void testEmptyPane() {
-        StaticPane pane = staticPane().build();
+        StaticPane pane = staticPane().name("test").build();
 
-        assertThat(pane.getName()).isEqualTo("unnamed");
+        assertThat(pane.getName()).isEqualTo("test");
         assertThat(pane.getBounds()).isEqualTo(PaneBounds.fullInventory());
         assertThat(pane.getStaticItems()).isEmpty();
     }
@@ -505,8 +505,7 @@ class StaticPaneTest {
         Menu testMenu = Menu.builder(this.plugin)
             .title("Render Error Test")
             .rows(3)
-            .pane("failingPane", staticPane()
-                .name("failingPane")
+            .pane(staticPane("failingPane")
                 .bounds(0, 0, 9, 1)
                 .item(0, 0, MenuItem.item()
                     .material(() -> {
@@ -514,8 +513,7 @@ class StaticPaneTest {
                     })
                     .build())
                 .build())
-            .pane("workingPane", staticPane()
-                .name("workingPane")
+            .pane(staticPane("workingPane")
                 .bounds(0, 1, 9, 1)
                 .item(0, 0, MenuItem.item()
                     .material(Material.EMERALD)

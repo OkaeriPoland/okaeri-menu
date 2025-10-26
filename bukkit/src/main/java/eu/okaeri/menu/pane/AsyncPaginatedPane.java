@@ -215,6 +215,18 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
     }
 
     /**
+     * Creates a new builder for AsyncPaginatedPane with a pre-set name.
+     *
+     * @param name The pane name
+     * @param <T>  The type of items to paginate
+     * @return A new builder instance with name pre-set
+     */
+    @NonNull
+    public static <T> Builder<T> paneAsync(@NonNull String name) {
+        return new Builder<T>().name(name);
+    }
+
+    /**
      * Creates a new builder for AsyncPaginatedPane with explicit type.
      * This avoids the need for type parameter specification at the call site.
      *
@@ -225,6 +237,19 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
     @NonNull
     public static <T> Builder<T> paneAsync(@NonNull Class<T> type) {
         return new Builder<>();
+    }
+
+    /**
+     * Creates a new builder for AsyncPaginatedPane with both name and type.
+     *
+     * @param name The pane name
+     * @param type The class of items to paginate (not used at runtime, only for type inference)
+     * @param <T>  The type of items to paginate
+     * @return A new builder instance with name pre-set
+     */
+    @NonNull
+    public static <T> Builder<T> paneAsync(@NonNull String name, @NonNull Class<T> type) {
+        return new Builder<T>().name(name);
     }
 
     public static class Builder<T> {

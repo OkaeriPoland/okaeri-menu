@@ -34,7 +34,7 @@ public class ShopExample {
             .title("&6&lItem Shop")
             .rows(6)
             // Filter buttons with declarative filters
-            .pane("filters", staticPane()
+            .pane(staticPane()
                 .name("filters")
                 .bounds(0, 0, 9, 1)
                 .item(1, 0, MenuItem.item()
@@ -117,7 +117,7 @@ public class ShopExample {
                     .build())
                 .build())
             // Shop items
-            .pane("shop", PaginatedPane.<ShopItem>pane()
+            .pane(PaginatedPane.<ShopItem>pane()
                 .name("shop")
                 .bounds(0, 1, 9, 4)
                 .items(items)
@@ -142,7 +142,7 @@ public class ShopExample {
                     .build())
                 .build())
             // Navigation
-            .pane("nav", staticPane()
+            .pane(staticPane()
                 .name("nav")
                 .bounds(0, 5, 9, 1)
                 .item(3, 0, PaginationUtils.previousPageButton("shop").build())
