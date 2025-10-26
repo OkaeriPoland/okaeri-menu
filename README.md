@@ -45,7 +45,7 @@ Modern, reactive GUI framework for Minecraft (Paper) with pane-based architectur
 <dependency>
     <groupId>eu.okaeri</groupId>
     <artifactId>okaeri-menu-bukkit</artifactId>
-    <version>2.0.1-beta.2</version>
+    <version>2.0.1-beta.3</version>
 </dependency>
 ```
 
@@ -57,7 +57,7 @@ repositories {
 ```
 ```kotlin
 dependencies {
-    implementation("eu.okaeri:okaeri-menu-bukkit:2.0.1-beta.2")
+    implementation("eu.okaeri:okaeri-menu-bukkit:2.0.1-beta.3")
 }
 ```
 
@@ -266,10 +266,10 @@ public static Menu createShopMenu(Plugin plugin) {
                 .build())
             .build())
         .pane(staticPane("controls")
-            .bounds(5, 0, 1, 9)  // row, col, height, width
-            .item(0, 2, previousPageButton("items").build())  // row, col
-            .item(0, 4, pageIndicator("items").build())
-            .item(0, 6, nextPageButton("items").build())
+            .bounds(5, 0, ". . < . I . > . .")  // Template: dimensions auto-derived
+            .item('<', previousPageButton("items").build())
+            .item('I', pageIndicator("items").build())
+            .item('>', nextPageButton("items").build())
             .build())
         .build();
 }
