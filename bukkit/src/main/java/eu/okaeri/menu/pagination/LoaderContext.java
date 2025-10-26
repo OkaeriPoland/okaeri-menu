@@ -658,6 +658,34 @@ public class LoaderContext {
     }
 
     /**
+     * Accesses async cached data with TypeReference for complex generic types.
+     * Convenience overload of {@link #computed(String)}.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * .loader(ctx -> {
+     *     Map<String, List<Item>> itemMap = ctx.computed("itemGroups",
+     *         new TypeReference<Map<String, List<Item>>>() {})
+     *         .orElse(Map.of());
+     *
+     *     return itemMap.values().stream()
+     *         .flatMap(List::stream)
+     *         .collect(Collectors.toList());
+     * })
+     * }</pre>
+     *
+     * @param key           The async data key
+     * @param typeReference Type reference capturing generic type information
+     * @param <T>           The value type
+     * @return ComputedValue wrapper supporting map/loading/error/orElse
+     */
+    @NonNull
+    @SuppressWarnings("unchecked")
+    public <T> Computed<T> computed(@NonNull String key, @NonNull TypeReference<T> typeReference) {
+        return this.pagination.getMenuContext().computed(key, typeReference);
+    }
+
+    /**
      * Accesses full pagination context for async panes.
      * Designed for AsyncPaginatedPane where the pane's data is async-loaded.
      *
