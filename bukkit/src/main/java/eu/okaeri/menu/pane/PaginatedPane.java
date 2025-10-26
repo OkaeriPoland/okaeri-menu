@@ -31,6 +31,8 @@ public class PaginatedPane<T> extends AbstractPane {
 
     // Cache for rendered items
     private boolean dirty = true;
+    // Track rendered paginated items for click routing (localSlot -> MenuItem)
+    private final Map<Integer, MenuItem> renderedItems = new HashMap<>();
 
     protected PaginatedPane(@NonNull Builder<T> builder) {
         super(builder.name, builder.bounds);
@@ -47,6 +49,9 @@ public class PaginatedPane<T> extends AbstractPane {
 
     @Override
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
+        // Clear previous render state for click routing
+        this.renderedItems.clear();
+
         // Get pagination context for this viewer (reactive - reads items from pane on-demand)
         PaginationContext<T> pagination = PaginationContext.get(context, this);
 
@@ -82,6 +87,8 @@ public class PaginatedPane<T> extends AbstractPane {
                     int globalSlot = this.bounds.toGlobalSlot(localX, localY);
                     inventory.setItem(globalSlot, itemStack);
                 }
+                // Track this item for click routing
+                this.renderedItems.put(localSlot, menuItem);
             }
 
             index++;
@@ -148,7 +155,13 @@ public class PaginatedPane<T> extends AbstractPane {
     @Override
     public MenuItem getItem(int localX, int localY) {
         int localSlot = this.localCoordinatesToSlot(localX, localY);
-        return this.staticItems.get(localSlot);
+        // Check static items first (they have priority)
+        MenuItem staticItem = this.staticItems.get(localSlot);
+        if (staticItem != null) {
+            return staticItem;
+        }
+        // Check rendered paginated items
+        return this.renderedItems.get(localSlot);
     }
 
     /**
