@@ -234,70 +234,7 @@ if (result.getStatus() == OpenStatus.PRELOADED) {
 
 ## Advanced Features
 
-### Per-Player State Management
-
-Each player viewing a menu has independent state. Use the state API to store per-player data like filter toggles, counters, or selections.
-
-```java
-Menu.builder(plugin)
-    .title("<yellow>Stateful Menu")
-    // Define menu-level defaults (optional)
-    .state(s -> s
-        .define("clicks", 0)
-        .define("favoriteColor", "blue")
-        .define("premium", false))
-    .pane("main", staticPane()
-        .bounds(0, 0, 3, 9)  // row, col, height, width
-        .item(1, 4, item()   // row, col
-            // Get state with automatic defaults
-            .name(ctx -> "<gold>Clicks: " + ctx.getInt("clicks"))
-            .onClick(ctx -> {
-                // Set state - automatically triggers refresh on next tick
-                ctx.set("clicks", ctx.getInt("clicks") + 1);
-            })
-            .build())
-        .build())
-    .build();
-```
-
-**State API Methods:**
-```java
-// Primitive convenience methods (with automatic defaults)
-int clicks = ctx.getInt("clicks");              // Returns 0 if not set
-boolean premium = ctx.getBool("premium");       // Returns false if not set
-String name = ctx.getString("name");            // Returns null if not set
-
-// Generic get/set
-Integer value = ctx.get("key", Integer.class);
-ctx.set("key", 42);
-
-// Collections
-List<String> names = ctx.getList("names");
-Map<String, Integer> scores = ctx.getMap("scores");
-
-// Check if explicitly set (not just default)
-if (ctx.has("customValue")) {
-    // Player has explicitly set this value
-}
-
-// Remove state (reverts to default)
-ctx.remove("temporaryData");
-```
-
-**Default Value Priority:**
-1. Explicitly set value via `ctx.set()`
-2. Menu-level default from `.state()` block
-3. Automatic primitive default (0, false, etc.)
-4. null for non-primitive types
-
-**Automatic Refresh Behavior:**
-
-State changes automatically trigger refreshes on the next tick:
-
-- **State changes** (`ctx.set()`) → refresh on next tick
-- **Pagination changes** (page navigation, filters) → refresh on next tick
-
-### Pagination with Filtering
+### Pagination with Controls
 
 ```java
 import static eu.okaeri.menu.pane.PaginatedPane.pane;
@@ -329,7 +266,7 @@ public static Menu createShopMenu(Plugin plugin) {
 }
 ```
 
-### Async Data Loading
+### Async Items Loading
 
 ```java
 import static eu.okaeri.menu.pane.AsyncPaginatedPane.paneAsync;
@@ -514,40 +451,68 @@ Menu.builder(plugin)
 - **Database queries**: Use filter values to build WHERE clauses for efficient database-side filtering
 - **Type-safe**: Filter values are retrieved with type checking (`String.class`, `Integer.class`, etc.)
 
-### Custom Filter Strategies
+### Per-Player State Management
+
+Each player viewing a menu has independent state. Use the state API to store per-player data like filter toggles, counters, or selections.
 
 ```java
-// Built-in strategies
-pagination.setFilterStrategy(FilterStrategy.AND);  // All filters must match
-pagination.setFilterStrategy(FilterStrategy.OR);   // Any filter can match
-
-// Custom strategy
-public class PriorityFilterStrategy implements FilterStrategy {
-    @Override
-    public <T> Predicate<T> combine(Collection<ItemFilter<T>> filters) {
-        return item -> {
-            // Required filters must ALL match
-            boolean requiredPass = filters.stream()
-                .filter(ItemFilter::isActive)
-                .filter(f -> f.getFilterId().startsWith("required-"))
-                .allMatch(f -> f.test(item));
-
-            // Optional filters - ANY must match
-            boolean optionalPass = filters.stream()
-                .filter(ItemFilter::isActive)
-                .filter(f -> f.getFilterId().startsWith("optional-"))
-                .anyMatch(f -> f.test(item));
-
-            return requiredPass && optionalPass;
-        };
-    }
-
-    @Override
-    public String getName() {
-        return "PRIORITY";
-    }
-}
+Menu.builder(plugin)
+    .title("<yellow>Stateful Menu")
+    // Define menu-level defaults (optional)
+    .state(s -> s
+        .define("clicks", 0)
+        .define("favoriteColor", "blue")
+        .define("premium", false))
+    .pane("main", staticPane()
+        .bounds(0, 0, 3, 9)  // row, col, height, width
+        .item(1, 4, item()   // row, col
+            // Get state with automatic defaults
+            .name(ctx -> "<gold>Clicks: " + ctx.getInt("clicks"))
+            .onClick(ctx -> {
+                // Set state - automatically triggers refresh on next tick
+                ctx.set("clicks", ctx.getInt("clicks") + 1);
+            })
+            .build())
+        .build())
+    .build();
 ```
+
+**State API Methods:**
+```java
+// Primitive convenience methods (with automatic defaults)
+int clicks = ctx.getInt("clicks");              // Returns 0 if not set
+boolean premium = ctx.getBool("premium");       // Returns false if not set
+String name = ctx.getString("name");            // Returns null if not set
+
+// Generic get/set
+Integer value = ctx.get("key", Integer.class);
+ctx.set("key", 42);
+
+// Collections
+List<String> names = ctx.getList("names");
+Map<String, Integer> scores = ctx.getMap("scores");
+
+// Check if explicitly set (not just default)
+if (ctx.has("customValue")) {
+    // Player has explicitly set this value
+}
+
+// Remove state (reverts to default)
+ctx.remove("temporaryData");
+```
+
+**Default Value Priority:**
+1. Explicitly set value via `ctx.set()`
+2. Menu-level default from `.state()` block
+3. Automatic primitive default (0, false, etc.)
+4. null for non-primitive types
+
+**Automatic Refresh Behavior:**
+
+State changes automatically trigger refreshes on the next tick:
+
+- **State changes** (`ctx.set()`) → refresh on next tick
+- **Pagination changes** (page navigation, filters) → refresh on next tick
 
 ## Examples
 
