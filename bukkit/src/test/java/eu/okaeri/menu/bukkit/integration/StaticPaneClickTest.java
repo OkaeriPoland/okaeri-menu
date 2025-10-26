@@ -288,4 +288,77 @@ class StaticPaneClickTest extends MenuListenerTestBase {
         this.listener.onInventoryClick(event3);
         assertThat(clickedItemId.get()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Should not route clicks to invisible static items at coordinates")
+    void testInvisibleStaticItemAtCoordinatesNoClick() {
+        AtomicBoolean clicked = new AtomicBoolean(false);
+
+        Menu menu = Menu.builder(this.plugin)
+            .title("Invisible Static Test")
+            .rows(1)
+            .pane(staticPane("test")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, item()
+                    .material(Material.DIAMOND)
+                    .visible(false)
+                    .onClick(event -> clicked.set(true))
+                    .build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        // Click where invisible static item is located
+        InventoryClickEvent event = this.createLeftClick(this.player, 0);
+        this.listener.onInventoryClick(event);
+
+        // Should not trigger onClick (item is invisible)
+        assertThat(clicked.get())
+            .as("Invisible static item at coordinates should not be clickable")
+            .isFalse();
+        assertThat(event.isCancelled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should not route clicks to static items that become invisible after refresh")
+    void testStaticItemBecomesInvisibleNoClick() {
+        AtomicBoolean visible = new AtomicBoolean(true);
+        AtomicBoolean clicked = new AtomicBoolean(false);
+
+        Menu menu = Menu.builder(this.plugin)
+            .title("Dynamic Visibility Test")
+            .rows(1)
+            .pane(staticPane("test")
+                .bounds(0, 0, 9, 1)
+                .item(0, 0, item()
+                    .material(Material.DIAMOND)
+                    .visible(visible::get)
+                    .onClick(event -> clicked.set(true))
+                    .build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        // Initially visible - click should work
+        InventoryClickEvent event1 = this.createLeftClick(this.player, 0);
+        this.listener.onInventoryClick(event1);
+        assertThat(clicked.get())
+            .as("Visible static item should be clickable")
+            .isTrue();
+
+        // Make invisible and refresh
+        clicked.set(false);
+        visible.set(false);
+        menu.refresh(this.player);
+
+        // Now invisible - click should NOT work
+        InventoryClickEvent event2 = this.createLeftClick(this.player, 0);
+        this.listener.onInventoryClick(event2);
+        assertThat(clicked.get())
+            .as("Static item should not be clickable after becoming invisible")
+            .isFalse();
+        assertThat(event2.isCancelled()).isTrue();
+    }
 }

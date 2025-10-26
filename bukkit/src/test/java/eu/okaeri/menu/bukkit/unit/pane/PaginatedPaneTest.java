@@ -376,6 +376,129 @@ class PaginatedPaneTest {
     }
 
     @Test
+    @DisplayName("Should calculate correct total pages with static items")
+    void testTotalPagesWithStaticItems() {
+        // Scenario: 9 items, 9x1 pane (9 slots), 2 static items
+        // Available slots: 9 - 2 = 7
+        // Expected: ceil(9 / 7) = 2 pages
+        List<Integer> items = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+        PaginatedPane<Integer> pane = pane(Integer.class)
+            .name("test")
+            .bounds(0, 0, 9, 1)  // 9 slots
+            .items(items)
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.STONE)
+                .amount(item)
+                .build())
+            .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
+            .staticItem(8, 0, MenuItem.item().material(Material.BARRIER).build())
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+
+        // Get pagination context to check total pages
+        PaginationContext<Integer> pagination = PaginationContext.get(context, pane);
+
+        // Verify items per page calculation
+        assertThat(pane.getItemsPerPage())
+            .as("Items per page should be pane size - static items: 9 - 2 = 7")
+            .isEqualTo(7);
+
+        // Verify total pages calculation
+        assertThat(pagination.getTotalPages())
+            .as("Should calculate 2 pages: ceil(9 items / 7 per page)")
+            .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Should distribute items correctly across multiple pages with static items")
+    void testMultiPagePaginationWithStaticItems() {
+        // Scenario: 9 items, 9x1 pane, 2 static items at positions 0 and 8
+        // Page 0 should show: STATIC, 1, 2, 3, 4, 5, 6, 7, STATIC (7 data items)
+        // Page 1 should show: STATIC, 8, 9, empty..., STATIC (2 data items)
+        List<Integer> items = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+        PaginatedPane<Integer> pane = pane(Integer.class)
+            .name("test")
+            .bounds(0, 0, 9, 1)
+            .items(items)
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.STONE)
+                .amount(item)
+                .build())
+            .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
+            .staticItem(8, 0, MenuItem.item().material(Material.BARRIER).build())
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        PaginationContext<Integer> pagination = PaginationContext.get(context, pane);
+
+        // === PAGE 0 ===
+        pagination.setPage(0);
+        pane.render(this.inventory, context);
+
+        // Verify static items
+        assertThat(this.inventory.getItem(0).getType())
+            .as("Slot 0 should have static barrier on page 0")
+            .isEqualTo(Material.BARRIER);
+        assertThat(this.inventory.getItem(8).getType())
+            .as("Slot 8 should have static barrier on page 0")
+            .isEqualTo(Material.BARRIER);
+
+        // Verify page 0 has items 1-7
+        assertThat(this.inventory.getItem(1).getAmount()).isEqualTo(1);
+        assertThat(this.inventory.getItem(2).getAmount()).isEqualTo(2);
+        assertThat(this.inventory.getItem(3).getAmount()).isEqualTo(3);
+        assertThat(this.inventory.getItem(4).getAmount()).isEqualTo(4);
+        assertThat(this.inventory.getItem(5).getAmount()).isEqualTo(5);
+        assertThat(this.inventory.getItem(6).getAmount()).isEqualTo(6);
+        assertThat(this.inventory.getItem(7).getAmount()).isEqualTo(7);
+
+        // === PAGE 1 ===
+        pagination.nextPage();
+        pane.render(this.inventory, context);
+
+        // Verify static items still present
+        assertThat(this.inventory.getItem(0).getType())
+            .as("Slot 0 should have static barrier on page 1")
+            .isEqualTo(Material.BARRIER);
+        assertThat(this.inventory.getItem(8).getType())
+            .as("Slot 8 should have static barrier on page 1")
+            .isEqualTo(Material.BARRIER);
+
+        // Verify page 1 has items 8-9
+        assertThat(this.inventory.getItem(1))
+            .as("Slot 1 on page 1 should have item 8")
+            .isNotNull()
+            .extracting(ItemStack::getAmount)
+            .isEqualTo(8);
+
+        assertThat(this.inventory.getItem(2))
+            .as("Slot 2 on page 1 should have item 9")
+            .isNotNull()
+            .extracting(ItemStack::getAmount)
+            .isEqualTo(9);
+
+        // Verify remaining slots are empty (cleared)
+        assertThat(this.inventory.getItem(3))
+            .as("Slot 3 on page 1 should be empty (no more items)")
+            .isNull();
+
+        // CRITICAL: Verify all 9 items are accessible across both pages
+        pagination.setPage(0);
+        List<Integer> page0Items = pagination.getCurrentPageItems();
+        pagination.setPage(1);
+        List<Integer> page1Items = pagination.getCurrentPageItems();
+
+        assertThat(page0Items.size()).isEqualTo(7);
+        assertThat(page1Items.size()).isEqualTo(2);
+        assertThat(page0Items.size() + page1Items.size())
+            .as("All 9 items should be accessible across both pages")
+            .isEqualTo(9);
+    }
+
+    @Test
     @DisplayName("Should support dynamic items via supplier")
     void testDynamicItemsSupplier() {
         List<String> dynamicList = new ArrayList<>(Arrays.asList("A", "B"));

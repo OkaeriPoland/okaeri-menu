@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static eu.okaeri.menu.item.MenuItem.item;
@@ -243,5 +244,92 @@ class PaginatedPaneClickTest extends MenuListenerTestBase {
         assertThat(clickCount.get())
             .as("Clicks during LOADING state should not route to item handlers")
             .isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Should not route clicks to invisible static items in paginated pane")
+    void testInvisibleStaticItemInPaginatedPaneNoClick() {
+        AtomicInteger staticClicks = new AtomicInteger(0);
+        AtomicInteger paginatedClicks = new AtomicInteger(0);
+        List<String> items = Arrays.asList("A", "B", "C");
+
+        Menu menu = Menu.builder(this.plugin)
+            .title("Invisible Static in Paginated")
+            .rows(3)
+            .pane(pane(String.class)
+                .name("items")
+                .bounds(0, 0, 9, 3)
+                .items(items)
+                .renderer((ctx, item, index) -> item()
+                    .material(Material.DIAMOND)
+                    .onClick(event -> paginatedClicks.incrementAndGet())
+                    .build())
+                .staticItem(8, 2, item()
+                    .material(Material.ARROW)
+                    .name("Next Page")
+                    .visible(false)  // Invisible static item
+                    .onClick(event -> staticClicks.incrementAndGet())
+                    .build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        // Click where invisible static item is (slot 26 = row 2, col 8)
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 26));
+        assertThat(staticClicks.get())
+            .as("Invisible static item should not be clickable")
+            .isEqualTo(0);
+
+        // Paginated items should still work
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 0));
+        assertThat(paginatedClicks.get())
+            .as("Paginated items should still be clickable")
+            .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should not route clicks to static items that become invisible in paginated pane")
+    void testPaginatedPaneStaticItemBecomesInvisibleNoClick() {
+        AtomicBoolean staticVisible = new AtomicBoolean(true);
+        AtomicInteger staticClicks = new AtomicInteger(0);
+        List<String> items = Arrays.asList("A", "B", "C");
+
+        Menu menu = Menu.builder(this.plugin)
+            .title("Dynamic Static Visibility")
+            .rows(3)
+            .pane(pane(String.class)
+                .name("items")
+                .bounds(0, 0, 9, 3)
+                .items(items)
+                .renderer((ctx, item, index) -> item()
+                    .material(Material.DIAMOND)
+                    .build())
+                .staticItem(8, 2, item()
+                    .material(Material.ARROW)
+                    .name("Button")
+                    .visible(staticVisible::get)
+                    .onClick(event -> staticClicks.incrementAndGet())
+                    .build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        // Initially visible - click should work
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 26));
+        assertThat(staticClicks.get())
+            .as("Visible static item should be clickable")
+            .isEqualTo(1);
+
+        // Make invisible and refresh
+        staticVisible.set(false);
+        menu.refresh(this.player);
+
+        // Now invisible - click should NOT work
+        this.listener.onInventoryClick(this.createLeftClick(this.player, 26));
+        assertThat(staticClicks.get())
+            .as("Static item should not be clickable after becoming invisible")
+            .isEqualTo(1);  // Still 1, not incremented
     }
 }

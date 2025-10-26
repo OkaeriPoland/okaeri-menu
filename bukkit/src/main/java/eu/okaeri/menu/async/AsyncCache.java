@@ -156,6 +156,7 @@ public class AsyncCache {
      * Invalidates a cache entry, forcing reload on next access.
      * Uses stale-while-revalidate: keeps showing old value while reloading in background.
      * Entry is marked as expired by backdating loadedAt timestamp.
+     * Marks ViewerState as dirty for immediate refresh by MenuUpdateTask.
      *
      * @param key The cache key
      */
@@ -166,16 +167,27 @@ public class AsyncCache {
             // Math: expiryTime = loadedAt + ttl, so loadedAt = now - ttl - 1s
             entry.loadedAt = Instant.now().minus(entry.ttl).minusSeconds(1);
         }
+
+        // Mark viewer dirty for immediate refresh
+        if (this.viewerState != null) {
+            this.viewerState.invalidate();
+        }
     }
 
     /**
      * Invalidates all cached entries, forcing reload on next access.
      * Uses stale-while-revalidate: keeps showing old values while reloading in background.
+     * Marks ViewerState as dirty for immediate refresh by MenuUpdateTask.
      */
     public void invalidateAll() {
         this.cache.values().stream()
             .filter(entry -> (entry.state == AsyncState.SUCCESS) && (entry.ttl != null))
             .forEach(entry -> entry.loadedAt = Instant.now().minus(entry.ttl).minusSeconds(1));
+
+        // Mark viewer dirty for immediate refresh
+        if (this.viewerState != null) {
+            this.viewerState.invalidate();
+        }
     }
 
     /**

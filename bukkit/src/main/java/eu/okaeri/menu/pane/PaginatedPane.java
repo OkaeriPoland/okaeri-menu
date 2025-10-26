@@ -152,6 +152,10 @@ public class PaginatedPane<T> extends AbstractPane {
 
     @Override
     public void invalidate() {
+        // Invalidate static items to clear their ReactiveProperty caches (e.g., .visible())
+        for (MenuItem item : this.staticItems.values()) {
+            item.invalidate();
+        }
         this.dirty = true;
     }
 

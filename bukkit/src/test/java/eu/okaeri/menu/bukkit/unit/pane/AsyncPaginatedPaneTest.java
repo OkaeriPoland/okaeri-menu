@@ -7,6 +7,7 @@ import eu.okaeri.menu.bukkit.test.SyncTestExecutor;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.pagination.ItemFilter;
 import eu.okaeri.menu.pagination.LoaderContext;
+import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.pane.AsyncPaginatedPane;
 import eu.okaeri.menu.pane.StaticPane;
 import org.bukkit.Material;
@@ -308,6 +309,53 @@ class AsyncPaginatedPaneTest {
         ItemStack loadingItem = inventory.getItem(0);
         assertThat(loadingItem).isNotNull();
         assertThat(loadingItem.getType()).isEqualTo(Material.CLOCK);
+    }
+
+    @Test
+    @DisplayName("Should clear slots for invisible static items after data loads")
+    void testInvisibleStaticItemsClearedAfterLoad() {
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())  // Sync executor for instant completion
+            .title("Async Menu")
+            .rows(3)
+            .pane(paneAsync(String.class)
+                .name("async-pane")
+                .bounds(0, 0, 3, 2)
+                .loader(ctx -> Arrays.asList("A", "B"))
+                .renderer((ctx, item, index) -> MenuItem.item()
+                    .material(Material.DIAMOND)
+                    .build())
+                .staticItem(0, 0, MenuItem.item()
+                    .material(Material.TORCH)
+                    .name("Create")
+                    .visible(ctx -> false)  // Always invisible
+                    .build())
+                .loading(MenuItem.item()
+                    .material(Material.CLOCK)
+                    .name("Loading...")
+                    .build())
+                .build())
+            .build();
+
+        // Open triggers first render (LOADING state) and starts async load
+        testMenu.open(this.player);
+
+        // Execute the scheduled refresh task after async load completes
+        server.getScheduler().performOneTick();
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+
+        // Slot 0 should be cleared (null) because static item is invisible
+        // Previously this bug would leave the loading item in the slot
+        ItemStack slot0 = inventory.getItem(0);
+        assertThat(slot0)
+            .as("Invisible static item slot should be cleared, not showing loading item")
+            .isNull();
+
+        // Verify data items rendered correctly in other slots
+        ItemStack slot1 = inventory.getItem(1);
+        assertThat(slot1).isNotNull();
+        assertThat(slot1.getType()).isEqualTo(Material.DIAMOND);
     }
 
     // ========================================
@@ -625,6 +673,141 @@ class AsyncPaginatedPaneTest {
 
         assertThat(capturedContext[0]).isNotNull();
         assertThat(capturedContext[0].getPageSize()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("LoaderContext should receive correct page size with static items")
+    void testLoaderContextPageSizeWithStaticItems() {
+        LoaderContext[] capturedContext = {null};
+
+        // Scenario: 9x1 pane (9 slots), 2 static items
+        // Expected page size: 9 - 2 = 7
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Menu")
+            .rows(3)
+            .pane(paneAsync(String.class)
+                .name("async-pane")
+                .bounds(0, 0, 9, 1)  // 9 slots
+                .loader(ctx -> {
+                    capturedContext[0] = ctx;
+                    return Collections.emptyList();
+                })
+                .renderer((ctx, item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .build())
+                .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
+                .staticItem(8, 0, MenuItem.item().material(Material.BARRIER).build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();
+
+        assertThat(capturedContext[0]).isNotNull();
+        assertThat(capturedContext[0].getPageSize())
+            .as("Page size should be pane slots - static items: 9 - 2 = 7")
+            .isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Should distribute async items correctly across multiple pages with static items")
+    void testAsyncMultiPagePaginationWithStaticItems() {
+        // Scenario: 9 items from loader, 9x1 pane, 2 static items
+        // Page 0: STATIC, 1, 2, 3, 4, 5, 6, 7, STATIC (7 data items)
+        // Page 1: STATIC, 8, 9, empty..., STATIC (2 data items)
+        List<Integer> allItems = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Async Multi-Page")
+            .rows(3)
+            .pane(paneAsync(Integer.class)
+                .name("async-pane")
+                .bounds(0, 0, 9, 1)
+                .loader(ctx -> allItems)  // Return all 9 items
+                .renderer((ctx, item, index) -> MenuItem.item()
+                    .material(Material.STONE)
+                    .amount(item)
+                    .build())
+                .staticItem(0, 0, MenuItem.item().material(Material.BARRIER).build())
+                .staticItem(8, 0, MenuItem.item().material(Material.BARRIER).build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+        server.getScheduler().performOneTick();  // Execute async load
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+        MenuContext context = new MenuContext(testMenu, this.player);
+        PaginationContext<?> pagination = context.pagination("async-pane");
+
+        // Verify total pages calculation
+        assertThat(pagination.getTotalPages())
+            .as("Should have 2 pages: ceil(9 items / 7 per page)")
+            .isEqualTo(2);
+
+        // === PAGE 0 ===
+        assertThat(pagination.getCurrentPage()).isEqualTo(0);
+
+        // Verify static items
+        assertThat(inventory.getItem(0).getType())
+            .as("Slot 0 should have static barrier on page 0")
+            .isEqualTo(Material.BARRIER);
+        assertThat(inventory.getItem(8).getType())
+            .as("Slot 8 should have static barrier on page 0")
+            .isEqualTo(Material.BARRIER);
+
+        // Verify page 0 has items 1-7
+        assertThat(inventory.getItem(1).getAmount()).isEqualTo(1);
+        assertThat(inventory.getItem(2).getAmount()).isEqualTo(2);
+        assertThat(inventory.getItem(3).getAmount()).isEqualTo(3);
+        assertThat(inventory.getItem(4).getAmount()).isEqualTo(4);
+        assertThat(inventory.getItem(5).getAmount()).isEqualTo(5);
+        assertThat(inventory.getItem(6).getAmount()).isEqualTo(6);
+        assertThat(inventory.getItem(7).getAmount()).isEqualTo(7);
+
+        // === PAGE 1 ===
+        pagination.nextPage();
+        testMenu.refresh(this.player);
+
+        // Verify static items still present
+        assertThat(inventory.getItem(0).getType())
+            .as("Slot 0 should have static barrier on page 1")
+            .isEqualTo(Material.BARRIER);
+        assertThat(inventory.getItem(8).getType())
+            .as("Slot 8 should have static barrier on page 1")
+            .isEqualTo(Material.BARRIER);
+
+        // Verify page 1 has items 8-9
+        assertThat(inventory.getItem(1))
+            .as("Slot 1 on page 1 should have item 8")
+            .isNotNull()
+            .extracting(ItemStack::getAmount)
+            .isEqualTo(8);
+
+        assertThat(inventory.getItem(2))
+            .as("Slot 2 on page 1 should have item 9")
+            .isNotNull()
+            .extracting(ItemStack::getAmount)
+            .isEqualTo(9);
+
+        // Verify remaining slots are cleared
+        assertThat(inventory.getItem(3))
+            .as("Slot 3 on page 1 should be empty (no more items)")
+            .isNull();
+
+        // CRITICAL: Verify all 9 items are accessible across both pages
+        pagination.setPage(0);
+        List<?> page0Items = pagination.getCurrentPageItems();
+        pagination.setPage(1);
+        List<?> page1Items = pagination.getCurrentPageItems();
+
+        assertThat(page0Items.size()).isEqualTo(7);
+        assertThat(page1Items.size()).isEqualTo(2);
+        assertThat(page0Items.size() + page1Items.size())
+            .as("All 9 items should be accessible across both pages")
+            .isEqualTo(9);
     }
 
     @Test

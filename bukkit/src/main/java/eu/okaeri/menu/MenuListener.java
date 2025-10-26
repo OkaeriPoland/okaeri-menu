@@ -234,6 +234,13 @@ public class MenuListener implements Listener {
             event.getClick()
         );
 
+        // Check if item is visible before handling click
+        // Invisible items should not be clickable (prevents clicking items that are not rendered)
+        if (!clickedItem.getVisible().get(clickContext)) {
+            // Item is invisible, don't handle click
+            return;
+        }
+
         // Handle the click
         try {
             clickedItem.handleClick(clickContext);

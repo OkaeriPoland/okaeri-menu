@@ -108,6 +108,8 @@ public abstract class AbstractPane implements Pane {
     /**
      * Renders static items (navigation buttons, decorations, etc).
      * Shared implementation used by paginated panes.
+     * <p>
+     * Clears slots where items are not visible (renders as null).
      *
      * @param inventory   The inventory to render into
      * @param context     The menu context
@@ -116,9 +118,6 @@ public abstract class AbstractPane implements Pane {
     protected void renderStaticItems(@NonNull Inventory inventory, @NonNull MenuContext context, @NonNull Map<Integer, MenuItem> staticItems) {
         this.bounds.slots().forEachMap(staticItems, (localSlot, globalSlot, menuItem) -> {
             ItemStack itemStack = menuItem.render(context);
-            if (itemStack == null) {
-                return;
-            }
             inventory.setItem(globalSlot, itemStack);
         });
     }
