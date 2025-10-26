@@ -16,6 +16,8 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static eu.okaeri.menu.pane.StaticPane.staticPane;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -540,5 +542,382 @@ class StaticPaneTest {
             .isNotNull();
         assertThat(inventory.getItem(9).getType())
             .isEqualTo(Material.EMERALD);
+    }
+
+    // ========================================
+    // AUTO-POSITIONED ITEMS
+    // ========================================
+
+    @Test
+    @DisplayName("Should auto-position items without coordinates")
+    void testAutoPositionedItems() {
+        MenuItem item1 = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem item2 = MenuItem.item().material(Material.GOLD_INGOT).build();
+        MenuItem item3 = MenuItem.item().material(Material.EMERALD).build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 3)
+            .item(item1)  // Auto: slot 0
+            .item(item2)  // Auto: slot 1
+            .item(item3)  // Auto: slot 2
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.EMERALD);
+    }
+
+    @Test
+    @DisplayName("Should reflow auto items when one becomes invisible")
+    void testAutoItemReflow() {
+        AtomicBoolean item2Visible = new AtomicBoolean(true);
+
+        MenuItem item1 = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem item2 = MenuItem.item()
+            .material(Material.GOLD_INGOT)
+            .visible(item2Visible::get)
+            .build();
+        MenuItem item3 = MenuItem.item().material(Material.EMERALD).build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 3)
+            .item(item1)
+            .item(item2)
+            .item(item3)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+
+        // First render - all visible
+        pane.render(inventory, this.context);
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.EMERALD);
+
+        // Hide item2
+        item2Visible.set(false);
+        pane.invalidate();  // Clear cached reactive properties
+        pane.render(inventory, this.context);
+
+        // item3 should shift to slot 1 (reflow)
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.EMERALD);  // Reflowed!
+        assertThat(inventory.getItem(2)).isNull();  // Cleared
+    }
+
+    @Test
+    @DisplayName("Should skip static item slots when auto-positioning")
+    void testAutoItemsSkipStaticSlots() {
+        MenuItem staticItem = MenuItem.item().material(Material.BARRIER).build();
+        MenuItem autoItem1 = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem autoItem2 = MenuItem.item().material(Material.EMERALD).build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 3)
+            .item(1, 0, staticItem)  // Occupy slot 1
+            .item(autoItem1)         // Auto: slot 0
+            .item(autoItem2)         // Auto: slot 2 (skip 1)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.BARRIER);
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.EMERALD);
+    }
+
+    @Test
+    @DisplayName("Should handle mixed static and auto items")
+    void testMixedStaticAndAutoItems() {
+        MenuItem static1 = MenuItem.item().material(Material.BARRIER).build();
+        MenuItem static2 = MenuItem.item().material(Material.BEDROCK).build();
+        MenuItem auto1 = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem auto2 = MenuItem.item().material(Material.EMERALD).build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 3, 2)  // 3x2 = 6 slots
+            .item(1, 0, static1)  // Slot 1
+            .item(2, 1, static2)  // Slot 11 (row 1, col 2)
+            .item(auto1)          // Slot 0
+            .item(auto2)          // Slot 2 (skip 1)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.BARRIER);
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.EMERALD);
+        assertThat(inventory.getItem(3)).isNull();
+        assertThat(inventory.getItem(4)).isNull();
+        assertThat(inventory.getItem(11).getType()).isEqualTo(Material.BEDROCK);
+    }
+
+    @Test
+    @DisplayName("Should handle filler with auto items")
+    void testFillerWithAutoItems() {
+        MenuItem fillerItem = MenuItem.item().material(Material.GRAY_STAINED_GLASS_PANE).build();
+        MenuItem autoItem1 = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem autoItem2 = MenuItem.item().material(Material.EMERALD).build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 1)  // Single row
+            .filler(fillerItem)
+            .item(autoItem1)     // Slot 0
+            .item(autoItem2)     // Slot 1
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // First two slots have auto items
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.EMERALD);
+
+        // Remaining slots should be filled
+        for (int i = 2; i < 9; i++) {
+            assertThat(inventory.getItem(i).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+        }
+    }
+
+    @Test
+    @DisplayName("Should stop rendering auto items when pane is full")
+    void testAutoItemsOverflow() {
+        StaticPane.Builder builder = staticPane()
+            .bounds(0, 0, 2, 1);  // Only 2 slots
+
+        // Add 5 auto items (more than slots available)
+        for (int i = 0; i < 5; i++) {
+            builder.item(MenuItem.item().material(Material.DIAMOND).build());
+        }
+
+        StaticPane pane = builder.build();
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Only first 2 items should render
+        assertThat(inventory.getItem(0)).isNotNull();
+        assertThat(inventory.getItem(1)).isNotNull();
+        assertThat(inventory.getItem(2)).isNull();  // No overflow
+    }
+
+    // ========================================
+    // AUTO-ITEM GETTER TESTS
+    // ========================================
+
+    @Test
+    @DisplayName("Should get auto-positioned items by global slot")
+    void testGetAutoItemBySlot() {
+        MenuItem item1 = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem item2 = MenuItem.item().material(Material.GOLD_INGOT).build();
+        MenuItem item3 = MenuItem.item().material(Material.EMERALD).build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 3)
+            .item(item1)
+            .item(item2)
+            .item(item3)
+            .build();
+
+        // Render to populate cache
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Verify getItemByGlobalSlot returns correct items
+        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(3)).isNull();  // Empty slot
+    }
+
+    @Test
+    @DisplayName("Should return null for invisible auto-item slot")
+    void testGetInvisibleAutoItemReturnsNull() {
+        MenuItem invisibleItem = MenuItem.item()
+            .material(Material.DIAMOND)
+            .visible(false)
+            .build();
+        MenuItem visibleItem = MenuItem.item()
+            .material(Material.EMERALD)
+            .build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 3)
+            .item(invisibleItem)
+            .item(visibleItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Invisible item is skipped, visible item takes slot 0
+        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(visibleItem);
+        assertThat(pane.getItemByGlobalSlot(1)).isNull();
+    }
+
+    @Test
+    @DisplayName("Should get reflowed auto-items by slot after visibility change")
+    void testGetReflowedAutoItemBySlot() {
+        AtomicBoolean item1Visible = new AtomicBoolean(true);
+
+        MenuItem item1 = MenuItem.item()
+            .material(Material.DIAMOND)
+            .visible(() -> item1Visible.get())
+            .build();
+        MenuItem item2 = MenuItem.item()
+            .material(Material.GOLD_INGOT)
+            .build();
+        MenuItem item3 = MenuItem.item()
+            .material(Material.EMERALD)
+            .build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 3)
+            .item(item1)
+            .item(item2)
+            .item(item3)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Initially: slot 0 = item1, slot 1 = item2, slot 2 = item3
+        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(item3);
+
+        // Hide item1 and re-render
+        item1Visible.set(false);
+        pane.invalidate();
+        pane.render(inventory, this.context);
+
+        // Now: slot 0 = item2, slot 1 = item3 (reflowed)
+        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(2)).isNull();
+    }
+
+    @Test
+    @DisplayName("Should get correct auto-items with multiple invisible items")
+    void testGetAutoItemWithMultipleInvisible() {
+        AtomicBoolean item1Visible = new AtomicBoolean(false);
+        AtomicBoolean item2Visible = new AtomicBoolean(false);
+
+        MenuItem item1 = MenuItem.item()
+            .material(Material.DIAMOND)
+            .visible(() -> item1Visible.get())
+            .build();
+        MenuItem item2 = MenuItem.item()
+            .material(Material.GOLD_INGOT)
+            .visible(() -> item2Visible.get())
+            .build();
+        MenuItem item3 = MenuItem.item()
+            .material(Material.EMERALD)
+            .build();
+        MenuItem item4 = MenuItem.item()
+            .material(Material.IRON_INGOT)
+            .build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 3)
+            .item(item1)
+            .item(item2)
+            .item(item3)
+            .item(item4)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // item1 and item2 invisible, so slot 0 = item3, slot 1 = item4
+        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item4);
+        assertThat(pane.getItemByGlobalSlot(2)).isNull();
+    }
+
+    @Test
+    @DisplayName("Should get both static and auto items correctly")
+    void testGetMixedStaticAutoItems() {
+        MenuItem staticItem = MenuItem.item()
+            .material(Material.BARRIER)
+            .build();
+        MenuItem autoItem1 = MenuItem.item()
+            .material(Material.DIAMOND)
+            .build();
+        MenuItem autoItem2 = MenuItem.item()
+            .material(Material.EMERALD)
+            .build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 3)
+            .item(1, 0, staticItem)  // Static at slot 1
+            .item(autoItem1)         // Auto at slot 0
+            .item(autoItem2)         // Auto at slot 2 (skips slot 1)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Verify getItemByGlobalSlot returns correct items
+        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(autoItem1);  // Auto item
+        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(staticItem);  // Static item
+        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(autoItem2);  // Auto item
+        assertThat(pane.getItemByGlobalSlot(3)).isNull();
+    }
+
+    @Test
+    @DisplayName("Should get correct items after complex visibility toggling")
+    void testGetItemsAfterComplexVisibilityToggle() {
+        AtomicBoolean item2Visible = new AtomicBoolean(true);
+
+        MenuItem item1 = MenuItem.item()
+            .material(Material.DIAMOND)
+            .build();
+        MenuItem item2 = MenuItem.item()
+            .material(Material.GOLD_INGOT)
+            .visible(() -> item2Visible.get())
+            .build();
+        MenuItem item3 = MenuItem.item()
+            .material(Material.EMERALD)
+            .build();
+
+        StaticPane pane = staticPane()
+            .bounds(0, 0, 9, 3)
+            .item(item1)
+            .item(item2)
+            .item(item3)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Initially all visible: slot 0 = item1, slot 1 = item2, slot 2 = item3
+        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(item3);
+
+        // Hide item2
+        item2Visible.set(false);
+        pane.invalidate();
+        pane.render(inventory, this.context);
+
+        // Now: slot 0 = item1, slot 1 = item3
+        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(2)).isNull();
+
+        // Show item2 again
+        item2Visible.set(true);
+        pane.invalidate();
+        pane.render(inventory, this.context);
+
+        // Back to: slot 0 = item1, slot 1 = item2, slot 2 = item3
+        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(item3);
     }
 }

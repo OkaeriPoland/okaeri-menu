@@ -20,6 +20,7 @@ public class StaticPane extends AbstractPane {
 
     private final MenuItem fillerItem;  // Optional filler for empty slots
     private final List<MenuItem> autoItems;  // Auto-positioned items that reflow based on visibility
+    private final Map<Integer, MenuItem> autoItemSlotCache = new HashMap<>();  // Cache of current auto-item positions
 
     private StaticPane(Builder builder) {
         super(builder.name, builder.bounds);
@@ -32,6 +33,9 @@ public class StaticPane extends AbstractPane {
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
         // Track which slots are occupied (for filler/clearing at the end)
         Map<Integer, Boolean> occupiedSlots = new HashMap<>();
+
+        // Clear auto-item slot cache from previous render
+        this.autoItemSlotCache.clear();
 
         // Step 1: Render static positioned items
         this.bounds.slots().forEachMap(this.staticItems, (localSlot, globalSlot, menuItem) -> {
@@ -73,6 +77,8 @@ public class StaticPane extends AbstractPane {
                 if (globalSlot < inventory.getSize()) {
                     inventory.setItem(globalSlot, rendered);
                     occupiedSlots.put(slotIndex, true);
+                    // Cache auto-item position for click routing
+                    this.autoItemSlotCache.put(slotIndex, item);
                 }
                 slotIndex++;  // Move to next slot after rendering
             }
@@ -107,6 +113,7 @@ public class StaticPane extends AbstractPane {
 
     /**
      * Gets the menu item at the specified local coordinates.
+     * Checks static items first, then looks up auto-item from the render cache.
      *
      * @param localX Column within this pane
      * @param localY Row within this pane
@@ -115,7 +122,15 @@ public class StaticPane extends AbstractPane {
     @Override
     public MenuItem getItem(int localX, int localY) {
         int localCoord = (localY * this.bounds.getWidth()) + localX;
-        return this.staticItems.get(localCoord);
+
+        // Check static items first
+        MenuItem staticItem = this.staticItems.get(localCoord);
+        if (staticItem != null) {
+            return staticItem;
+        }
+
+        // Check auto-item cache (populated during last render)
+        return this.autoItemSlotCache.get(localCoord);
     }
 
     @NonNull
