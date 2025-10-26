@@ -7,10 +7,7 @@ import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.message.DefaultMessageProvider;
 import eu.okaeri.menu.message.MessageProvider;
 import eu.okaeri.menu.navigation.NavigationHistory;
-import eu.okaeri.menu.pane.AbstractPane;
-import eu.okaeri.menu.pane.AsyncPaginatedPane;
-import eu.okaeri.menu.pane.Pane;
-import eu.okaeri.menu.pane.PaneBounds;
+import eu.okaeri.menu.pane.*;
 import eu.okaeri.menu.reactive.ReactiveProperty;
 import eu.okaeri.menu.state.StateDefaults;
 import eu.okaeri.menu.state.ViewerState;
@@ -112,13 +109,39 @@ public class Menu implements InventoryHolder {
 
     /**
      * Gets or creates viewer state for a player.
+     * <p>
+     * Creates ViewerState without inventory (lazy-initialized later) and pre-initializes
+     * pagination contexts for all PaginatedPane instances.
+     * <p>
+     * This allows title functions to access pagination data on first open:
+     * - ViewerState is created with null inventory
+     * - Pagination contexts are initialized (doesn't need map lookup - direct state reference)
+     * - ViewerState enters map when computeIfAbsent completes
+     * - Later, when getInventory() is called, it lazy-initializes
+     * - During lazy init, title is evaluated
+     * - Title can call ctx.pagination() which finds ViewerState in map ✅
+     * <p>
+     * For sync PaginatedPane: getTotalItems(), getTotalPages() work immediately with correct data
+     * For AsyncPaginatedPane: methods return 0 initially, update after async load + refresh
      */
     private ViewerState getOrCreateViewerState(@NonNull Player player, @NonNull MenuContext context) {
         return this.viewerStates.computeIfAbsent(player.getUniqueId(), uuid -> {
-            String titleTemplate = this.title.get(context);
-            Component titleComponent = this.messageProvider.resolveSingle(player, titleTemplate, Map.of());
-            Inventory inv = Bukkit.createInventory(this, this.rows * 9, titleComponent);
-            return new ViewerState(context, inv, this.asyncExecutor);
+            // Create ViewerState without inventory (will be lazily initialized)
+            ViewerState state = new ViewerState(context, null);
+
+            // Pre-initialize pagination contexts for all PaginatedPane instances
+            // This makes ctx.pagination("paneName") available during title evaluation
+            // Note: Pagination doesn't need map lookup - it's called directly on state
+            for (Pane pane : this.panes.values()) {
+                if (pane instanceof PaginatedPane<?> paginatedPane) {
+                    state.getPagination(paginatedPane);
+                }
+            }
+
+            return state;
+            // ViewerState enters map HERE
+            // Next: openImmediate() calls state.getInventory() which lazy-inits
+            // Lazy init evaluates title, which can call ctx.pagination() that finds state in map
         });
     }
 

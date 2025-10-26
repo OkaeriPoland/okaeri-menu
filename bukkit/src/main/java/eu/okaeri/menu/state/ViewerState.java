@@ -1,5 +1,6 @@
 package eu.okaeri.menu.state;
 
+import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.AsyncCache;
 import eu.okaeri.menu.async.AsyncExecutor;
@@ -7,6 +8,10 @@ import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.pane.PaginatedPane;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Synchronized;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 import java.time.Duration;
@@ -23,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ViewerState {
 
     private @NonNull final MenuContext context;
-    private @NonNull Inventory inventory;
+    private Inventory inventory;  // Lazily initialized on first access
 
     private @NonNull final AsyncCache asyncCache;
     private @NonNull final Map<String, PaginationContext<?>> paginationContexts = new ConcurrentHashMap<>();
@@ -35,10 +40,51 @@ public class ViewerState {
     // Last refresh timestamp for interval-based updates
     private volatile Instant lastRefreshTime = null;
 
-    public ViewerState(@NonNull MenuContext context, @NonNull Inventory inventory, @NonNull AsyncExecutor asyncExecutor) {
+    public ViewerState(@NonNull MenuContext context, Inventory inventory) {
         this.context = context;
-        this.inventory = inventory;
+        this.inventory = inventory;  // Can be null - will be lazily initialized
+        AsyncExecutor asyncExecutor = context.getMenu().getAsyncExecutor();
         this.asyncCache = new AsyncCache(asyncExecutor, this);  // Pass reference for invalidation
+    }
+
+    /**
+     * Gets the inventory, lazily initializing it if needed.
+     * <p>
+     * Lazy initialization allows pagination contexts to be created before title evaluation.
+     * When this method is first called:
+     * 1. ViewerState is already in the menu's viewerStates map
+     * 2. Pagination contexts are already initialized
+     * 3. Title can call ctx.pagination() which finds this state in the map
+     *
+     * @return The inventory
+     */
+    public Inventory getInventory() {
+        if (this.inventory == null) {
+            this.initializeInventory();
+        }
+        return this.inventory;
+    }
+
+    /**
+     * Initializes the inventory with evaluated title.
+     * Synchronized to prevent concurrent initialization by multiple threads.
+     */
+    @Synchronized
+    private void initializeInventory() {
+        // Double-check pattern - another thread might have initialized it
+        if (this.inventory != null) {
+            return;
+        }
+
+        Menu menu = this.context.getMenu();
+        Player player = this.context.getPlayer();
+
+        // Evaluate title (ctx.pagination() works - state is in map by now!)
+        String titleTemplate = menu.getTitle().get(this.context);
+        Component titleComponent = menu.getMessageProvider().resolveSingle(player, titleTemplate, Map.of());
+
+        // Create inventory
+        this.inventory = Bukkit.createInventory(menu, menu.getRows() * 9, titleComponent);
     }
 
     /**

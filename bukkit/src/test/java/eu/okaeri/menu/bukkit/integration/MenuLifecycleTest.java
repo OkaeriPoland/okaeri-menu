@@ -487,6 +487,135 @@ class MenuLifecycleTest {
         assertThat(context2.getPaneId()).isEqualTo("pane2");
     }
 
+    @Test
+    @DisplayName("Should auto-initialize pagination contexts before title evaluation")
+    void testPaginationAutoInitialization() {
+        AtomicInteger titleEvaluationCount = new AtomicInteger(0);
+        AtomicInteger paginationAccessSuccessCount = new AtomicInteger(0);
+
+        Menu menu = Menu.builder(this.plugin)
+            .title(ctx -> {
+                titleEvaluationCount.incrementAndGet();
+
+                // This should NOT throw - pagination should be pre-initialized
+                try {
+                    PaginationContext<?> pagination = ctx.pagination("items");
+                    paginationAccessSuccessCount.incrementAndGet();
+
+                    // For sync PaginatedPane, data should be available immediately
+                    int totalItems = pagination.getTotalItems();
+                    int totalPages = pagination.getTotalPages();
+                    int currentPage = pagination.getCurrentPage() + 1;
+
+                    return "Items: " + totalItems + " (Page " + currentPage + "/" + totalPages + ")";
+                } catch (Exception e) {
+                    return "ERROR: " + e.getMessage();
+                }
+            })
+            .rows(3)
+            .pane(PaginatedPane.pane("items")
+                .bounds(0, 0, 9, 3)
+                .items(List.of("A", "B", "C", "D", "E"))
+                .renderer((ctx, item, index) -> item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        // Open menu
+        menu.open(this.player1);
+
+        // Title should have been evaluated once
+        assertThat(titleEvaluationCount.get())
+            .as("Title should be evaluated during menu opening")
+            .isEqualTo(1);
+
+        // Pagination access should have succeeded
+        assertThat(paginationAccessSuccessCount.get())
+            .as("Pagination context should be accessible in title")
+            .isEqualTo(1);
+
+        // Verify ViewerState has the pagination context
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        assertThat(state).isNotNull();
+        assertThat(state.getPaginationContexts())
+            .as("Pagination context should be cached in ViewerState")
+            .containsKey("items");
+    }
+
+    @Test
+    @DisplayName("Should provide accurate pagination data for sync PaginatedPane in title")
+    void testSyncPaginationDataInTitle() {
+        List<String> items = List.of("Item1", "Item2", "Item3", "Item4", "Item5", "Item6", "Item7");
+
+        Menu menu = Menu.builder(this.plugin)
+            .title(ctx -> {
+                PaginationContext<?> pagination = ctx.pagination("items");
+                return "Total: " + pagination.getTotalItems() + " | Pages: " + pagination.getTotalPages();
+            })
+            .rows(3)
+            .pane(PaginatedPane.<String>pane("items")
+                .bounds(0, 0, 9, 2)  // 18 slots
+                .items(items)
+                .itemsPerPage(5)
+                .renderer((ctx, item, index) -> item()
+                    .material(Material.STONE)
+                    .build())
+                .build())
+            .build();
+
+        menu.open(this.player1);
+
+        // Title should show accurate data immediately
+        // getTotalItems() = 7, getTotalPages() = ceil(7/5) = 2
+        // Expected title: "Total: 7 | Pages: 2"
+
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        PaginationContext<?> paginationContext = state.getPaginationContexts().get("items");
+
+        // Verify pagination context has correct data
+        assertThat(paginationContext.getTotalItems())
+            .as("Should have all 7 items")
+            .isEqualTo(7);
+        assertThat(paginationContext.getTotalPages())
+            .as("Should calculate 2 pages (7 items / 5 per page)")
+            .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Should handle pagination access in title for menu without paginated panes")
+    void testNoPaginatedPanesInTitle() {
+        AtomicInteger titleEvaluationCount = new AtomicInteger(0);
+
+        Menu menu = Menu.builder(this.plugin)
+            .title(ctx -> {
+                titleEvaluationCount.incrementAndGet();
+                return "Static Menu";
+            })
+            .rows(3)
+            .pane(staticPane("static")
+                .bounds(0, 0, 9, 3)
+                .item(0, 0, item()
+                    .material(Material.DIAMOND)
+                    .build())
+                .build())
+            .build();
+
+        // Open menu (should not throw even though there are no paginated panes)
+        assertThatCode(() -> menu.open(this.player1))
+            .as("Opening menu without paginated panes should not throw")
+            .doesNotThrowAnyException();
+
+        // Title should have been evaluated
+        assertThat(titleEvaluationCount.get()).isEqualTo(1);
+
+        // ViewerState should have no pagination contexts
+        ViewerState state = menu.getViewerState(this.player1.getUniqueId());
+        assertThat(state.getPaginationContexts())
+            .as("Should have no pagination contexts for menu without paginated panes")
+            .isEmpty();
+    }
+
     // ========================================
     // EDGE CASES
     // ========================================
