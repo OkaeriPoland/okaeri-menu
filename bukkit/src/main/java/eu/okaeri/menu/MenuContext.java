@@ -423,14 +423,42 @@ public class MenuContext {
     }
 
     /**
-     * Invalidate cached async data, triggering reload on next access.
+     * Invalidates a specific async cached entry and refreshes the menu.
+     * Forces reload while showing old data (stale-while-revalidate pattern).
+     * Old value continues to display until new data loads successfully.
      *
-     * @param key The data key to invalidate
+     * <p>Example:
+     * <pre>{@code
+     * .onClick(ctx -> {
+     *     ctx.invalidate("playerStats");  // Reload stats, keep showing old during load
+     * })
+     * }</pre>
+     *
+     * @param key The async data key to invalidate
      */
     public void invalidate(@NonNull String key) {
         ViewerState state = this.menu.getViewerState(this.entity.getUniqueId());
         if (state != null) {
             state.getAsyncCache().invalidate(key);
+        }
+    }
+
+    /**
+     * Invalidates all async cached data and refreshes the menu.
+     * All data reloads in background while showing old values (stale-while-revalidate).
+     * Useful for "refresh all" buttons or after significant state changes.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * .onClick(ctx -> {
+     *     ctx.invalidate();  // Reload all async data
+     * })
+     * }</pre>
+     */
+    public void invalidate() {
+        ViewerState state = this.menu.getViewerState(this.entity.getUniqueId());
+        if (state != null) {
+            state.getAsyncCache().invalidateAll();
         }
     }
 

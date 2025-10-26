@@ -153,12 +153,29 @@ public class AsyncCache {
     }
 
     /**
-     * Invalidates a cache entry, removing it completely.
+     * Invalidates a cache entry, forcing reload on next access.
+     * Uses stale-while-revalidate: keeps showing old value while reloading in background.
+     * Entry is marked as expired by backdating loadedAt timestamp.
      *
      * @param key The cache key
      */
     public void invalidate(@NonNull String key) {
-        this.cache.remove(key);
+        CacheEntry<?> entry = this.cache.get(key);
+        if ((entry != null) && (entry.state == AsyncState.SUCCESS) && (entry.ttl != null)) {
+            // Set loadedAt so entry is expired NOW, regardless of TTL
+            // Math: expiryTime = loadedAt + ttl, so loadedAt = now - ttl - 1s
+            entry.loadedAt = Instant.now().minus(entry.ttl).minusSeconds(1);
+        }
+    }
+
+    /**
+     * Invalidates all cached entries, forcing reload on next access.
+     * Uses stale-while-revalidate: keeps showing old values while reloading in background.
+     */
+    public void invalidateAll() {
+        this.cache.values().stream()
+            .filter(entry -> (entry.state == AsyncState.SUCCESS) && (entry.ttl != null))
+            .forEach(entry -> entry.loadedAt = Instant.now().minus(entry.ttl).minusSeconds(1));
     }
 
     /**
