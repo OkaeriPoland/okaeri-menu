@@ -5,7 +5,6 @@ import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.item.MenuItemChangeContext;
 import eu.okaeri.menu.item.MenuItemClickContext;
 import eu.okaeri.menu.navigation.NavigationHistory;
-import eu.okaeri.menu.pane.AbstractPane;
 import eu.okaeri.menu.pane.Pane;
 import eu.okaeri.menu.state.ViewerState;
 import lombok.NonNull;
@@ -208,7 +207,7 @@ public class MenuListener implements Listener {
         }
 
         // Find the clicked item
-        MenuItem clickedItem = this.findMenuItemAtSlot(menu, rawSlot);
+        MenuItem clickedItem = this.findMenuItemAtSlot(menu, rawSlot, player);
 
         if (clickedItem == null) {
             // No item at this slot, cancel by default
@@ -470,14 +469,12 @@ public class MenuListener implements Listener {
 
     /**
      * Finds a menu item at the specified global slot.
-     * Searches all panes in the menu.
+     * Searches all panes in the menu using per-player context.
      */
-    private MenuItem findMenuItemAtSlot(@NonNull Menu menu, int globalSlot) {
+    private MenuItem findMenuItemAtSlot(@NonNull Menu menu, int globalSlot, @NonNull HumanEntity player) {
+        MenuContext context = new MenuContext(menu, player);
         for (Pane pane : menu.getPanes().values()) {
-            MenuItem item = null;
-            if (pane instanceof AbstractPane abstractPane) {
-                item = abstractPane.getItemByGlobalSlot(globalSlot);
-            }
+            MenuItem item = pane.getItemByGlobalSlot(globalSlot, context);
             if (item != null) {
                 return item;
             }

@@ -4,7 +4,7 @@ import eu.okaeri.menu.async.AsyncCache;
 import eu.okaeri.menu.async.Computed;
 import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.navigation.NavigationHistory;
-import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.pane.PaginationContext;
 import eu.okaeri.menu.pane.Pane;
 import eu.okaeri.menu.pane.StaticPane;
 import eu.okaeri.menu.state.PrimitiveDefaults;
@@ -54,7 +54,7 @@ public class MenuContext {
         if (!Bukkit.isPrimaryThread()) {
             throw new IllegalStateException(
                 methodName + "() must be called from main thread. " +
-                "Called from async context - use Bukkit.getScheduler().runTask() to schedule main-thread work."
+                    "Called from async context - use Bukkit.getScheduler().runTask() to schedule main-thread work."
             );
         }
     }
@@ -300,7 +300,7 @@ public class MenuContext {
      * @param localY   The local Y coordinate (row) within the pane
      * @param item     The item to set (can be null to clear)
      * @throws IllegalArgumentException if the pane doesn't exist or slot is not interactive
-     * @throws IllegalStateException if called from async thread
+     * @throws IllegalStateException    if called from async thread
      */
     public void setSlotItem(@NonNull String paneName, int localX, int localY, ItemStack item) {
         this.requireMainThread("setSlotItem");

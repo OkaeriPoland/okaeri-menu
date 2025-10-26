@@ -6,6 +6,7 @@ import eu.okaeri.menu.message.DefaultMessageProvider;
 import eu.okaeri.menu.message.MessageProvider;
 import eu.okaeri.menu.navigation.NavigationUtils;
 import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.pane.pagination.PaginationUtils;
 import lombok.NonNull;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -582,7 +583,7 @@ public class MessageExample {
                 .name("controls")
                 .bounds(0, 0, 9, 1)
                 // Custom i18n pagination buttons
-                .item(0, 0, eu.okaeri.menu.pagination.PaginationUtils.previousPageButton(
+                .item(0, 0, PaginationUtils.previousPageButton(
                     "items",
                     Map.of(
                         Locale.ENGLISH, "<red>← Previous",
@@ -609,7 +610,7 @@ public class MessageExample {
                             <yellow>Aller à la page précédente"""
                     )
                 ).build())
-                .item(4, 0, eu.okaeri.menu.pagination.PaginationUtils.pageIndicator(
+                .item(4, 0, PaginationUtils.pageIndicator(
                     "items",
                     Map.of(
                         Locale.ENGLISH, "<yellow>Page <current>/<total>",
@@ -632,7 +633,7 @@ public class MessageExample {
                             <gray>Total: <white><total_items>"""
                     )
                 ).build())
-                .item(8, 0, eu.okaeri.menu.pagination.PaginationUtils.nextPageButton(
+                .item(8, 0, PaginationUtils.nextPageButton(
                     "items",
                     Map.of(
                         Locale.ENGLISH, "<green>Next →",

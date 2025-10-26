@@ -20,7 +20,6 @@ public class StaticPane extends AbstractPane {
 
     private final MenuItem fillerItem;  // Optional filler for empty slots
     private final List<MenuItem> autoItems;  // Auto-positioned items that reflow based on visibility
-    private final Map<Integer, MenuItem> autoItemSlotCache = new HashMap<>();  // Cache of current auto-item positions
 
     private StaticPane(Builder builder) {
         super(builder.name, builder.bounds);
@@ -34,8 +33,9 @@ public class StaticPane extends AbstractPane {
         // Track which slots are occupied (for filler/clearing at the end)
         Map<Integer, Boolean> occupiedSlots = new HashMap<>();
 
-        // Clear auto-item slot cache from previous render
-        this.autoItemSlotCache.clear();
+        // Get per-player auto-item slot cache and clear it
+        Map<Integer, MenuItem> autoItemSlotCache = context.getViewerState().getPaneRenderCache(this.getName());
+        autoItemSlotCache.clear();
 
         // Step 1: Render static positioned items
         this.bounds.slots().forEachMap(this.staticItems, (localSlot, globalSlot, menuItem) -> {
@@ -77,8 +77,8 @@ public class StaticPane extends AbstractPane {
                 if (globalSlot < inventory.getSize()) {
                     inventory.setItem(globalSlot, rendered);
                     occupiedSlots.put(slotIndex, true);
-                    // Cache auto-item position for click routing
-                    this.autoItemSlotCache.put(slotIndex, item);
+                    // Cache auto-item position for click routing (per-player)
+                    autoItemSlotCache.put(slotIndex, item);
                 }
                 slotIndex++;  // Move to next slot after rendering
             }
@@ -108,6 +108,23 @@ public class StaticPane extends AbstractPane {
      */
     @Override
     public MenuItem getItem(int localX, int localY) {
+        // This method is used by non-context-aware code
+        // For click routing, getItemByGlobalSlot(globalSlot, context) is used
+        int localCoord = (localY * this.bounds.getWidth()) + localX;
+        // Only return static items (auto-items need context)
+        return this.staticItems.get(localCoord);
+    }
+
+    /**
+     * Gets the menu item at local coordinates with context for per-player lookup.
+     *
+     * @param localX  Local X coordinate
+     * @param localY  Local Y coordinate
+     * @param context The menu context (for per-player state)
+     * @return The menu item, or null if not found
+     */
+    @Override
+    public MenuItem getItem(int localX, int localY, @NonNull MenuContext context) {
         int localCoord = (localY * this.bounds.getWidth()) + localX;
 
         // Check static items first
@@ -116,8 +133,9 @@ public class StaticPane extends AbstractPane {
             return staticItem;
         }
 
-        // Check auto-item cache (populated during last render)
-        return this.autoItemSlotCache.get(localCoord);
+        // Check auto-item cache (per-player, populated during last render)
+        Map<Integer, MenuItem> autoItemSlotCache = context.getViewerState().getPaneRenderCache(this.getName());
+        return autoItemSlotCache.get(localCoord);
     }
 
     @NonNull

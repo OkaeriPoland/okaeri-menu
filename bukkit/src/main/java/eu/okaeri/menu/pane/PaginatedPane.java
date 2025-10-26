@@ -2,8 +2,7 @@ package eu.okaeri.menu.pane;
 
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.item.MenuItem;
-import eu.okaeri.menu.pagination.ItemFilter;
-import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.pane.pagination.ItemFilter;
 import eu.okaeri.menu.util.TriFunction;
 import lombok.Getter;
 import lombok.NonNull;
@@ -29,9 +28,6 @@ public class PaginatedPane<T> extends AbstractPane {
     private final TriFunction<MenuContext, T, Integer, MenuItem> itemRenderer;
     private final int itemsPerPage;
 
-    // Track rendered paginated items for click routing (localSlot -> MenuItem)
-    private final Map<Integer, MenuItem> renderedItems = new HashMap<>();
-
     protected PaginatedPane(@NonNull Builder<T> builder) {
         super(builder.name, builder.bounds);
         this.itemsSupplier = builder.itemsSupplier;
@@ -47,11 +43,12 @@ public class PaginatedPane<T> extends AbstractPane {
 
     @Override
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
-        // Clear previous render state for click routing
-        this.renderedItems.clear();
-
         // Get pagination context for this viewer (reactive - reads items from pane on-demand)
         PaginationContext<T> pagination = PaginationContext.get(context, this);
+
+        // Get per-player rendered items cache and clear it
+        Map<Integer, MenuItem> renderedItems = context.getViewerState().getPaneRenderCache(this.getName());
+        renderedItems.clear();
 
         // Apply declarative filters from menu items
         this.applyItemFilters(context, pagination);
@@ -87,8 +84,8 @@ public class PaginatedPane<T> extends AbstractPane {
                     int globalSlot = this.bounds.toGlobalSlot(localX, localY);
                     inventory.setItem(globalSlot, itemStack);
                 }
-                // Track this item for click routing
-                this.renderedItems.put(localSlot, menuItem);
+                // Track this item for click routing (per-player)
+                renderedItems.put(localSlot, menuItem);
             }
 
             itemIndex++; // Move to next item
@@ -148,14 +145,31 @@ public class PaginatedPane<T> extends AbstractPane {
 
     @Override
     public MenuItem getItem(int localX, int localY) {
+        // This method is used by StaticPane and for non-paginated operations
+        // For PaginatedPane clicks, getItemByGlobalSlot(globalSlot, context) is used
+        int localSlot = this.localCoordinatesToSlot(localX, localY);
+        return this.staticItems.get(localSlot);
+    }
+
+    /**
+     * Gets the menu item at local coordinates with context for per-player lookup.
+     *
+     * @param localX  Local X coordinate
+     * @param localY  Local Y coordinate
+     * @param context The menu context (for per-player state)
+     * @return The menu item, or null if not found
+     */
+    @Override
+    public MenuItem getItem(int localX, int localY, @NonNull MenuContext context) {
         int localSlot = this.localCoordinatesToSlot(localX, localY);
         // Check static items first (they have priority)
         MenuItem staticItem = this.staticItems.get(localSlot);
         if (staticItem != null) {
             return staticItem;
         }
-        // Check rendered paginated items
-        return this.renderedItems.get(localSlot);
+        // Check rendered paginated items (per-player)
+        Map<Integer, MenuItem> renderedItems = context.getViewerState().getPaneRenderCache(this.getName());
+        return renderedItems.get(localSlot);
     }
 
     /**

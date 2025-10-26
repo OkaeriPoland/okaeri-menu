@@ -21,7 +21,8 @@ import java.util.stream.Collectors;
 
 import static eu.okaeri.menu.item.MenuItem.item;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for item-level variables feature.

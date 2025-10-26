@@ -1,6 +1,7 @@
-package eu.okaeri.menu.pagination;
+package eu.okaeri.menu.pane.pagination;
 
 import eu.okaeri.menu.item.MenuItem;
+import eu.okaeri.menu.pane.PaginationContext;
 import lombok.NonNull;
 import org.bukkit.Material;
 import org.bukkit.Sound;

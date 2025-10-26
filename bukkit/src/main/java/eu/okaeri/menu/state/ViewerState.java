@@ -4,8 +4,9 @@ import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.AsyncCache;
 import eu.okaeri.menu.async.AsyncExecutor;
-import eu.okaeri.menu.pagination.PaginationContext;
+import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.pane.PaginationContext;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Synchronized;
@@ -36,6 +37,10 @@ public class ViewerState {
     private @NonNull final Map<String, PaginationContext<?>> pagination = new ConcurrentHashMap<>();
     private @NonNull final Map<String, Optional<Object>> state = new ConcurrentHashMap<>();
     private @NonNull final Map<ViewerProp<?>, PropValue> props = new HashMap<>();
+
+    // Per-player render caches for panes (paneName -> localSlot -> MenuItem)
+    // Used by StaticPane for auto-item reflow cache and other panes that need per-player item tracking
+    private @NonNull final Map<String, Map<Integer, MenuItem>> paneRenderCaches = new ConcurrentHashMap<>();
 
     // Dirty flag for tracking state changes (used by MenuUpdateTask)
     private volatile boolean dirty = false;
@@ -228,6 +233,22 @@ public class ViewerState {
         return (PaginationContext<T>) this.pagination.computeIfAbsent(pane.getName(),
             k -> new PaginationContext<>(this.context, pane)
         );
+    }
+
+    /**
+     * Gets the per-player render cache for a pane.
+     * Used by panes to store rendered item mappings (localSlot -> MenuItem).
+     * Each player gets their own cache to prevent cross-contamination.
+     *
+     * <p><b>INTERNAL USE ONLY:</b> This is managed by pane render() methods.
+     * Manual modification will yield unexpected results and break click routing.
+     *
+     * @param paneName The pane name
+     * @return The render cache map (localSlot -> MenuItem)
+     */
+    @NonNull
+    public Map<Integer, MenuItem> getPaneRenderCache(@NonNull String paneName) {
+        return this.paneRenderCaches.computeIfAbsent(paneName, k -> new HashMap<>());
     }
 
     /**

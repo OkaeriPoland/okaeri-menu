@@ -1,9 +1,9 @@
-package eu.okaeri.menu.pagination;
+package eu.okaeri.menu.pane;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
-import eu.okaeri.menu.pane.PaginatedPane;
-import eu.okaeri.menu.pane.Pane;
+import eu.okaeri.menu.pane.pagination.FilterStrategy;
+import eu.okaeri.menu.pane.pagination.ItemFilter;
 import eu.okaeri.menu.state.ViewerState;
 import lombok.NonNull;
 

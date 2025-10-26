@@ -2,8 +2,8 @@ package eu.okaeri.menu.bukkit.unit;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
-import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.pane.PaginationContext;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.*;
 import org.mockbukkit.mockbukkit.MockBukkit;

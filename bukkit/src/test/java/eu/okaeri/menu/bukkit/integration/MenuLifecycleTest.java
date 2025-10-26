@@ -1,8 +1,8 @@
 package eu.okaeri.menu.bukkit.integration;
 
 import eu.okaeri.menu.Menu;
-import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.pane.PaginationContext;
 import eu.okaeri.menu.state.ViewerState;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

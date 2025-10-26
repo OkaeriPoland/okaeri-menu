@@ -2,9 +2,9 @@ package eu.okaeri.menu.bukkit.unit.pagination;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.MenuContext;
-import eu.okaeri.menu.pagination.FilterStrategy;
-import eu.okaeri.menu.pagination.PaginationContext;
 import eu.okaeri.menu.pane.PaginatedPane;
+import eu.okaeri.menu.pane.PaginationContext;
+import eu.okaeri.menu.pane.pagination.FilterStrategy;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import org.junit.jupiter.api.AfterEach;

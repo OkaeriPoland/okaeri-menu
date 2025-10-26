@@ -1,6 +1,6 @@
 package eu.okaeri.menu.bukkit.unit;
 
-import eu.okaeri.menu.pagination.PaginationFilter;
+import eu.okaeri.menu.pane.pagination.PaginationFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

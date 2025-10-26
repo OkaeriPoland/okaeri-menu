@@ -1,4 +1,4 @@
-package eu.okaeri.menu.pagination;
+package eu.okaeri.menu.pane.pagination;
 
 import eu.okaeri.menu.MenuContext;
 import lombok.NonNull;

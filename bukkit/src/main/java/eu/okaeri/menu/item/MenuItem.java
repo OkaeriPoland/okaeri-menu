@@ -2,7 +2,7 @@ package eu.okaeri.menu.item;
 
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.AsyncLoader;
-import eu.okaeri.menu.pagination.ItemFilter;
+import eu.okaeri.menu.pane.pagination.ItemFilter;
 import eu.okaeri.menu.state.ViewerProp;
 import lombok.Getter;
 import lombok.NonNull;

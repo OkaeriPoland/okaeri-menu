@@ -22,7 +22,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static eu.okaeri.menu.pane.StaticPane.staticPane;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for StaticPane.
@@ -768,10 +769,10 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // Verify getItemByGlobalSlot returns correct items
-        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
-        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item2);
-        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(item3);
-        assertThat(pane.getItemByGlobalSlot(3)).isNull();  // Empty slot
+        assertThat(pane.getItemByGlobalSlot(0, this.context)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1, this.context)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(2, this.context)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(3, this.context)).isNull();  // Empty slot
     }
 
     @Test
@@ -796,8 +797,8 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // Invisible item is skipped, visible item takes slot 0
-        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(visibleItem);
-        assertThat(pane.getItemByGlobalSlot(1)).isNull();
+        assertThat(pane.getItemByGlobalSlot(0, this.context)).isEqualTo(visibleItem);
+        assertThat(pane.getItemByGlobalSlot(1, this.context)).isNull();
     }
 
     @Test
@@ -828,9 +829,9 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // Initially: slot 0 = item1, slot 1 = item2, slot 2 = item3
-        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
-        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item2);
-        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(0, this.context)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1, this.context)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(2, this.context)).isEqualTo(item3);
 
         // Hide item1 and re-render
         item1Visible.set(false);
@@ -838,9 +839,9 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // Now: slot 0 = item2, slot 1 = item3 (reflowed)
-        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item2);
-        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item3);
-        assertThat(pane.getItemByGlobalSlot(2)).isNull();
+        assertThat(pane.getItemByGlobalSlot(0, this.context)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(1, this.context)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(2, this.context)).isNull();
     }
 
     @Test
@@ -877,9 +878,9 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // item1 and item2 invisible, so slot 0 = item3, slot 1 = item4
-        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item3);
-        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item4);
-        assertThat(pane.getItemByGlobalSlot(2)).isNull();
+        assertThat(pane.getItemByGlobalSlot(0, this.context)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(1, this.context)).isEqualTo(item4);
+        assertThat(pane.getItemByGlobalSlot(2, this.context)).isNull();
     }
 
     @Test
@@ -907,9 +908,9 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // Verify getItemByGlobalSlot returns correct items
-        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(autoItem1);  // Auto item
-        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(staticItem);  // Static item
-        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(autoItem2);  // Auto item
+        assertThat(pane.getItemByGlobalSlot(0, this.context)).isEqualTo(autoItem1);  // Auto item
+        assertThat(pane.getItemByGlobalSlot(1, this.context)).isEqualTo(staticItem);  // Static item
+        assertThat(pane.getItemByGlobalSlot(2, this.context)).isEqualTo(autoItem2);  // Auto item
         assertThat(pane.getItemByGlobalSlot(3)).isNull();
     }
 
@@ -941,9 +942,9 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // Initially all visible: slot 0 = item1, slot 1 = item2, slot 2 = item3
-        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
-        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item2);
-        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(0, this.context)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1, this.context)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(2, this.context)).isEqualTo(item3);
 
         // Hide item2
         item2Visible.set(false);
@@ -951,9 +952,9 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // Now: slot 0 = item1, slot 1 = item3
-        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
-        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item3);
-        assertThat(pane.getItemByGlobalSlot(2)).isNull();
+        assertThat(pane.getItemByGlobalSlot(0, this.context)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1, this.context)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(2, this.context)).isNull();
 
         // Show item2 again
         item2Visible.set(true);
@@ -961,8 +962,8 @@ class StaticPaneTest {
         pane.render(inventory, this.context);
 
         // Back to: slot 0 = item1, slot 1 = item2, slot 2 = item3
-        assertThat(pane.getItemByGlobalSlot(0)).isEqualTo(item1);
-        assertThat(pane.getItemByGlobalSlot(1)).isEqualTo(item2);
-        assertThat(pane.getItemByGlobalSlot(2)).isEqualTo(item3);
+        assertThat(pane.getItemByGlobalSlot(0, this.context)).isEqualTo(item1);
+        assertThat(pane.getItemByGlobalSlot(1, this.context)).isEqualTo(item2);
+        assertThat(pane.getItemByGlobalSlot(2, this.context)).isEqualTo(item3);
     }
 }

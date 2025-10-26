@@ -69,12 +69,35 @@ public abstract class AbstractPane implements Pane {
     }
 
     /**
+     * Gets a menu item by global slot with context for per-player lookup.
+     * Converts global slot to local coordinates and delegates to getItem().
+     *
+     * @param globalSlot The global inventory slot
+     * @param context    The menu context (for per-player state)
+     * @return The menu item, or null if not found
+     */
+    @Override
+    public MenuItem getItemByGlobalSlot(int globalSlot, @NonNull MenuContext context) {
+        int[] local = this.globalSlotToLocal(globalSlot);
+        if (local == null) {
+            return null;
+        }
+        return this.getItem(local[0], local[1], context);
+    }
+
+    /**
      * Gets a menu item by global slot (for click handling).
      * Uses template method pattern - subclasses implement getItemAtLocalSlot().
      *
+     * <p><b>DEPRECATED:</b> This method cannot access per-player render caches.
+     * For panes that use per-player caching (StaticPane auto-items, PaginatedPane),
+     * this will only return static items. Use {@link #getItemByGlobalSlot(int, MenuContext)} instead.
+     *
      * @param globalSlot The global inventory slot
-     * @return The menu item, or null if not found
+     * @return The menu item, or null if not found (may be incomplete for cached items)
+     * @deprecated Use context-aware {@link #getItemByGlobalSlot(int, MenuContext)} instead
      */
+    @Deprecated
     public MenuItem getItemByGlobalSlot(int globalSlot) {
         int[] local = this.globalSlotToLocal(globalSlot);
         if (local == null) {
@@ -91,6 +114,7 @@ public abstract class AbstractPane implements Pane {
      * @param localY Local Y coordinate
      * @return The menu item, or null if none
      */
+    @Override
     public abstract MenuItem getItem(int localX, int localY);
 
     /**

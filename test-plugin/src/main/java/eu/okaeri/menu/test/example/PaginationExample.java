@@ -2,8 +2,8 @@ package eu.okaeri.menu.test.example;
 
 import eu.okaeri.menu.Menu;
 import eu.okaeri.menu.navigation.NavigationUtils;
-import eu.okaeri.menu.pagination.PaginationFilter;
-import eu.okaeri.menu.pagination.PaginationUtils;
+import eu.okaeri.menu.pane.pagination.PaginationFilter;
+import eu.okaeri.menu.pane.pagination.PaginationUtils;
 import eu.okaeri.menu.pane.PaginatedPane;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
