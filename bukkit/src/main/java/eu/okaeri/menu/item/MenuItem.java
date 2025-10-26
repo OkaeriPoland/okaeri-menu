@@ -302,9 +302,9 @@ public class MenuItem {
 
         // Item-level variables shared across name, lore, etc.
         private ViewerProp<Map<String, Object>> itemLevelVars = ViewerProp.of(Map.of());
-        // Track static vars separately for merging during building (before context is available)
+        // Track vars separately for merging at build time
         private Map<String, Object> staticVars = new HashMap<>();
-        private boolean hasStaticVarsOnly = true;
+        private Function<MenuContext, Map<String, Object>> dynamicVarsFunction = null;
 
         // Declarative filters
         private List<ItemFilter<?>> filters = new ArrayList<>();
@@ -1211,39 +1211,29 @@ public class MenuItem {
         /**
          * Sets item-level variables that are shared across name, lore, and other properties.
          * These variables are merged with method-level variables (method-level overrides item-level).
+         * Can be called multiple times to accumulate static variables.
+         * Static variables act as defaults when combined with {@link #vars(Function)}.
          *
          * @param vars Variables map
          * @return This builder
          */
         @NonNull
         public Builder vars(@NonNull Map<String, Object> vars) {
-            // If we only have static vars, merge them
-            if (this.hasStaticVarsOnly) {
-                this.staticVars.putAll(vars);
-                this.itemLevelVars = ViewerProp.of(new HashMap<>(this.staticVars));
-            } else {
-                // Already have a dynamic function, can't replace with static vars
-                throw new IllegalStateException(
-                    "Cannot call vars(Map) after vars(Function) has been set. " +
-                        "Static variables cannot replace dynamic variable functions. " +
-                        "Use vars(Function) to merge or override, or call vars(Map) before vars(Function)."
-                );
-            }
+            this.staticVars.putAll(vars);  // Accumulate static vars
             return this;
         }
 
         /**
          * Sets item-level variables with context-aware function.
          * Useful for dynamic variables based on player state that are shared across name/lore.
+         * When combined with static vars from {@link #vars(Map)}, dynamic vars override static vars.
          *
          * @param varsFunction Function that receives MenuContext and returns variables map
          * @return This builder
          */
         @NonNull
         public Builder vars(@NonNull Function<MenuContext, Map<String, Object>> varsFunction) {
-            this.itemLevelVars = ViewerProp.ofContext(varsFunction);
-            this.hasStaticVarsOnly = false;
-            this.staticVars.clear();
+            this.dynamicVarsFunction = varsFunction;
             return this;
         }
 
@@ -1366,6 +1356,20 @@ public class MenuItem {
                     return originalMaterial.get(ctx);
                 });
             }
+
+            // Merge static and dynamic vars at build time
+            if (this.dynamicVarsFunction != null) {
+                // Merge: static vars as base, dynamic vars override
+                this.itemLevelVars = ViewerProp.ofContext(ctx -> {
+                    Map<String, Object> merged = new HashMap<>(this.staticVars);
+                    merged.putAll(this.dynamicVarsFunction.apply(ctx));
+                    return merged;
+                });
+            } else if (!this.staticVars.isEmpty()) {
+                // Only static vars
+                this.itemLevelVars = ViewerProp.of(new HashMap<>(this.staticVars));
+            }
+            // else: keep default empty map
 
             // Validate: interactive items should not have display properties
             boolean isInteractive = this.allowPickup || this.allowPlacement;
