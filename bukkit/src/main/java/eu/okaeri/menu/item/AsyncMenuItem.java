@@ -2,6 +2,7 @@ package eu.okaeri.menu.item;
 
 import eu.okaeri.menu.MenuContext;
 import eu.okaeri.menu.async.AsyncCache;
+import eu.okaeri.menu.async.AsyncUtils;
 import eu.okaeri.menu.state.ViewerState;
 import lombok.NonNull;
 import org.bukkit.inventory.ItemStack;
@@ -258,15 +259,16 @@ public class AsyncMenuItem extends MenuItem {
          */
         @NonNull
         public AsyncMenuItem build() {
+            // Use sane defaults if suspense items not provided
+            if (this.loadingState == null) {
+                this.loadingState = AsyncUtils.loadingItem().build();
+            }
+            if (this.errorStateFactory == null) {
+                this.errorStateFactory = err -> AsyncUtils.errorItem().build();
+            }
             // Validation
             if (this.asyncLoader == null) {
                 throw new IllegalStateException("Async loader is required (use .data())");
-            }
-            if (this.loadingState == null) {
-                throw new IllegalStateException("Loading state is required (use .loading())");
-            }
-            if (this.errorStateFactory == null) {
-                throw new IllegalStateException("Error state factory is required (use .error())");
             }
             if (this.successStateFactory == null) {
                 throw new IllegalStateException("Success state factory is required (use .loaded())");

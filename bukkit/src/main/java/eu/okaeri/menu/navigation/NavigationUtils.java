@@ -176,7 +176,7 @@ public final class NavigationUtils {
     public static MenuItem.Builder closeButton() {
         return closeButton(
             Material.BARRIER,
-            Map.of(Locale.ENGLISH, "<red>✕ Close"),
+            Map.of(Locale.ENGLISH, "<red>❌ Close"),
             Map.of(Locale.ENGLISH, """
                 <gray>Close this menu
                 

@@ -694,10 +694,10 @@ public class MessageExample {
                 // Custom i18n close button
                 .item(8, 0, eu.okaeri.menu.navigation.NavigationUtils.closeButton(
                     Map.of(
-                        Locale.ENGLISH, "<red>✕ Close",
-                        new Locale("pl"), "<red>✕ Zamknij",
-                        new Locale("de"), "<red>✕ Schließen",
-                        new Locale("fr"), "<red>✕ Fermer"
+                        Locale.ENGLISH, "<red>❌ Close",
+                        new Locale("pl"), "<red>❌ Zamknij",
+                        new Locale("de"), "<red>❌ Schließen",
+                        new Locale("fr"), "<red>❌ Fermer"
                     ),
                     Map.of(
                         Locale.ENGLISH, """

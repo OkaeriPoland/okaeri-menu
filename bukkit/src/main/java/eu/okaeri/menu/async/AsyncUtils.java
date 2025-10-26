@@ -14,7 +14,7 @@ import java.util.Map;
  * <p>Core i18n-aware methods accept Map&lt;Locale, String&gt; for full localization support.
  * Convenience methods provide English defaults by calling the i18n versions.
  */
-public class AsyncUtils {
+public final class AsyncUtils {
 
     // ========================================
     // I18N-AWARE METHODS (Core API)
@@ -43,7 +43,7 @@ public class AsyncUtils {
     }
 
     /**
-     * Creates a loading item with i18n support and default material (HOPPER).
+     * Creates a loading item with i18n support and default material (GRAY_STAINED_GLASS_PANE).
      *
      * @param name The display name in multiple languages
      * @param lore The lore in multiple languages (optional, can be null)
@@ -51,7 +51,7 @@ public class AsyncUtils {
      */
     @NonNull
     public static MenuItem.Builder loadingItem(@NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        return loadingItem(Material.HOPPER, name, lore);
+        return loadingItem(Material.GRAY_STAINED_GLASS_PANE, name, lore);
     }
 
     /**
@@ -85,7 +85,7 @@ public class AsyncUtils {
      */
     @NonNull
     public static MenuItem.Builder errorItem(@NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        return errorItem(Material.BARRIER, name, lore);
+        return errorItem(Material.RED_STAINED_GLASS_PANE, name, lore);
     }
 
     /**
@@ -119,7 +119,7 @@ public class AsyncUtils {
      */
     @NonNull
     public static MenuItem.Builder emptyItem(@NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        return emptyItem(Material.LIGHT_GRAY_STAINED_GLASS_PANE, name, lore);
+        return emptyItem(Material.PAPER, name, lore);
     }
 
     // ========================================
@@ -129,21 +129,14 @@ public class AsyncUtils {
     /**
      * Creates a standard loading state item.
      * Shown while async data is being loaded.
-     * Uses English text.
      *
      * @return A MenuItem builder for a loading item
      */
     @NonNull
     public static MenuItem.Builder loadingItem() {
-        return loadingItem(
-            Material.HOPPER,
-            Map.of(Locale.ENGLISH, "<yellow>⏳ Loading..."),
-            Map.of(Locale.ENGLISH, """
-                <gray>Please wait while
-                <gray>the data is loading
-                
-                <yellow>This may take a moment""")
-        );
+        return MenuItem.item()
+            .material(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+            .name("<gray>⏳...");
     }
 
     /**
@@ -162,20 +155,14 @@ public class AsyncUtils {
     /**
      * Creates a standard error state item.
      * Shown when async data loading fails.
-     * Uses English text.
      *
      * @return A MenuItem builder for an error item
      */
     @NonNull
     public static MenuItem.Builder errorItem() {
-        return errorItem(
-            Material.BARRIER,
-            Map.of(Locale.ENGLISH, "<red>✕ Error"),
-            Map.of(Locale.ENGLISH, """
-                <gray>Failed to load data
-                
-                <red>Please try again later""")
-        );
+        return MenuItem.item()
+            .material(Material.RED_STAINED_GLASS_PANE)
+            .name("<red>❌");
     }
 
     /**

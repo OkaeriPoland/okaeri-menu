@@ -428,7 +428,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
                 throw new IllegalStateException("Item renderer is required");
             }
 
-            // Use AsyncUtils defaults if suspense items not provided
+            // Use sane defaults if suspense items not provided
             if (this.loadingItem == null) {
                 this.loadingItem = AsyncUtils.loadingItem().build();
             }
@@ -436,7 +436,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
                 this.errorItem = AsyncUtils.errorItem().build();
             }
             if (this.emptyItem == null) {
-                this.emptyItem = AsyncUtils.emptyItem().build();
+                this.emptyItem = MenuItem.empty();
             }
 
             // Default items per page to pane size if not set

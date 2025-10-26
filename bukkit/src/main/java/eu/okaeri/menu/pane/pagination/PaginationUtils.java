@@ -381,7 +381,7 @@ public final class PaginationUtils {
         return clearFiltersButton(
             paneName,
             Material.BARRIER,
-            Map.of(Locale.ENGLISH, "<red>✕ Clear All Filters"),
+            Map.of(Locale.ENGLISH, "<red>❌ Clear All Filters"),
             Map.of(Locale.ENGLISH, """
                 <gray>Active filters: <white><count>
                 

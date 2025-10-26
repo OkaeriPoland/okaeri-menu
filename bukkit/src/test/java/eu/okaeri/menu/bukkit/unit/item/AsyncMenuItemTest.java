@@ -1,6 +1,7 @@
 package eu.okaeri.menu.bukkit.unit.item;
 
 import eu.okaeri.menu.Menu;
+import eu.okaeri.menu.bukkit.test.SyncTestExecutor;
 import eu.okaeri.menu.item.MenuItem;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
@@ -72,29 +73,27 @@ class AsyncMenuItemTest {
     }
 
     @Test
-    @DisplayName("Should require loading state")
-    void testRequireLoadingState() {
-        assertThatThrownBy(() ->
-            itemAsync()
-                .data(ctx -> "test data")
-                .error(ex -> item().material(Material.BARRIER).build())
-                .loaded(data -> item().material(Material.DIAMOND).build())
-                .build()
-        ).isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("Loading state is required");
+    @DisplayName("Should use default loading state when not provided")
+    void testDefaultLoadingState() {
+        MenuItem item = itemAsync()
+            .data(ctx -> "test data")
+            .loaded(data -> item().material(Material.DIAMOND).build())
+            .build();
+
+        assertThat(item).isNotNull();
+        // Default loading state provided by AsyncUtils.loadingItem()
     }
 
     @Test
-    @DisplayName("Should require error state factory")
-    void testRequireErrorFactory() {
-        assertThatThrownBy(() ->
-            itemAsync()
-                .data(ctx -> "test data")
-                .loading(item().material(Material.CLOCK).build())
-                .loaded(data -> item().material(Material.DIAMOND).build())
-                .build()
-        ).isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("Error state factory is required");
+    @DisplayName("Should use default error factory when not provided")
+    void testDefaultErrorFactory() {
+        MenuItem item = itemAsync()
+            .data(ctx -> "test data")
+            .loaded(data -> item().material(Material.DIAMOND).build())
+            .build();
+
+        assertThat(item).isNotNull();
+        // Default error state provided by AsyncUtils.errorItem()
     }
 
     @Test
@@ -584,7 +583,7 @@ class AsyncMenuItemTest {
     @DisplayName("Should handle null data in success state")
     void testNullDataSuccess() {
         Menu testMenu = Menu.builder(this.plugin)
-            .asyncExecutor(eu.okaeri.menu.bukkit.test.SyncTestExecutor.create())  // Sync executor for deterministic testing
+            .asyncExecutor(SyncTestExecutor.create())  // Sync executor for deterministic testing
             .title("Test Menu")
             .rows(3)
             .pane(staticPane()
@@ -663,5 +662,110 @@ class AsyncMenuItemTest {
         assertThat(item).isNotNull();
         assertThat(item.getType()).isEqualTo(Material.GOLD_INGOT);
         assertThat(item.getAmount()).isEqualTo(42);
+    }
+
+    // ========================================
+    // DEFAULT STATE RENDERING
+    // ========================================
+
+    @Test
+    @DisplayName("Should render default loading state when not provided")
+    void testRenderDefaultLoadingState() {
+        Menu testMenu = Menu.builder(this.plugin)
+            .title("Test Menu")
+            .rows(3)
+            .pane(staticPane()
+                .name("main")
+                .bounds(0, 0, 3, 3)
+                .item(0, 0, itemAsync()
+                    .key("slow-default-load")
+                    .data(ctx -> {
+                        // Simulate slow load
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                        }
+                        return "Loaded Data";
+                    })
+                    // No .loading() - should use default
+                    .loaded(data -> item()
+                        .material(Material.DIAMOND)
+                        .name(data.toString())
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+        ItemStack item = inventory.getItem(0);
+
+        // Should render with default loading state (not null, not air)
+        assertThat(item).isNotNull();
+        assertThat(item.getType()).isNotEqualTo(Material.AIR);
+    }
+
+    @Test
+    @DisplayName("Should render default error state when not provided")
+    void testRenderDefaultErrorState() throws InterruptedException {
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Test Menu")
+            .rows(3)
+            .pane(staticPane()
+                .name("main")
+                .bounds(0, 0, 3, 3)
+                .item(0, 0, itemAsync()
+                    .key("failing-default-error")
+                    .data(ctx -> {
+                        throw new RuntimeException("Database connection failed");
+                    })
+                    // No .error() - should use default
+                    .loaded(data -> item()
+                        .material(Material.DIAMOND)
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+        ItemStack item = inventory.getItem(0);
+
+        // Should render with default error state (not null, not air)
+        assertThat(item).isNotNull();
+        assertThat(item.getType()).isNotEqualTo(Material.AIR);
+    }
+
+    @Test
+    @DisplayName("Should work with only data and loaded provided")
+    void testMinimalAsyncItem() throws InterruptedException {
+        Menu testMenu = Menu.builder(this.plugin)
+            .asyncExecutor(SyncTestExecutor.create())
+            .title("Test Menu")
+            .rows(3)
+            .pane(staticPane()
+                .name("main")
+                .bounds(0, 0, 3, 3)
+                .item(0, 0, itemAsync()
+                    .data(ctx -> "Minimal Config")
+                    .loaded(data -> item()
+                        .material(Material.EMERALD)
+                        .name(data.toString())
+                        .build())
+                    .build())
+                .build())
+            .build();
+
+        testMenu.open(this.player);
+
+        Inventory inventory = this.player.getOpenInventory().getTopInventory();
+        ItemStack item = inventory.getItem(0);
+
+        // Should successfully reach loaded state with minimal config
+        assertThat(item).isNotNull();
+        assertThat(item.getType()).isEqualTo(Material.EMERALD);
     }
 }

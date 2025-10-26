@@ -99,7 +99,7 @@ public class AsyncShopExample {
                         .build())
                     .error(ex -> item()
                         .material(Material.BARRIER)
-                        .name("<red>✕ Balance Error")
+                        .name("<red>❌ Balance Error")
                         .lore("<gray>Failed to load balance\n<red>" + ex.getMessage())
                         .build())
                     .loaded(balance -> item()
@@ -294,7 +294,7 @@ public class AsyncShopExample {
                 ).build())
                 .error(AsyncUtils.errorItem(
                     Material.BARRIER,
-                    "<red>✕ Failed to Load Shop"
+                    "<red>❌ Failed to Load Shop"
                 ).build())
                 .empty(AsyncUtils.emptyItem(
                     Material.CHEST,
