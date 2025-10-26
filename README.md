@@ -45,7 +45,7 @@ Modern, reactive GUI framework for Minecraft (Paper) with pane-based architectur
 <dependency>
     <groupId>eu.okaeri</groupId>
     <artifactId>okaeri-menu-bukkit</artifactId>
-    <version>2.0.1-beta.1</version>
+    <version>2.0.1-beta.2</version>
 </dependency>
 ```
 
@@ -57,7 +57,7 @@ repositories {
 ```
 ```kotlin
 dependencies {
-    implementation("eu.okaeri:okaeri-menu-bukkit:2.0.1-beta.1")
+    implementation("eu.okaeri:okaeri-menu-bukkit:2.0.1-beta.2")
 }
 ```
 
@@ -110,7 +110,6 @@ public class SimpleMenuExample {
 public static Menu createReactiveMenu(Plugin plugin) {
     return Menu.builder(plugin)
         .title("<yellow>Reactive Menu")
-        .updateInterval(Duration.ofMillis(500))  // Auto-refresh every 500ms
         // .state(s -> s.define("clickCount", 0))  // Optional - integers default to 0
         .pane("main", staticPane()
             .name("main")
@@ -124,13 +123,17 @@ public static Menu createReactiveMenu(Plugin plugin) {
                     : "<gray>Keep clicking...")
                 .onClick(ctx -> {
                     ctx.set("clickCount", ctx.getInt("clickCount") + 1);
-                    ctx.refresh();  // Trigger immediate update
+                    // No refresh needed - state changes automatically trigger refresh on next tick!
                 })
                 .build())
             .build())
         .build();
 }
 ```
+
+**Automatic Refresh:** State changes (`ctx.set()`), async data updates, and pagination changes automatically trigger refresh on the next tick. Manual `ctx.refresh()` is only needed for immediate updates within the same tick.
+
+**Update Interval:** Use `.updateInterval(Duration)` only when you need periodic polling of external state (e.g., checking balance from database every 5 seconds). It's not required for reactive state changes!
 
 ### Opening Menus
 
@@ -190,9 +193,8 @@ Menu.builder(plugin)
             // Get state with automatic defaults
             .name(ctx -> "<gold>Clicks: " + ctx.getInt("clicks"))
             .onClick(ctx -> {
-                // Set state
+                // Set state - automatically triggers refresh on next tick
                 ctx.set("clicks", ctx.getInt("clicks") + 1);
-                ctx.refresh();
             })
             .build())
         .build())
@@ -229,11 +231,24 @@ ctx.remove("temporaryData");
 3. Automatic primitive default (0, false, etc.)
 4. null for non-primitive types
 
+**Automatic Refresh Behavior:**
+
+State changes automatically trigger refreshes on the next tick:
+
+- **State changes** (`ctx.set()`) → refresh on next tick
+- **Pagination changes** (page navigation, filters) → refresh on next tick
+
+This means you typically don't need manual `ctx.refresh()` calls. The menu automatically updates when data changes!
+
+**When to use updateInterval:**
+Use `.updateInterval(Duration)` only for periodic re-evaluation of properties that directly access external state without async caching. For example: `ctx -> player.getLevel()`.
+
+For async reactive polling (like `menu.reactive(() -> database.getBalance(), Duration.ofSeconds(5))`), you **don't need** `updateInterval` - the menu automatically refreshes when TTL expires!
+
 ### Pagination with Filtering
 
 ```java
 import static eu.okaeri.menu.pane.PaginatedPane.pane;
-import static eu.okaeri.menu.pagination.PaginationUtils.*;
 
 public static Menu createShopMenu(Plugin plugin) {
     return Menu.builder(plugin)
@@ -242,7 +257,7 @@ public static Menu createShopMenu(Plugin plugin) {
             .name("items")
             .bounds(0, 1, 9, 4)
             .items(() -> loadShopItems())  // Your data source
-            .renderer((item, index) -> item()
+            .renderer((ctx, item, index) -> item()
                 .material(item.getMaterial())
                 .name("<yellow><name>")
                 .vars(Map.of(
@@ -287,7 +302,7 @@ public static Menu createAsyncShopMenu(Plugin plugin) {
                     """, pageSize + 1, page * pageSize);
             })
             .ttl(Duration.ofSeconds(30))  // Cache for 30 seconds
-            .renderer((item, index) -> item()
+            .renderer((ctx, item, index) -> item()
                 .material(item.getMaterial())
                 .name("<yellow><name>")
                 .vars(Map.of(
@@ -353,7 +368,7 @@ Menu.builder(plugin)
         .name("items")
         .bounds(0, 1, 9, 4)
         .items(() -> loadShopItems())
-        .renderer((item, index) -> item()
+        .renderer((ctx, item, index) -> item()
             .material(item.getMaterial())
             .name("<yellow><name>")
             .vars(Map.of("name", item.getName(), "price", item.getPrice()))
@@ -438,7 +453,7 @@ Menu.builder(plugin)
             return database.query(query.toString(), params.toArray());
         })
         .ttl(Duration.ofSeconds(30))
-        .renderer((item, index) -> item()
+        .renderer((ctx, item, index) -> item()
             .material(item.getMaterial())
             .name("<yellow><name>")
             .vars(Map.of("name", item.getName(), "price", item.getPrice()))
@@ -510,7 +525,7 @@ Need time to migrate? Use the compatibility module:
 <dependency>
     <groupId>eu.okaeri</groupId>
     <artifactId>okaeri-menu-bukkit-compat</artifactId>
-    <version>2.0.1-beta.1</version>
+    <version>2.0.1-beta.2</version>
 </dependency>
 ```
 
