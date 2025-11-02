@@ -313,10 +313,21 @@ public class Menu implements InventoryHolder {
     }
 
     /**
-     * Refreshes the menu for a specific viewer.
-     * Updates both the title (if changed) and all pane contents.
-     * <p>
-     * Note: Dynamic title updates require reopening the inventory in Paper API 1.21+,
+     * Refreshes the menu for a specific viewer immediately (same tick).
+     * Updates both the title (if changed) and all pane contents synchronously.
+     *
+     * <p><b>Important:</b> Prefer {@link MenuContext#invalidate()} over this method.
+     * During click events, inventory modifications typically cannot be applied in the same tick
+     * due to Minecraft constraints. {@code invalidate()} schedules refresh for the next tick,
+     * avoiding timing issues and batching multiple changes into a single refresh.
+     *
+     * <p><b>Scheduling behavior:</b>
+     * <ul>
+     *   <li>{@link MenuContext#invalidate()} - Schedules refresh for next tick (preferred, reliable)</li>
+     *   <li>{@code menu.refresh()} - Executes immediately (may fail during click events)</li>
+     * </ul>
+     *
+     * <p>Dynamic title updates require reopening the inventory in Paper API 1.21+,
      * which may reset cursor position. The menu only reopens if the title actually changed.
      *
      * @param player The player viewing the menu
@@ -335,10 +346,21 @@ public class Menu implements InventoryHolder {
     }
 
     /**
-     * Refreshes a specific pane for a viewer.
-     * <p>
-     * Only updates the specified pane's content, not the menu title or other panes.
+     * Refreshes a specific pane for a viewer immediately (same tick).
+     *
+     * <p>Only updates the specified pane's content synchronously, not the menu title or other panes.
      * Use {@link #refresh(HumanEntity)} to refresh the entire menu including title.
+     *
+     * <p><b>Important:</b> Prefer {@link MenuContext#invalidate()} over this method.
+     * During click events, inventory modifications typically cannot be applied in the same tick
+     * due to Bukkit constraints. {@code invalidate()} schedules refresh for the next tick,
+     * avoiding timing issues and batching multiple changes into a single refresh.
+     *
+     * <p><b>Scheduling behavior:</b>
+     * <ul>
+     *   <li>{@link MenuContext#invalidate()} - Schedules refresh for next tick (preferred, reliable)</li>
+     *   <li>{@code menu.refreshPane()} - Executes immediately (may fail during click events)</li>
+     * </ul>
      *
      * @param player   The player viewing the menu
      * @param paneName The name of the pane to refresh

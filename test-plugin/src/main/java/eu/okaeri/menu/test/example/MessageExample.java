@@ -78,7 +78,7 @@ public class MessageExample {
                             <gray>This updates on refresh!""",
                         ctx -> Map.of("time", System.currentTimeMillis())
                     )
-                    .onClick(MenuContext::refresh)
+                    .onClick(MenuContext::invalidate)
                     .build())
                 .item(2, 8, NavigationUtils.closeButton().build())
                 .build())
@@ -208,7 +208,6 @@ public class MessageExample {
                     )
                     .onClick(event -> {
                         event.set("clickCount", event.getInt("clickCount") + 1);
-                        event.refresh();
                     })
                     .build())
                 // Dynamic color based on value

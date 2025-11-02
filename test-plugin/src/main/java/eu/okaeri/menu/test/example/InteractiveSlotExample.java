@@ -138,7 +138,6 @@ public class InteractiveSlotExample {
                             event.playSound(Sound.ENTITY_PLAYER_LEVELUP);
                             // Clear slots and reset value
                             event.set("totalValue", 0);
-                            event.refresh();
                         } else {
                             event.sendMessage("<red>No items to sell!");
                             event.playSound(Sound.ENTITY_VILLAGER_NO);
@@ -160,7 +159,6 @@ public class InteractiveSlotExample {
                 }
                 ctx.set("totalValue", value * 10); // Simplified calculation
                 ctx.sendMessage("<yellow>Item value: " + value + " coins");
-                ctx.refresh();  // Update value display
             })
             .build();
     }

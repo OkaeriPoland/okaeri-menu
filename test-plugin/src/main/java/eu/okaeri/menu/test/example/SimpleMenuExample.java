@@ -37,7 +37,7 @@ public class SimpleMenuExample {
                     .name(() -> "Dynamic: " + System.currentTimeMillis())  // Reactive!
                     .onClick(event -> {
                         event.sendMessage("Refreshing menu...");
-                        event.refresh();
+                        event.invalidate();
                     })
                     .build())
                 .item(2, 8, item()
@@ -76,7 +76,6 @@ public class SimpleMenuExample {
                     .name("Content Item")
                     .onClick(event -> {
                         event.sendMessage("Content clicked!");
-                        event.refreshPane("content");  // Refresh only this pane
                     })
                     .build())
                 .build())
@@ -99,7 +98,6 @@ public class SimpleMenuExample {
                     .amount(ctx -> Math.min(64, ctx.getInt("clickCount") + 1))  // Reactive amount!
                     .onClick(event -> {
                         event.set("clickCount", event.getInt("clickCount") + 1);
-                        event.refresh();  // Re-evaluate reactive properties
                     })
                     .build())
                 .build())

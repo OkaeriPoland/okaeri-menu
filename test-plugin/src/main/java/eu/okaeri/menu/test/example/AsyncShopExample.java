@@ -273,7 +273,6 @@ public class AsyncShopExample {
                         event.set("totalSpent", event.getInt("totalSpent") + item.price());
                         event.sendMessage("<green>✓ Purchased <yellow>" + item.name() + " <green>for <gold>" + item.price() + " coins<green>!");
                         event.playSound(Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.2f);
-                        event.refresh();  // Refresh to update balance and stats
                     })
                     .onMiddleClick(event -> {
                         event.sendMessage("<yellow>━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -319,14 +318,9 @@ public class AsyncShopExample {
                         <gray>Shows loading state""")
                     .onClick(event -> {
                         // Clear the async cache to trigger reload
-                        var viewerState = event.getMenu().getViewerState(event.getEntity().getUniqueId());
-                        if (viewerState != null) {
-                            viewerState.getAsync().invalidate("shop-pane");
-                            viewerState.getAsync().invalidate("balance-item");
-                        }
+                        event.invalidate();
                         event.sendMessage("<yellow>⏳ Reloading shop data...");
                         event.playSound(Sound.BLOCK_LEVER_CLICK, 0.5f, 1.0f);
-                        event.refresh();
                     })
                     .build())
                 .item(0, 4, PaginationUtils.pageIndicator("shop-pane")
@@ -354,7 +348,6 @@ public class AsyncShopExample {
 
                         event.sendMessage("<yellow>Filter strategy changed to: <white>" + newStrategy.getName());
                         event.playSound(Sound.BLOCK_NOTE_BLOCK_BELL, 0.5f, 1.0f);
-                        event.refresh();
                     })
                     .build())
                 .item(0, 6, PaginationUtils.nextPageButton("shop-pane")

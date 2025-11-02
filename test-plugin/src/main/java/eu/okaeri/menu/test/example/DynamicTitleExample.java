@@ -101,7 +101,6 @@ public class DynamicTitleExample {
                         <yellow>Click me!""")
                     .onClick(event -> {
                         event.set("progress", Math.max(0, event.getInt("progress") - 10));
-                        event.refresh();
                     })
                     .build())
                 .item(1, 4, item()
@@ -123,7 +122,6 @@ public class DynamicTitleExample {
                         <yellow>Click me!""")
                     .onClick(event -> {
                         event.set("progress", Math.min(100, event.getInt("progress") + 10));
-                        event.refresh();
                     })
                     .build())
                 .build())

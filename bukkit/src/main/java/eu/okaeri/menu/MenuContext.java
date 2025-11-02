@@ -470,14 +470,25 @@ public class MenuContext {
     }
 
     /**
-     * Invalidates a specific async cached entry and refreshes the menu.
+     * Invalidates a specific async cached entry and marks ViewerState as dirty.
      * Forces reload while showing old data (stale-while-revalidate pattern).
      * Old value continues to display until new data loads successfully.
+     * Automatically marks ViewerState as dirty, triggering refresh on next tick.
+     *
+     * <p><b>Note:</b> Most operations already trigger automatic partial invalidation:
+     * <ul>
+     *   <li>{@code ctx.set()} - Marks state dirty automatically</li>
+     *   <li>Async data loads - Mark dirty on completion</li>
+     *   <li>Pagination changes - Mark dirty automatically</li>
+     * </ul>
+     *
+     * <p>Manual invalidation is only needed for external changes (e.g., after database updates).
      *
      * <p>Example:
      * <pre>{@code
      * .onClick(ctx -> {
-     *     ctx.invalidate("playerStats");  // Reload stats, keep showing old during load
+     *     database.updatePlayerRank(player);
+     *     ctx.invalidate("playerRank");  // Force reload after external change
      * })
      * }</pre>
      *
@@ -491,14 +502,28 @@ public class MenuContext {
     }
 
     /**
-     * Invalidates all async cached data and refreshes the menu.
+     * Invalidates all async cached data and marks ViewerState as dirty.
      * All data reloads in background while showing old values (stale-while-revalidate).
-     * Useful for "refresh all" buttons or after significant state changes.
+     * Automatically marks ViewerState as dirty, triggering refresh on next tick.
+     *
+     * <p><b>Warning:</b> This is expensive - invalidates ALL cached async data and viewer props.
+     * Forces re-evaluation of all computed values, reactive properties, and cached items.
+     *
+     * <p><b>Most operations don't need this:</b>
+     * <ul>
+     *   <li>{@code ctx.set()} - Already marks state dirty</li>
+     *   <li>Async data loads - Already mark dirty on completion</li>
+     *   <li>Pagination changes - Already mark dirty</li>
+     *   <li>{@code ctx.invalidate(key)} - Invalidates single key (preferred for targeted updates)</li>
+     * </ul>
+     *
+     * <p>Use this only for "refresh all" buttons or when you need to reload everything
+     * (e.g., after major external changes like server-wide events).
      *
      * <p>Example:
      * <pre>{@code
      * .onClick(ctx -> {
-     *     ctx.invalidate();  // Reload all async data
+     *     ctx.invalidate();  // Full refresh - reloads ALL async data and props
      * })
      * }</pre>
      */

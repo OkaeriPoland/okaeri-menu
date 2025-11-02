@@ -51,7 +51,6 @@ public class ItemVarsExample {
                         &eClick to increment!""")
                     .onClick(event -> {
                         event.set("counter", event.getInt("counter") + 1);
-                        event.refresh();
                     })
                     .build())
                 // Example 3: Method-level vars override item-level vars

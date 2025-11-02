@@ -56,7 +56,6 @@ public class FilterStrategyExample {
                     .onClick(event -> {
                         event.set("strategy", FilterStrategy.AND);
                         event.pagination("shop").setFilterStrategy(FilterStrategy.AND);
-                        event.refresh();
                     })
                     .build())
                 .item(0, 3, item()
@@ -72,7 +71,6 @@ public class FilterStrategyExample {
                     .onClick(event -> {
                         event.set("strategy", FilterStrategy.OR);
                         event.pagination("shop").setFilterStrategy(FilterStrategy.OR);
-                        event.refresh();
                     })
                     .build())
                 .item(0, 8, item()
@@ -81,7 +79,6 @@ public class FilterStrategyExample {
                     .onClick(event -> {
                         // Clear all filter states
                         event.clearState();
-                        event.refresh();
                     })
                     .build())
                 .build())
@@ -108,7 +105,6 @@ public class FilterStrategyExample {
                         &eTry with AND and OR!""")
                     .onClick(event -> {
                         event.set("filter:weapon", !event.getBool("filter:weapon"));
-                        event.refresh();
                     })
                     .build())
                 .item(0, 3, item()
@@ -130,7 +126,6 @@ public class FilterStrategyExample {
                         &eTry with AND and OR!""")
                     .onClick(event -> {
                         event.set("filter:armor", !event.getBool("filter:armor"));
-                        event.refresh();
                     })
                     .build())
                 .item(0, 5, item()
