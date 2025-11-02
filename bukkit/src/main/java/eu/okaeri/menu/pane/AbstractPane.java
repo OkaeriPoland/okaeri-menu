@@ -190,21 +190,21 @@ public abstract class AbstractPane implements Pane {
                 break;
             }
 
-            // Render item
-            ItemStack rendered = autoItem.render(context);
-
-            if (rendered != null) {
+            // Check visibility first (avoid rendering invisible items)
+            if (autoItem.isVisible(context)) {
                 // Item is visible - occupy slot
                 int localRow = slotIndex / this.bounds.getWidth();
                 int localCol = slotIndex % this.bounds.getWidth();
                 int globalSlot = this.bounds.toGlobalSlot(localRow, localCol);
 
+                // Now render for display
+                ItemStack rendered = autoItem.render(context);
                 inventory.setItem(globalSlot, rendered);
                 occupiedSlots.put(slotIndex, true);
                 autoItemCache.put(slotIndex, autoItem);
                 slotIndex++;
             }
-            // If null (invisible), don't increment slotIndex - next auto-item can take this slot (reflow)
+            // If invisible, don't increment slotIndex - next auto-item can take this slot (reflow)
         }
 
         return occupiedSlots;
