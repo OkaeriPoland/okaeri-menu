@@ -139,7 +139,7 @@ public final class PaginationUtils {
                 PaginationContext<?> pagination = ctx.pagination(paneName);
                 return Map.of(
                     "current", pagination.getCurrentPage() + 1,
-                    "total", pagination.getTotalPages()
+                    "total", Math.max(1, pagination.getTotalPages())  // Show "Page 1" instead of "Page 1/0" when empty
                 );
             });
 
