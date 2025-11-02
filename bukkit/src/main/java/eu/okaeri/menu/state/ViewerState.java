@@ -42,6 +42,10 @@ public class ViewerState {
     // Used by StaticPane for auto-item reflow cache and other panes that need per-player item tracking
     private @NonNull final Map<String, Map<Integer, MenuItem>> paneRenderCaches = new ConcurrentHashMap<>();
 
+    // Effective itemsPerPage overrides (paneName -> effective count based on visible auto-items)
+    // Used by PaginatedPane to dynamically adjust pagination when auto-items have varying visibility
+    private @NonNull final Map<String, Integer> effectiveItemsPerPage = new ConcurrentHashMap<>();
+
     // Dirty flag for tracking state changes (used by MenuUpdateTask)
     private volatile boolean dirty = false;
 
@@ -249,6 +253,29 @@ public class ViewerState {
     @NonNull
     public Map<Integer, MenuItem> getPaneRenderCache(@NonNull String paneName) {
         return this.paneRenderCaches.computeIfAbsent(paneName, k -> new HashMap<>());
+    }
+
+    /**
+     * Sets the effective itemsPerPage for a paginated pane based on currently visible auto-items.
+     * This allows pagination to dynamically adjust when auto-item visibility changes.
+     *
+     * @param paneName The pane name
+     * @param count    The effective items per page count
+     */
+    public void setEffectiveItemsPerPage(@NonNull String paneName, int count) {
+        this.effectiveItemsPerPage.put(paneName, count);
+    }
+
+    /**
+     * Gets the effective itemsPerPage override for a paginated pane.
+     * Returns empty if no override is set (pane will use its static value).
+     *
+     * @param paneName The pane name
+     * @return Optional containing the effective count, or empty if not set
+     */
+    @NonNull
+    public Optional<Integer> getEffectiveItemsPerPage(@NonNull String paneName) {
+        return Optional.ofNullable(this.effectiveItemsPerPage.get(paneName));
     }
 
     /**

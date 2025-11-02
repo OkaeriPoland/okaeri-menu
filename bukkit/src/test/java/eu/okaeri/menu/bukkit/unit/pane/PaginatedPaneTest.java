@@ -18,6 +18,7 @@ import org.mockbukkit.mockbukkit.ServerMock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static eu.okaeri.menu.pane.PaginatedPane.pane;
@@ -1041,5 +1042,283 @@ class PaginatedPaneTest {
         assertThat(inventory.getItem(7).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE);  // Row 0, col 7
         assertThat(inventory.getItem(12).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE); // Row 1, col 3
         assertThat(inventory.getItem(16).getType()).isEqualTo(Material.BLACK_STAINED_GLASS_PANE); // Row 1, col 7
+    }
+
+    // ========================================
+    // AUTO-FLOW TESTS
+    // ========================================
+
+    @Test
+    @DisplayName("Should render auto-flow items before page items")
+    void testAutoFlowBasicPlacement() {
+        MenuItem filterItem = MenuItem.item().material(Material.DIAMOND).name("Filter").build();
+        MenuItem sortItem = MenuItem.item().material(Material.EMERALD).name("Sort").build();
+
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(0, 0, 2, 9)
+            .item(filterItem)  // Auto-flow: fills slot 0
+            .item(sortItem)    // Auto-flow: fills slot 1
+            .items(List.of("Item1", "Item2", "Item3"))
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.GOLD_INGOT)
+                .name(item)
+                .build())
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, context);
+
+        // Auto-items should be at slots 0 and 1
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.EMERALD);
+
+        // Page items should start at slot 2 (after auto-items)
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(3).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(4).getType()).isEqualTo(Material.GOLD_INGOT);
+    }
+
+    @Test
+    @DisplayName("Should reflow auto-items when visibility changes")
+    void testAutoFlowReflow() {
+        AtomicBoolean item1Visible = new AtomicBoolean(true);
+
+        MenuItem item1 = MenuItem.item().material(Material.DIAMOND).name("Item 1")
+            .visible(item1Visible::get)
+            .build();
+        MenuItem item2 = MenuItem.item().material(Material.EMERALD).name("Item 2").build();
+        MenuItem item3 = MenuItem.item().material(Material.GOLD_INGOT).name("Item 3").build();
+
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(0, 0, 1, 9)
+            .item(item1)  // Auto-flow
+            .item(item2)  // Auto-flow
+            .item(item3)  // Auto-flow
+            .items(List.of())  // No page items
+            .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+
+        // First render: all visible
+        pane.render(inventory, context);
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.EMERALD);
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.GOLD_INGOT);
+
+        // Hide item1, clear cached props, and reflow
+        item1Visible.set(false);
+        context.getViewerState().invalidateProps();  // Clear cached reactive properties
+        pane.render(inventory, context);
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.EMERALD);  // item2 moved to slot 0
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.GOLD_INGOT);  // item3 moved to slot 1
+        assertThat(inventory.getItem(2)).isNull();  // Slot 2 now empty
+    }
+
+    @Test
+    @DisplayName("Should skip static item slots when rendering auto-items")
+    void testAutoFlowWithStaticItems() {
+        MenuItem autoItem1 = MenuItem.item().material(Material.DIAMOND).name("Auto 1").build();
+        MenuItem autoItem2 = MenuItem.item().material(Material.EMERALD).name("Auto 2").build();
+        MenuItem staticItem = MenuItem.item().material(Material.BARRIER).name("Static").build();
+
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(0, 0, 1, 9)
+            .item(0, 1, staticItem)  // Static at slot 1
+            .item(autoItem1)          // Auto-flow: fills slot 0 (skips static at 1)
+            .item(autoItem2)          // Auto-flow: fills slot 2 (after static)
+            .items(List.of())
+            .renderer((ctx, item, index) -> MenuItem.item().material(Material.STONE).build())
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, context);
+
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);  // Auto-item 1
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.BARRIER);  // Static item
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.EMERALD);  // Auto-item 2
+    }
+
+    @Test
+    @DisplayName("Should calculate itemsPerPage accounting for auto-items")
+    void testItemsPerPageWithAutoItems() {
+        MenuItem autoItem1 = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem autoItem2 = MenuItem.item().material(Material.EMERALD).build();
+
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(0, 0, 1, 9)  // 9 total slots
+            .item(autoItem1)      // 1 auto-item
+            .item(autoItem2)      // 1 auto-item
+            .items(List.of("1", "2", "3", "4", "5", "6", "7", "8"))  // 8 items
+            .renderer((ctx, item, index) -> MenuItem.item().material(Material.GOLD_INGOT).build())
+            .build();
+
+        // Base itemsPerPage is 9 (total slots - static items)
+        // Auto-items are subtracted dynamically during render
+        assertThat(pane.getItemsPerPage()).isEqualTo(9);
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, context);  // Render to calculate effective itemsPerPage
+
+        PaginationContext<?> pagination = PaginationContext.get(context, pane);
+
+        // Effective itemsPerPage should be 9 (base) - 2 (visible auto-items) = 7
+        assertThat(pagination.getItemsPerPage()).isEqualTo(7);
+
+        // Should have 2 pages: 7 items on page 1, 1 item on page 2
+        assertThat(pagination.getTotalPages()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Should route clicks to auto-items correctly")
+    void testAutoItemClickRouting() {
+        MenuItem autoItem = MenuItem.item()
+            .material(Material.DIAMOND)
+            .name("Clickable Auto")
+            .build();
+
+        MenuItem pageItem = MenuItem.item()
+            .material(Material.GOLD_INGOT)
+            .name("Page Item")
+            .build();
+
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(0, 0, 1, 9)
+            .item(autoItem)  // Auto-flow: slot 0
+            .items(List.of("Item1"))
+            .renderer((ctx, item, index) -> pageItem)
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, context);
+
+        // Get item at slot 0 (auto-item) via getItem() - should route to auto-items cache
+        MenuItem retrievedAutoItem = pane.getItem(0, 0, context);
+        assertThat(retrievedAutoItem).isNotNull();
+        assertThat(retrievedAutoItem).isSameAs(autoItem);  // Should be the exact same instance
+
+        // Get item at slot 1 (page item) - should route to page items cache
+        MenuItem retrievedPageItem = pane.getItem(0, 1, context);
+        assertThat(retrievedPageItem).isNotNull();
+        assertThat(retrievedPageItem).isSameAs(pageItem);  // Should be the exact same instance
+
+        // Verify rendered ItemStacks have correct materials
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.GOLD_INGOT);
+    }
+
+    @Test
+    @DisplayName("Should render page items after auto-items, skipping auto-item slots")
+    void testPageItemsAfterAutoItems() {
+        MenuItem autoItem = MenuItem.item().material(Material.DIAMOND).build();
+
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(0, 0, 1, 9)
+            .item(autoItem)  // Auto-flow: slot 0
+            .items(List.of("A", "B", "C"))
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.GOLD_INGOT)
+                .name(item)
+                .build())
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, context);
+
+        // Slot 0: auto-item
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+
+        // Slots 1-3: page items (after auto-item)
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(1).getItemMeta().getDisplayName()).contains("A");
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(2).getItemMeta().getDisplayName()).contains("B");
+        assertThat(inventory.getItem(3).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(3).getItemMeta().getDisplayName()).contains("C");
+    }
+
+    @Test
+    @DisplayName("Should dynamically adjust itemsPerPage when auto-item visibility changes")
+    void testDynamicItemsPerPageWithAutoItems() {
+        // Setup: 9 total slots, 2 auto-items (one dynamic), should leave 7 slots for page items initially
+        AtomicBoolean showReturnButton = new AtomicBoolean(true);
+
+        MenuItem returnButton = MenuItem.item()
+            .material(Material.ARROW)
+            .name("Return")
+            .visible(showReturnButton::get)
+            .build();
+
+        MenuItem closeButton = MenuItem.item()
+            .material(Material.BARRIER)
+            .name("Close")
+            .build();
+
+        // Create 20 page items to test pagination across multiple pages
+        List<String> items = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            items.add("Item " + i);
+        }
+
+        PaginatedPane<String> pane = PaginatedPane.<String>pane("test", String.class)
+            .bounds(0, 0, 1, 9)
+            .item(returnButton)   // Auto-item 1 (conditionally visible)
+            .item(closeButton)    // Auto-item 2 (always visible)
+            .items(items)
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.GOLD_INGOT)
+                .name(item)
+                .build())
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        Inventory inventory = this.server.createInventory(null, 54);
+
+        // Initial render: both auto-items visible
+        pane.render(inventory, context);
+
+        // Get pagination context to check itemsPerPage
+        PaginationContext<String> pagination = PaginationContext.get(context, pane);
+
+        // Should have 7 items per page (9 slots - 2 auto-items)
+        assertThat(pagination.getItemsPerPage()).isEqualTo(7);
+        assertThat(pagination.getTotalPages()).isEqualTo(3);  // 20 items / 7 per page = 3 pages
+
+        // Slots 0-1: auto-items
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.ARROW);   // Return button
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.BARRIER); // Close button
+
+        // Slots 2-8: first 7 page items
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(2).getItemMeta().getDisplayName()).contains("Item 0");
+        assertThat(inventory.getItem(8).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(8).getItemMeta().getDisplayName()).contains("Item 6");
+
+        // Now hide the return button
+        showReturnButton.set(false);
+        context.getViewerState().invalidateProps();  // Clear cached reactive properties
+
+        // Re-render with one auto-item hidden
+        Inventory inventory2 = this.server.createInventory(null, 54);
+        pane.render(inventory2, context);
+
+        // Should now have 8 items per page (9 slots - 1 auto-item)
+        assertThat(pagination.getItemsPerPage()).isEqualTo(8);
+        assertThat(pagination.getTotalPages()).isEqualTo(3);  // 20 items / 8 per page = 3 pages (rounded up)
+
+        // Slot 0: only close button (return button is hidden and takes no space)
+        assertThat(inventory2.getItem(0).getType()).isEqualTo(Material.BARRIER); // Close button
+
+        // Slots 1-8: first 8 page items (one more than before)
+        assertThat(inventory2.getItem(1).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory2.getItem(1).getItemMeta().getDisplayName()).contains("Item 0");
+        assertThat(inventory2.getItem(8).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory2.getItem(8).getItemMeta().getDisplayName()).contains("Item 7");  // One extra item!
     }
 }

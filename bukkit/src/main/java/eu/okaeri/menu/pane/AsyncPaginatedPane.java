@@ -78,11 +78,33 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         asyncBuilder.staticItems.forEach(entry ->
             parentBuilder.item(entry.getLocalRow(), entry.getLocalCol(), entry.getMenuItem()));
 
+        // Copy auto-items
+        asyncBuilder.autoItems.forEach(parentBuilder::item);
+
         return parentBuilder;
     }
 
     @Override
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
+        // Only calculate dynamic itemsPerPage if this pane has auto-items
+        // Otherwise, use the configured static value (which may be explicitly set by user)
+        if (!this.autoItems.isEmpty()) {
+            // Count visible auto-items to calculate dynamic itemsPerPage
+            int visibleAutoItemCount = 0;
+            for (MenuItem autoItem : this.autoItems) {
+                if (autoItem.isVisible(context)) {
+                    visibleAutoItemCount++;
+                }
+            }
+
+            // Calculate effective itemsPerPage by subtracting visible auto-items from configured itemsPerPage
+            // This respects explicit itemsPerPage settings while adjusting for dynamic auto-item visibility
+            // Example: itemsPerPage=7, 2 auto-items visible → 5 page items
+            // Example: itemsPerPage=7, 1 auto-item visible → 6 page items (dynamic adjustment)
+            int effectiveCount = this.getItemsPerPage() - visibleAutoItemCount;
+            context.getViewerState().setEffectiveItemsPerPage(this.getName(), Math.max(1, effectiveCount));
+        }
+
         String cacheKey = this.getName();  // Use pane name as cache key
 
         ViewerState state = context.getMenu().getViewerState(context.getEntity().getUniqueId());
@@ -148,11 +170,21 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
     /**
      * Renders loading state by filling all slots with loading item.
+     * Auto-items are still rendered so controls remain accessible during loading.
      */
     private void renderLoadingState(@NonNull Inventory inventory, @NonNull MenuContext context) {
-        // Fill all slots with loading item
+        // Track which slots are occupied (static items + auto-items)
+        Map<Integer, Boolean> occupiedSlots = new HashMap<>();
+        this.getStaticItems().keySet().forEach(slot -> occupiedSlots.put(slot, true));
+
+        // Render auto-items first (controls remain accessible during loading)
+        this.renderAutoItems(inventory, context, occupiedSlots, this.getName() + ":auto");
+
+        // Fill remaining slots with loading item
         ItemStack loadingItemStack = this.loadingItem.render(context);
-        this.getBounds().slots().fill(inventory, loadingItemStack);
+        this.getBounds().slots()
+            .excludeKeys(occupiedSlots)
+            .fill(inventory, loadingItemStack);
 
         // Render static items on top
         this.renderStaticItems(inventory, context, this.getStaticItems());
@@ -160,11 +192,21 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
     /**
      * Renders error state by filling all slots with error item.
+     * Auto-items are still rendered so controls remain accessible during error.
      */
     private void renderErrorState(@NonNull Inventory inventory, @NonNull MenuContext context) {
-        // Fill all slots with error item
+        // Track which slots are occupied (static items + auto-items)
+        Map<Integer, Boolean> occupiedSlots = new HashMap<>();
+        this.getStaticItems().keySet().forEach(slot -> occupiedSlots.put(slot, true));
+
+        // Render auto-items first (controls remain accessible during error)
+        this.renderAutoItems(inventory, context, occupiedSlots, this.getName() + ":auto");
+
+        // Fill remaining slots with error item
         ItemStack errorItemStack = this.errorItem.render(context);
-        this.getBounds().slots().fill(inventory, errorItemStack);
+        this.getBounds().slots()
+            .excludeKeys(occupiedSlots)
+            .fill(inventory, errorItemStack);
 
         // Render static items on top
         this.renderStaticItems(inventory, context, this.getStaticItems());
@@ -172,18 +214,28 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
 
     /**
      * Renders empty state by showing single item in center of pane.
+     * Auto-items are still rendered so controls remain accessible when empty.
      */
     private void renderEmptyState(@NonNull Inventory inventory, @NonNull MenuContext context) {
         PaneBounds bounds = this.getBounds();
 
-        // Show empty item at top-left (0,0)
-        ItemStack emptyItemStack = this.emptyItem.render(context);
-        inventory.setItem(bounds.toGlobalSlot(0, 0), emptyItemStack);
+        // Track which slots are occupied (static items + auto-items)
+        Map<Integer, Boolean> occupiedSlots = new HashMap<>();
+        this.getStaticItems().keySet().forEach(slot -> occupiedSlots.put(slot, true));
 
-        // Clear other slots (exclude slot 0 and static items)
+        // Render auto-items first (controls remain accessible when empty)
+        this.renderAutoItems(inventory, context, occupiedSlots, this.getName() + ":auto");
+
+        // Show empty item at top-left (0,0) if not occupied
+        if (!occupiedSlots.containsKey(0)) {
+            ItemStack emptyItemStack = this.emptyItem.render(context);
+            inventory.setItem(bounds.toGlobalSlot(0, 0), emptyItemStack);
+            occupiedSlots.put(0, true);
+        }
+
+        // Clear other slots (exclude occupied slots)
         bounds.slots()
-            .excludeKeys(this.getStaticItems())
-            .exclude(Set.of(0))
+            .excludeKeys(occupiedSlots)
             .clear(inventory);
 
         // Render static items on top
@@ -260,6 +312,7 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         private TriFunction<MenuContext, T, Integer, MenuItem> itemRenderer;
         private int itemsPerPage;
         private List<AbstractPane.ItemCoordinateEntry> staticItems = new ArrayList<>();
+        private List<MenuItem> autoItems = new ArrayList<>();  // Auto-positioned items
         private MenuItem loadingItem;
         private MenuItem errorItem;
         private MenuItem emptyItem;
@@ -455,6 +508,30 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
         }
 
         /**
+         * Adds an auto-positioned item that fills the first available slot BEFORE page items.
+         * Auto-positioned items automatically reflow when visibility changes - when an item
+         * becomes invisible (visible=false), it's completely skipped and the next item takes its place.
+         *
+         * <p>Auto-positioned items are rendered before paginated content, filling slots
+         * left-to-right, top-to-bottom within the pane bounds. They skip slots occupied
+         * by static items.
+         *
+         * <p>Useful for filter buttons, sort controls, and other UI elements that should
+         * appear before paginated content.
+         *
+         * <p><b>Note:</b> Auto-items remain visible during LOADING, ERROR, and EMPTY states,
+         * so controls like filters remain accessible while data is loading or when errors occur.
+         *
+         * @param item The menu item to auto-position
+         * @return This builder
+         */
+        @NonNull
+        public Builder<T> item(@NonNull MenuItem item) {
+            this.autoItems.add(item);
+            return this;
+        }
+
+        /**
          * Sets the loading item (shown while data is loading).
          * Fills all slots in pane.
          *
@@ -520,9 +597,12 @@ public class AsyncPaginatedPane<T> extends PaginatedPane<T> {
                 this.emptyItem = MenuItem.empty();
             }
 
-            // Default items per page to pane size if not set
+            // Default items per page to pane size minus static items if not set
+            // Auto-items are dynamically subtracted during render based on visibility
             if (this.itemsPerPage == 0) {
-                this.itemsPerPage = (this.bounds.getWidth() * this.bounds.getHeight()) - this.staticItems.size();
+                int availableSlots = (this.bounds.getWidth() * this.bounds.getHeight())
+                    - this.staticItems.size();
+                this.itemsPerPage = Math.max(1, availableSlots);
             }
 
             return new AsyncPaginatedPane<>(this);

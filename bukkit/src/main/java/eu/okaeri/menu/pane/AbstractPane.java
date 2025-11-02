@@ -6,6 +6,7 @@ import lombok.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ public abstract class AbstractPane implements Pane {
     protected @NonNull final String name;
     protected @NonNull final PaneBounds bounds;
     protected final Map<Integer, MenuItem> staticItems = new HashMap<>();
+    protected final List<MenuItem> autoItems = new ArrayList<>();
 
     /**
      * Checks if a global slot is within this pane's bounds.
@@ -145,6 +147,67 @@ public abstract class AbstractPane implements Pane {
             ItemStack itemStack = menuItem.render(context);
             inventory.setItem(globalSlot, itemStack);
         });
+    }
+
+    /**
+     * Renders auto-positioned items that fill available slots before other content.
+     * Items with visibility=false are skipped and don't consume slots (dynamic reflow).
+     * Shared implementation used by all pane types.
+     *
+     * <p>Rendering order:
+     * <ol>
+     *   <li>Skip slots already occupied (from occupiedSlots map)</li>
+     *   <li>Render visible auto-items in order, filling gaps</li>
+     *   <li>Store in per-player cache for click routing</li>
+     *   <li>Update occupiedSlots map with newly occupied positions</li>
+     * </ol>
+     *
+     * @param inventory     The inventory to render into
+     * @param context       The menu context (for per-player caching)
+     * @param occupiedSlots Map tracking which local slots are already occupied (will be updated)
+     * @param cacheName     Cache name for per-player auto-item tracking (e.g., "paneName:auto")
+     * @return Updated occupiedSlots map with auto-item positions added
+     */
+    protected Map<Integer, Boolean> renderAutoItems(
+        @NonNull Inventory inventory,
+        @NonNull MenuContext context,
+        @NonNull Map<Integer, Boolean> occupiedSlots,
+        @NonNull String cacheName
+    ) {
+        // Get per-player cache for click routing
+        Map<Integer, MenuItem> autoItemCache = context.getViewerState().getPaneRenderCache(cacheName);
+        autoItemCache.clear();
+
+        int slotIndex = 0;
+        for (MenuItem autoItem : this.autoItems) {
+            // Find next free slot
+            while ((slotIndex < this.bounds.getSlotCount()) && occupiedSlots.containsKey(slotIndex)) {
+                slotIndex++;
+            }
+
+            // No more slots available
+            if (slotIndex >= this.bounds.getSlotCount()) {
+                break;
+            }
+
+            // Render item
+            ItemStack rendered = autoItem.render(context);
+
+            if (rendered != null) {
+                // Item is visible - occupy slot
+                int localRow = slotIndex / this.bounds.getWidth();
+                int localCol = slotIndex % this.bounds.getWidth();
+                int globalSlot = this.bounds.toGlobalSlot(localRow, localCol);
+
+                inventory.setItem(globalSlot, rendered);
+                occupiedSlots.put(slotIndex, true);
+                autoItemCache.put(slotIndex, autoItem);
+                slotIndex++;
+            }
+            // If null (invisible), don't increment slotIndex - next auto-item can take this slot (reflow)
+        }
+
+        return occupiedSlots;
     }
 
     /**

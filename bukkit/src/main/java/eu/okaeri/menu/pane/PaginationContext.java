@@ -107,11 +107,16 @@ public class PaginationContext<T> {
 
     /**
      * Gets items per page (reactive - reads from pane on-demand).
+     * Checks for dynamic override first (based on visible auto-items),
+     * falls back to pane's static configuration.
      *
-     * @return Items per page configured on the pane
+     * @return Items per page (dynamic or configured)
      */
     public int getItemsPerPage() {
-        return this.pane.getItemsPerPage();
+        // Check for dynamic override first (set during render based on visible auto-items)
+        return this.context.getViewerState()
+            .getEffectiveItemsPerPage(this.pane.getName())
+            .orElse(this.pane.getItemsPerPage());
     }
 
     /**

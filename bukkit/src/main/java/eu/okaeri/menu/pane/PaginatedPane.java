@@ -39,10 +39,31 @@ public class PaginatedPane<T> extends AbstractPane {
         } else {
             this.staticItems.putAll(builder.staticItems);
         }
+        // Copy auto-items to parent's list
+        this.autoItems.addAll(builder.autoItems);
     }
 
     @Override
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
+        // Only calculate dynamic itemsPerPage if this pane has auto-items
+        // Otherwise, use the configured static value (which may be explicitly set by user)
+        if (!this.autoItems.isEmpty()) {
+            // Count visible auto-items to calculate dynamic itemsPerPage
+            int visibleAutoItemCount = 0;
+            for (MenuItem autoItem : this.autoItems) {
+                if (autoItem.isVisible(context)) {
+                    visibleAutoItemCount++;
+                }
+            }
+
+            // Calculate effective itemsPerPage by subtracting visible auto-items from configured itemsPerPage
+            // This respects explicit itemsPerPage settings while adjusting for dynamic auto-item visibility
+            // Example: itemsPerPage=7, 2 auto-items visible → 5 page items
+            // Example: itemsPerPage=7, 1 auto-item visible → 6 page items (dynamic adjustment)
+            int effectiveCount = this.itemsPerPage - visibleAutoItemCount;
+            context.getViewerState().setEffectiveItemsPerPage(this.getName(), Math.max(1, effectiveCount));
+        }
+
         // Get pagination context for this viewer (reactive - reads items from pane on-demand)
         PaginationContext<T> pagination = PaginationContext.get(context, this);
 
@@ -56,7 +77,14 @@ public class PaginatedPane<T> extends AbstractPane {
         // Get items for current page
         List<T> pageItems = pagination.getCurrentPageItems();
 
-        // Render paginated items
+        // Track which slots are occupied (static items + auto-items)
+        Map<Integer, Boolean> occupiedSlots = new HashMap<>();
+        this.staticItems.keySet().forEach(slot -> occupiedSlots.put(slot, true));
+
+        // Step 1: Render auto-positioned items BEFORE page items
+        this.renderAutoItems(inventory, context, occupiedSlots, this.getName() + ":auto");
+
+        // Step 2: Render paginated items (skip both static and auto-item slots)
         // Use separate counters: slotIndex tracks position, itemIndex tracks which item to render
         int slotIndex = 0;
         int itemIndex = 0;
@@ -67,8 +95,8 @@ public class PaginatedPane<T> extends AbstractPane {
             int localCol = slotIndex % this.bounds.getWidth();
             int localSlot = (localRow * this.bounds.getWidth()) + localCol;
 
-            // Check if position is occupied by static item
-            if (this.staticItems.containsKey(localSlot)) {
+            // Check if position is occupied by static item or auto-item
+            if (occupiedSlots.containsKey(localSlot)) {
                 slotIndex++; // Skip this slot, retry same item at next position
                 continue;
             }
@@ -92,14 +120,14 @@ public class PaginatedPane<T> extends AbstractPane {
             slotIndex++; // Move to next slot
         }
 
-        // Clear unfilled slots (slots beyond the last rendered item, but not static items)
+        // Clear unfilled slots (slots beyond the last rendered item, but not static/auto items)
         // This prevents old items from showing when page has fewer items
         this.bounds.slots()
-            .excludeKeys(this.staticItems)
+            .excludeKeys(occupiedSlots)
             .range(slotIndex, this.bounds.getSlotCount())
             .clear(inventory);
 
-        // Render static items (buttons, decorations, etc.)
+        // Step 3: Render static items (buttons, decorations, etc.) - last so they're on top
         this.renderStaticItems(inventory, context, this.staticItems);
     }
 
@@ -162,12 +190,21 @@ public class PaginatedPane<T> extends AbstractPane {
     @Override
     public MenuItem getItem(int localRow, int localCol, @NonNull MenuContext context) {
         int localSlot = this.localCoordinatesToSlot(localRow, localCol);
-        // Check static items first (they have priority)
+
+        // Check static items first (highest priority)
         MenuItem staticItem = this.staticItems.get(localSlot);
         if (staticItem != null) {
             return staticItem;
         }
-        // Check rendered paginated items (per-player)
+
+        // Check auto-items (per-player cache)
+        Map<Integer, MenuItem> autoItemCache = context.getViewerState().getPaneRenderCache(this.getName() + ":auto");
+        MenuItem autoItem = autoItemCache.get(localSlot);
+        if (autoItem != null) {
+            return autoItem;
+        }
+
+        // Check rendered paginated items (per-player, lowest priority)
         Map<Integer, MenuItem> renderedItems = context.getViewerState().getPaneRenderCache(this.getName());
         return renderedItems.get(localSlot);
     }
@@ -236,6 +273,7 @@ public class PaginatedPane<T> extends AbstractPane {
         private int itemsPerPage;
         private List<AbstractPane.ItemCoordinateEntry> staticItemEntries = new ArrayList<>();
         private Map<Integer, MenuItem> staticItems = new HashMap<>();  // Populated in build()
+        private List<MenuItem> autoItems = new ArrayList<>();  // Auto-positioned items
         private PaneTemplate template = null;  // Visual template for item placement
 
         /**
@@ -414,6 +452,27 @@ public class PaginatedPane<T> extends AbstractPane {
             return this;
         }
 
+        /**
+         * Adds an auto-positioned item that fills the first available slot BEFORE page items.
+         * Auto-positioned items automatically reflow when visibility changes - when an item
+         * becomes invisible (visible=false), it's completely skipped and the next item takes its place.
+         *
+         * <p>Auto-positioned items are rendered before paginated content, filling slots
+         * left-to-right, top-to-bottom within the pane bounds. They skip slots occupied
+         * by static items.
+         *
+         * <p>Useful for filter buttons, sort controls, and other UI elements that should
+         * appear before paginated content.
+         *
+         * @param item The menu item to auto-position
+         * @return This builder
+         */
+        @NonNull
+        public Builder<T> item(@NonNull MenuItem item) {
+            this.autoItems.add(item);
+            return this;
+        }
+
         @NonNull
         public PaginatedPane<T> build() {
             if (this.name == null) {
@@ -432,9 +491,11 @@ public class PaginatedPane<T> extends AbstractPane {
             // Calculate slots from coordinates using final bounds with validation
             this.staticItems = convertEntriesToSlotMap(this.staticItemEntries, this.bounds);
 
-            // Default items per page to pane size if not set
+            // Default items per page to pane size minus static items if not set
+            // Auto-items are dynamically subtracted during render based on visibility
             if (this.itemsPerPage == 0) {
-                this.itemsPerPage = this.bounds.getSlotCount() - this.staticItems.size();
+                int availableSlots = this.bounds.getSlotCount() - this.staticItems.size();
+                this.itemsPerPage = Math.max(1, availableSlots);
             }
 
             return new PaginatedPane<>(this);

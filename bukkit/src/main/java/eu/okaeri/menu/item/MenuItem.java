@@ -234,6 +234,17 @@ public class MenuItem {
     }
 
     /**
+     * Checks if this item is visible for the given context.
+     * Useful for calculating slot occupancy without rendering.
+     *
+     * @param context The menu context
+     * @return true if the item is visible
+     */
+    public boolean isVisible(@NonNull MenuContext context) {
+        return this.visible.get(context);
+    }
+
+    /**
      * Handles an item change event on this interactive slot.
      *
      * @param context The change context

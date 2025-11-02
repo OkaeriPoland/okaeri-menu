@@ -19,23 +19,18 @@ import java.util.Map;
 public class StaticPane extends AbstractPane {
 
     private final MenuItem fillerItem;  // Optional filler for empty slots
-    private final List<MenuItem> autoItems;  // Auto-positioned items that reflow based on visibility
 
     private StaticPane(Builder builder) {
         super(builder.name, builder.bounds);
         this.staticItems.putAll(builder.items);
         this.fillerItem = builder.fillerItem;
-        this.autoItems = new ArrayList<>(builder.autoItems);
+        this.autoItems.addAll(builder.autoItems);  // Use parent's autoItems list
     }
 
     @Override
     public void render(@NonNull Inventory inventory, @NonNull MenuContext context) {
         // Track which slots are occupied (for filler/clearing at the end)
         Map<Integer, Boolean> occupiedSlots = new HashMap<>();
-
-        // Get per-player auto-item slot cache and clear it
-        Map<Integer, MenuItem> autoItemSlotCache = context.getViewerState().getPaneRenderCache(this.getName());
-        autoItemSlotCache.clear();
 
         // Step 1: Render static positioned items
         this.bounds.slots().forEachMap(this.staticItems, (localSlot, globalSlot, menuItem) -> {
@@ -51,39 +46,8 @@ public class StaticPane extends AbstractPane {
             }
         });
 
-        // Step 2: Render auto-positioned items (reflow based on visibility)
-        int slotIndex = 0;
-        for (MenuItem item : this.autoItems) {
-            if (slotIndex >= this.bounds.getSlotCount()) {
-                break;
-            }
-
-            // Find next free slot (skip slots occupied by static items)
-            while ((slotIndex < this.bounds.getSlotCount()) && occupiedSlots.containsKey(slotIndex)) {
-                slotIndex++;
-            }
-            if (slotIndex >= this.bounds.getSlotCount()) {
-                break;
-            }
-
-            // Render item - returns null if visible=false
-            ItemStack rendered = item.render(context);
-            if (rendered != null) {
-                // Calculate position from slot index
-                int localRow = slotIndex / this.bounds.getWidth();
-                int localCol = slotIndex % this.bounds.getWidth();
-                int globalSlot = this.bounds.toGlobalSlot(localRow, localCol);
-
-                if (globalSlot < inventory.getSize()) {
-                    inventory.setItem(globalSlot, rendered);
-                    occupiedSlots.put(slotIndex, true);
-                    // Cache auto-item position for click routing (per-player)
-                    autoItemSlotCache.put(slotIndex, item);
-                }
-                slotIndex++;  // Move to next slot after rendering
-            }
-            // If null (invisible), don't increment - next item takes this slot
-        }
+        // Step 2: Render auto-positioned items (use shared implementation from AbstractPane)
+        this.renderAutoItems(inventory, context, occupiedSlots, this.getName() + ":auto");
 
         // Step 3: Fill or clear remaining empty slots
         if (this.fillerItem != null) {
@@ -134,7 +98,7 @@ public class StaticPane extends AbstractPane {
         }
 
         // Check auto-item cache (per-player, populated during last render)
-        Map<Integer, MenuItem> autoItemSlotCache = context.getViewerState().getPaneRenderCache(this.getName());
+        Map<Integer, MenuItem> autoItemSlotCache = context.getViewerState().getPaneRenderCache(this.getName() + ":auto");
         return autoItemSlotCache.get(localCoord);
     }
 
