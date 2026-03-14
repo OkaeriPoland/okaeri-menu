@@ -308,4 +308,201 @@ class InteractiveSlotTest extends MenuListenerTestBase {
         // Event should be cancelled by handler
         assertThat(event.isCancelled()).isTrue();
     }
+
+    // ========================================
+    // SHIFT-CLICK FROM PLAYER INVENTORY
+    // ========================================
+
+    @Test
+    @DisplayName("Should route shift-click to first empty interactive placement slot")
+    void testShiftClickRoutesToInteractiveSlot() {
+        AtomicBoolean changeHandlerCalled = new AtomicBoolean(false);
+
+        Menu menu = Menu.builder(this.plugin)
+            .title("Test Menu")
+            .rows(1)
+            .pane(staticPane("test")
+                .bounds(0, 0, 1, 9)
+                .item(0, 0, item().material(Material.BARRIER).build())  // Non-interactive
+                .item(0, 1, item()
+                    .interactive()
+                    .onItemChange(ctx -> changeHandlerCalled.set(true))
+                    .build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        // Place item in player inventory to shift-click
+        this.player.getInventory().setItem(0, new ItemStack(Material.DIAMOND, 5));
+
+        // Simulate shift-click from player inventory (slot 9+ is player inventory in the view)
+        InventoryClickEvent event = new InventoryClickEvent(
+            this.player.getOpenInventory(),
+            InventoryType.SlotType.CONTAINER,
+            9,  // Player inventory slot
+            ClickType.SHIFT_LEFT,
+            InventoryAction.MOVE_TO_OTHER_INVENTORY
+        );
+
+        this.listener.onInventoryClick(event);
+
+        // Event is cancelled (we handle it manually)
+        assertThat(event.isCancelled()).isTrue();
+        // Item should have been moved to slot 1 (first interactive slot)
+        Inventory topInv = this.player.getOpenInventory().getTopInventory();
+        assertThat(topInv.getItem(1)).isNotNull();
+        assertThat(topInv.getItem(1).getType()).isEqualTo(Material.DIAMOND);
+        // Change handler should have been called
+        assertThat(changeHandlerCalled.get()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should block shift-click when no interactive slots exist")
+    void testShiftClickBlockedWithoutInteractiveSlots() {
+        Menu menu = Menu.builder(this.plugin)
+            .title("Test Menu")
+            .rows(1)
+            .pane(staticPane("test")
+                .bounds(0, 0, 1, 9)
+                .item(0, 0, item().material(Material.BARRIER).build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        this.player.getInventory().setItem(0, new ItemStack(Material.DIAMOND));
+
+        InventoryClickEvent event = new InventoryClickEvent(
+            this.player.getOpenInventory(),
+            InventoryType.SlotType.CONTAINER,
+            9,
+            ClickType.SHIFT_LEFT,
+            InventoryAction.MOVE_TO_OTHER_INVENTORY
+        );
+
+        this.listener.onInventoryClick(event);
+
+        // Should be cancelled with no item moved
+        assertThat(event.isCancelled()).isTrue();
+        Inventory topInv = this.player.getOpenInventory().getTopInventory();
+        assertThat(topInv.getItem(1)).isNull();
+    }
+
+    @Test
+    @DisplayName("Should skip occupied interactive slots during shift-click")
+    void testShiftClickSkipsOccupiedSlots() {
+        Menu menu = Menu.builder(this.plugin)
+            .title("Test Menu")
+            .rows(1)
+            .pane(staticPane("test")
+                .bounds(0, 0, 1, 9)
+                .item(0, 0, item().interactive().build())
+                .item(0, 1, item().interactive().build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        // Occupy first interactive slot
+        Inventory topInv = this.player.getOpenInventory().getTopInventory();
+        topInv.setItem(0, new ItemStack(Material.GOLD_INGOT));
+
+        // Shift-click diamond from player inventory
+        this.player.getInventory().setItem(0, new ItemStack(Material.DIAMOND));
+
+        InventoryClickEvent event = new InventoryClickEvent(
+            this.player.getOpenInventory(),
+            InventoryType.SlotType.CONTAINER,
+            9,
+            ClickType.SHIFT_LEFT,
+            InventoryAction.MOVE_TO_OTHER_INVENTORY
+        );
+
+        this.listener.onInventoryClick(event);
+
+        // Diamond should go to slot 1 (slot 0 is occupied)
+        assertThat(topInv.getItem(0).getType()).isEqualTo(Material.GOLD_INGOT);  // Unchanged
+        assertThat(topInv.getItem(1)).isNotNull();
+        assertThat(topInv.getItem(1).getType()).isEqualTo(Material.DIAMOND);
+    }
+
+    @Test
+    @DisplayName("Should still block collect-to-cursor even with interactive slots")
+    void testCollectToCursorStillBlocked() {
+        Menu menu = Menu.builder(this.plugin)
+            .title("Test Menu")
+            .rows(1)
+            .pane(staticPane("test")
+                .bounds(0, 0, 1, 9)
+                .item(0, 0, item().interactive().build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        InventoryClickEvent event = new InventoryClickEvent(
+            this.player.getOpenInventory(),
+            InventoryType.SlotType.CONTAINER,
+            9,
+            ClickType.LEFT,
+            InventoryAction.COLLECT_TO_CURSOR
+        );
+
+        this.listener.onInventoryClick(event);
+
+        assertThat(event.isCancelled()).isTrue();
+    }
+
+    // ========================================
+    // INTERACTIVE SLOT INITIAL ITEMS
+    // ========================================
+
+    @Test
+    @DisplayName("Should show initial item in interactive slot after menu open")
+    void testInteractiveSlotInitialItemOnOpen() {
+        Menu menu = Menu.builder(this.plugin)
+            .title("Test Menu")
+            .rows(1)
+            .pane(staticPane("test")
+                .bounds(0, 0, 1, 9)
+                .item(0, 0, item()
+                    .from(new ItemStack(Material.EMERALD))
+                    .interactive()
+                    .build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        Inventory inv = this.player.getOpenInventory().getTopInventory();
+        assertThat(inv.getItem(0)).isNotNull();
+        assertThat(inv.getItem(0).getType()).isEqualTo(Material.EMERALD);
+    }
+
+    @Test
+    @DisplayName("Should preserve player-placed items after refresh")
+    void testInteractiveSlotPreservesItemsAfterRefresh() {
+        Menu menu = Menu.builder(this.plugin)
+            .title("Test Menu")
+            .rows(1)
+            .pane(staticPane("test")
+                .bounds(0, 0, 1, 9)
+                .item(0, 0, item().interactive().build())
+                .build())
+            .build();
+
+        menu.open(this.player);
+
+        // Place item
+        Inventory inv = this.player.getOpenInventory().getTopInventory();
+        inv.setItem(0, new ItemStack(Material.DIAMOND_SWORD));
+
+        // Refresh
+        menu.refresh(this.player);
+
+        // Item should be preserved
+        assertThat(inv.getItem(0)).isNotNull();
+        assertThat(inv.getItem(0).getType()).isEqualTo(Material.DIAMOND_SWORD);
+    }
 }

@@ -144,6 +144,20 @@ public abstract class AbstractPane implements Pane {
      */
     protected void renderStaticItems(@NonNull Inventory inventory, @NonNull MenuContext context, @NonNull Map<Integer, MenuItem> staticItems) {
         this.bounds.slots().forEachMap(staticItems, (localSlot, globalSlot, menuItem) -> {
+            // Interactive items: only render if the slot is currently empty (preserves player-placed items)
+            if (menuItem.isInteractive()) {
+                if (globalSlot < inventory.getSize()) {
+                    ItemStack current = inventory.getItem(globalSlot);
+                    if ((current == null) || current.getType().isAir()) {
+                        ItemStack rendered = menuItem.render(context);
+                        if (rendered != null) {
+                            inventory.setItem(globalSlot, rendered);
+                        }
+                    }
+                }
+                return;
+            }
+
             ItemStack itemStack = menuItem.render(context);
             inventory.setItem(globalSlot, itemStack);
         });

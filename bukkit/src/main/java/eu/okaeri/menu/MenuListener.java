@@ -5,6 +5,7 @@ import eu.okaeri.menu.item.MenuItem;
 import eu.okaeri.menu.item.MenuItemChangeContext;
 import eu.okaeri.menu.item.MenuItemClickContext;
 import eu.okaeri.menu.navigation.NavigationHistory;
+import eu.okaeri.menu.pane.AbstractPane;
 import eu.okaeri.menu.pane.Pane;
 import eu.okaeri.menu.state.ViewerState;
 import lombok.NonNull;
@@ -357,10 +358,16 @@ public class MenuListener implements Listener {
         // But prevent actions that move items into the menu
 
         switch (event.getAction()) {
-            // Block actions that automatically move items into the menu
-            case MOVE_TO_OTHER_INVENTORY, COLLECT_TO_CURSOR -> {    // Shift-click, Double-click to collect
+            // Shift-click: try to route to an interactive slot, otherwise block
+            case MOVE_TO_OTHER_INVENTORY -> {
                 event.setCancelled(true);
-                this.plugin.getLogger().fine("Blocked shift-click/collect while menu open");
+                this.handleShiftClickIntoMenu(event, menuInventory);
+            }
+
+            // Double-click to collect: always block (would pull items from menu)
+            case COLLECT_TO_CURSOR -> {
+                event.setCancelled(true);
+                this.plugin.getLogger().fine("Blocked collect-to-cursor while menu open");
             }
 
             // Block hotbar swaps that could affect menu slots
@@ -378,6 +385,78 @@ public class MenuListener implements Listener {
                 // Don't cancel - allow normal inventory interactions
             }
         }
+    }
+
+    /**
+     * Handles shift-click from player inventory into a menu with interactive slots.
+     * Manually routes the item to the first empty interactive slot with allowPlacement.
+     * The original event is already cancelled - this performs the item move manually.
+     */
+    private void handleShiftClickIntoMenu(@NonNull InventoryClickEvent event, @NonNull Inventory menuInventory) {
+        Menu menu = this.getMenuFromInventory(menuInventory);
+        if (menu == null) {
+            return;
+        }
+
+        // Get the item being shift-clicked
+        ItemStack sourceItem = event.getCurrentItem();
+        if ((sourceItem == null) || sourceItem.getType().isAir()) {
+            return;
+        }
+
+        HumanEntity player = event.getWhoClicked();
+
+        // Find first empty interactive slot with allowPlacement
+        for (Pane pane : menu.getPanes().values()) {
+            if (!(pane instanceof AbstractPane abstractPane)) {
+                continue;
+            }
+
+            for (var entry : abstractPane.getStaticItems().entrySet()) {
+                MenuItem menuItem = entry.getValue();
+                if (!menuItem.isAllowPlacement()) {
+                    continue;
+                }
+
+                int globalSlot = abstractPane.getBounds().localSlotToGlobal(entry.getKey());
+                if (globalSlot >= menuInventory.getSize()) {
+                    continue;
+                }
+
+                ItemStack existing = menuInventory.getItem(globalSlot);
+                if ((existing != null) && !existing.getType().isAir()) {
+                    continue;  // Slot occupied
+                }
+
+                // Found an empty interactive slot - fire handler first, then move if not cancelled
+                ItemStack movedItem = sourceItem.clone();
+
+                MenuItemChangeContext changeContext = new MenuItemChangeContext(
+                    menu, player, event, globalSlot,
+                    null, movedItem
+                );
+
+                try {
+                    menuItem.handleItemChange(changeContext);
+                } catch (Exception exception) {
+                    this.plugin.getLogger().log(Level.WARNING,
+                        "Exception in interactive slot change handler during shift-click (slot " + globalSlot + ")",
+                        exception);
+                    return;  // Don't move the item if handler threw
+                }
+
+                // Only move if handler didn't cancel
+                if (!changeContext.isCancelled()) {
+                    menuInventory.setItem(globalSlot, movedItem);
+                    event.getClickedInventory().setItem(event.getSlot(), null);
+                }
+
+                return;
+            }
+        }
+
+        // No empty interactive slot found - item stays in player inventory (event already cancelled)
+        this.plugin.getLogger().fine("Blocked shift-click - no empty interactive placement slot available");
     }
 
     private void handleInventoryDragSafe(@NonNull InventoryDragEvent event) {

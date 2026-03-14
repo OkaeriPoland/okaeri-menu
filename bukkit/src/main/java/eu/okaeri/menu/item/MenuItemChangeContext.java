@@ -16,6 +16,7 @@ public class MenuItemChangeContext extends MenuItemContext {
 
     private final ItemStack previousItem;
     private final ItemStack newItem;
+    private boolean cancelled;
 
     public MenuItemChangeContext(
         @NonNull Menu menu,
@@ -28,6 +29,17 @@ public class MenuItemChangeContext extends MenuItemContext {
         super(menu, player, event, slot);
         this.previousItem = previousItem;
         this.newItem = newItem;
+    }
+
+    /**
+     * Cancels the item change, preventing the move.
+     * Overrides the base cancel to also set the internal flag
+     * (needed for shift-click where the event is already cancelled).
+     */
+    @Override
+    public void cancel() {
+        super.cancel();
+        this.cancelled = true;
     }
 
     /**
