@@ -609,27 +609,6 @@ public class MenuItem {
         }
 
         /**
-         * Sets the item name from a context-aware function returning a locale-specific map.
-         * Enables dynamic locale template selection based on runtime state.
-         * Re-evaluated on {@link MenuContext#invalidate()}.
-         * Uses item-level variables set via {@link #vars(Map)}.
-         *
-         * <p>Example:
-         * <pre>{@code
-         * .name(ctx -> ctx.getBool("active") ? activeName : inactiveName)
-         * }</pre>
-         *
-         * @param function Function that provides the locale map based on context
-         * @return This builder
-         */
-        @NonNull
-        public Builder name(@NonNull Function<MenuContext, Map<Locale, String>> function) {
-            this.name = ViewerProp.ofContext(ctx -> this.joinComponents(this.resolve(ctx, function.apply(ctx), null)));
-            this.nameExplicitlySet = true;
-            return this;
-        }
-
-        /**
          * Sets the item name from a locale-specific map.
          * The menu's MessageProvider selects the appropriate locale for each viewer.
          * Uses item-level variables set via {@link #vars(Map)}.
@@ -780,28 +759,6 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Function<MenuContext, String> function) {
-            this.lore = ViewerProp.ofContext(ctx -> this.resolve(ctx, function.apply(ctx), null));
-            this.loreExplicitlySet = true;
-            return this;
-        }
-
-        /**
-         * Sets the item lore from a context-aware function returning a locale-specific map.
-         * Enables dynamic locale template selection based on runtime state.
-         * The locale-specific template is split into lines on {@code \n} character.
-         * Re-evaluated on {@link MenuContext#invalidate()}.
-         * Uses item-level variables set via {@link #vars(Map)}.
-         *
-         * <p>Example:
-         * <pre>{@code
-         * .lore(ctx -> ctx.getBool("maxed") ? maxedLore : upgradeLore)
-         * }</pre>
-         *
-         * @param function Function that provides the locale map based on context
-         * @return This builder
-         */
-        @NonNull
-        public Builder lore(@NonNull Function<MenuContext, Map<Locale, String>> function) {
             this.lore = ViewerProp.ofContext(ctx -> this.resolve(ctx, function.apply(ctx), null));
             this.loreExplicitlySet = true;
             return this;
