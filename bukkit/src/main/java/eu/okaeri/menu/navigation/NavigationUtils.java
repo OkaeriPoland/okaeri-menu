@@ -58,7 +58,7 @@ public final class NavigationUtils {
      */
     @NonNull
     public static MenuItem.Builder backButton(@NonNull Map<Locale, String> name, Map<Locale, String> lore) {
-        return backButton(Material.ARROW, name, lore);
+        return backButton(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, name, lore);
     }
 
     /**
