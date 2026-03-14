@@ -36,10 +36,7 @@ public final class PaginationUtils {
         MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
-            .visible(ctx -> {
-                PaginationContext<?> pagination = ctx.pagination(paneName);
-                return pagination.hasNext();
-            })
+            .visibleOrFiller(ctx -> ctx.pagination(paneName).hasNext())
             .onClick(event -> {
                 PaginationContext<?> pagination = event.pagination(paneName);
                 if (pagination.nextPage()) {
@@ -86,10 +83,7 @@ public final class PaginationUtils {
         MenuItem.Builder builder = MenuItem.item()
             .material(material)
             .name(name)
-            .visible(ctx -> {
-                PaginationContext<?> pagination = ctx.pagination(paneName);
-                return pagination.hasPrevious();
-            })
+            .visibleOrFiller(ctx -> ctx.pagination(paneName).hasPrevious())
             .onClick(event -> {
                 PaginationContext<?> pagination = event.pagination(paneName);
                 if (pagination.previousPage()) {

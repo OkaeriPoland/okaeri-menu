@@ -1321,4 +1321,163 @@ class PaginatedPaneTest {
         assertThat(inventory2.getItem(8).getType()).isEqualTo(Material.GOLD_INGOT);
         assertThat(inventory2.getItem(8).getItemMeta().getDisplayName()).contains("Item 7");  // One extra item!
     }
+
+    // ========================================
+    // INTERACTIVE STATIC ITEMS IN PAGINATED PANE
+    // ========================================
+
+    @Test
+    @DisplayName("Should preserve player-placed item in interactive static slot on re-render")
+    void testInteractiveStaticItemPreservedOnReRender() {
+        List<String> items = List.of("A", "B", "C");
+
+        PaginatedPane<String> pane = pane(String.class)
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .items(items)
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.STONE)
+                .name(item)
+                .build())
+            .item(0, 8, MenuItem.item().interactive().build())  // Interactive slot at last position
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        pane.render(this.inventory, context);
+
+        // Paginated items at 0-2, interactive slot at 8 is empty
+        assertThat(this.inventory.getItem(0).getType()).isEqualTo(Material.STONE);
+        assertThat(this.inventory.getItem(8)).isNull();
+
+        // Player places an item in the interactive slot
+        this.inventory.setItem(8, new ItemStack(Material.DIAMOND, 3));
+
+        // Re-render (e.g. page change, refresh)
+        pane.render(this.inventory, context);
+
+        // Player-placed item should be preserved
+        assertThat(this.inventory.getItem(8)).isNotNull();
+        assertThat(this.inventory.getItem(8).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(this.inventory.getItem(8).getAmount()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Should render initial item in interactive static slot via from()")
+    void testInteractiveStaticItemInitialItem() {
+        List<String> items = List.of("A", "B");
+
+        PaginatedPane<String> pane = pane(String.class)
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .items(items)
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.STONE)
+                .name(item)
+                .build())
+            .item(0, 8, MenuItem.item()
+                .from(new ItemStack(Material.EMERALD))
+                .interactive()
+                .build())
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        pane.render(this.inventory, context);
+
+        // Interactive slot should have initial item
+        assertThat(this.inventory.getItem(8)).isNotNull();
+        assertThat(this.inventory.getItem(8).getType()).isEqualTo(Material.EMERALD);
+    }
+
+    @Test
+    @DisplayName("Should not overwrite player item with initial item on re-render")
+    void testInteractiveStaticItemDoesNotOverwritePlayer() {
+        List<String> items = List.of("A");
+
+        PaginatedPane<String> pane = pane(String.class)
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .items(items)
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.STONE)
+                .name(item)
+                .build())
+            .item(0, 8, MenuItem.item()
+                .from(new ItemStack(Material.EMERALD))
+                .interactive()
+                .build())
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        pane.render(this.inventory, context);
+
+        // Initial item rendered
+        assertThat(this.inventory.getItem(8).getType()).isEqualTo(Material.EMERALD);
+
+        // Player replaces with their own item
+        this.inventory.setItem(8, new ItemStack(Material.DIAMOND_SWORD));
+
+        // Re-render
+        pane.render(this.inventory, context);
+
+        // Player's item preserved, not reset to initial
+        assertThat(this.inventory.getItem(8).getType()).isEqualTo(Material.DIAMOND_SWORD);
+    }
+
+    @Test
+    @DisplayName("Should not clear interactive static slot when page has fewer items")
+    void testInteractiveStaticItemNotClearedByPageClear() {
+        List<String> items = List.of("A");  // Only 1 item, many empty slots
+
+        PaginatedPane<String> pane = pane(String.class)
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .items(items)
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.STONE)
+                .name(item)
+                .build())
+            .item(0, 4, MenuItem.item().interactive().build())  // Interactive in the middle
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        pane.render(this.inventory, context);
+
+        // Player places item
+        this.inventory.setItem(4, new ItemStack(Material.GOLD_INGOT));
+
+        // Re-render - the clear step should skip the interactive slot
+        pane.render(this.inventory, context);
+
+        assertThat(this.inventory.getItem(4)).isNotNull();
+        assertThat(this.inventory.getItem(4).getType()).isEqualTo(Material.GOLD_INGOT);
+    }
+
+    @Test
+    @DisplayName("Should skip interactive static slots when placing paginated items")
+    void testPaginatedItemsFlowAroundInteractiveSlots() {
+        List<String> items = List.of("A", "B", "C", "D", "E");
+
+        PaginatedPane<String> pane = pane(String.class)
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .items(items)
+            .renderer((ctx, item, index) -> MenuItem.item()
+                .material(Material.GOLD_INGOT)
+                .name(item)
+                .build())
+            .item(0, 2, MenuItem.item().interactive().build())  // Interactive at slot 2
+            .build();
+
+        MenuContext context = new MenuContext(this.menu, this.player);
+        pane.render(this.inventory, context);
+
+        // Items should flow around the interactive slot:
+        // slot 0=A, 1=B, 2=interactive(empty), 3=C, 4=D, 5=E
+        assertThat(this.inventory.getItem(0).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(this.inventory.getItem(1).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(this.inventory.getItem(2)).isNull();  // Interactive, empty
+        assertThat(this.inventory.getItem(3).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(this.inventory.getItem(4).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(this.inventory.getItem(5).getType()).isEqualTo(Material.GOLD_INGOT);
+    }
 }

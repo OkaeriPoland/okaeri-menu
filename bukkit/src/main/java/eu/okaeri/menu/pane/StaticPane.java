@@ -67,6 +67,14 @@ public class StaticPane extends AbstractPane {
             this.bounds.slots()
                 .excludeKeys(occupiedSlots)
                 .fill(inventory, fillerItemStack);
+            // Fill hidden fillerWhenHidden items with filler instead of leaving empty gaps
+            this.bounds.slots().forEachMap(this.staticItems, (localSlot, globalSlot, menuItem) -> {
+                if (menuItem.isFillerWhenHidden() && !menuItem.getVisible().get(context)) {
+                    if (globalSlot < inventory.getSize()) {
+                        inventory.setItem(globalSlot, fillerItemStack);
+                    }
+                }
+            });
         } else {
             this.bounds.slots()
                 .excludeKeys(occupiedSlots)

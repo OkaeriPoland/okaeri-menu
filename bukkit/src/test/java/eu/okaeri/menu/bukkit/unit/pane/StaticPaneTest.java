@@ -1098,4 +1098,323 @@ class StaticPaneTest {
         ).isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Marker 'Y' not found");
     }
+
+    // ========================================
+    // INTERACTIVE SLOT RENDERING
+    // ========================================
+
+    @Test
+    @DisplayName("Should protect interactive slots from filler")
+    void testInteractiveSlotsProtectedFromFiller() {
+        MenuItem fillerItem = MenuItem.item().material(Material.GRAY_STAINED_GLASS_PANE).build();
+        MenuItem interactiveItem = MenuItem.item().interactive().build();
+        MenuItem normalItem = MenuItem.item().material(Material.DIAMOND).build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .filler(fillerItem)
+            .item(0, 0, normalItem)
+            .item(0, 1, interactiveItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Normal item rendered
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        // Interactive slot should NOT be filled with filler
+        assertThat(inventory.getItem(1)).isNull();
+        // Other slots should have filler
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+    }
+
+    @Test
+    @DisplayName("Should protect interactive slots from clear on re-render")
+    void testInteractiveSlotsProtectedFromClear() {
+        MenuItem interactiveItem = MenuItem.item().interactive().build();
+        MenuItem normalItem = MenuItem.item().material(Material.DIAMOND).build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .item(0, 0, normalItem)
+            .item(0, 1, interactiveItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+
+        // First render
+        pane.render(inventory, this.context);
+
+        // Simulate player placing an item in the interactive slot
+        inventory.setItem(1, new ItemStack(Material.GOLD_INGOT, 5));
+
+        // Re-render (e.g., from refresh) - should NOT clear player-placed item
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(1)).isNotNull();
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.GOLD_INGOT);
+        assertThat(inventory.getItem(1).getAmount()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Should render initial item in interactive slot via from()")
+    void testInteractiveSlotInitialItem() {
+        ItemStack initialItem = new ItemStack(Material.EMERALD);
+        MenuItem interactiveItem = MenuItem.item()
+            .from(initialItem)
+            .interactive()
+            .build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .item(0, 0, interactiveItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Initial item should be rendered
+        assertThat(inventory.getItem(0)).isNotNull();
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.EMERALD);
+    }
+
+    @Test
+    @DisplayName("Should not overwrite player-placed item on re-render")
+    void testInteractiveSlotPreservesPlayerItem() {
+        ItemStack initialItem = new ItemStack(Material.EMERALD, 3);
+        MenuItem interactiveItem = MenuItem.item()
+            .from(initialItem)
+            .interactive()
+            .build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .item(0, 0, interactiveItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+
+        // First render - shows initial item
+        pane.render(inventory, this.context);
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.EMERALD);
+
+        // Player replaces with their own item
+        inventory.setItem(0, new ItemStack(Material.DIAMOND_SWORD));
+
+        // Re-render - should preserve player's item, NOT reset to initial
+        pane.render(inventory, this.context);
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND_SWORD);
+    }
+
+    @Test
+    @DisplayName("Should leave interactive slot empty when no from() set")
+    void testInteractiveSlotEmptyWithoutFrom() {
+        MenuItem interactiveItem = MenuItem.item()
+            .interactive()
+            .build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .item(0, 0, interactiveItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        // Slot should be empty (no initial item configured)
+        assertThat(inventory.getItem(0)).isNull();
+    }
+
+    @Test
+    @DisplayName("Should handle mixed interactive and non-interactive items on refresh")
+    void testMixedInteractiveNonInteractiveRefresh() {
+        MenuItem normalItem = MenuItem.item().material(Material.BARRIER).build();
+        MenuItem interactiveItem = MenuItem.item().interactive().build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 9)
+            .item(0, 0, normalItem)
+            .item(0, 1, interactiveItem)
+            .item(0, 2, normalItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+
+        // First render
+        pane.render(inventory, this.context);
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.BARRIER);
+        assertThat(inventory.getItem(1)).isNull();  // Interactive, no initial item
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.BARRIER);
+
+        // Player places item in interactive slot
+        inventory.setItem(1, new ItemStack(Material.GOLDEN_APPLE, 8));
+
+        // Manually change a non-interactive slot (simulating stale state)
+        inventory.setItem(0, new ItemStack(Material.DIRT));
+
+        // Re-render
+        pane.render(inventory, this.context);
+
+        // Non-interactive items are re-rendered (reset to BARRIER)
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.BARRIER);
+        // Interactive item is preserved
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.GOLDEN_APPLE);
+        assertThat(inventory.getItem(1).getAmount()).isEqualTo(8);
+        // Non-interactive re-rendered
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.BARRIER);
+    }
+
+    // ========================================
+    // FILLER WHEN HIDDEN TESTS
+    // ========================================
+
+    @Test
+    @DisplayName("fillerWhenHidden: hidden item slot gets filler instead of empty gap")
+    void testFillerWhenHidden() {
+        MenuItem filler = MenuItem.item().material(Material.GRAY_STAINED_GLASS_PANE).build();
+        MenuItem normalItem = MenuItem.item().material(Material.DIAMOND).build();
+        MenuItem hiddenItem = MenuItem.item()
+            .material(Material.GOLD_INGOT)
+            .visible(false)
+            .fillerWhenHidden()
+            .build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 3)
+            .filler(filler)
+            .item(0, 0, normalItem)
+            .item(0, 1, hiddenItem)
+            .item(0, 2, normalItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.DIAMOND);
+    }
+
+    @Test
+    @DisplayName("fillerWhenHidden: hidden item without flag leaves empty gap (default behavior)")
+    void testHiddenItemWithoutFlagLeavesGap() {
+        MenuItem filler = MenuItem.item().material(Material.GRAY_STAINED_GLASS_PANE).build();
+        MenuItem hiddenItem = MenuItem.item()
+            .material(Material.GOLD_INGOT)
+            .visible(false)
+            .build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 3)
+            .filler(filler)
+            .item(0, 1, hiddenItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+        assertThat(inventory.getItem(1)).isNull();  // Hidden without flag - empty gap
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+    }
+
+    @Test
+    @DisplayName("fillerWhenHidden: visible item with flag renders normally")
+    void testFillerWhenHiddenVisibleItem() {
+        MenuItem filler = MenuItem.item().material(Material.GRAY_STAINED_GLASS_PANE).build();
+        MenuItem item = MenuItem.item()
+            .material(Material.DIAMOND)
+            .visible(true)
+            .fillerWhenHidden()
+            .build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 3)
+            .filler(filler)
+            .item(0, 1, item)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+    }
+
+    @Test
+    @DisplayName("fillerWhenHidden: no filler on pane leaves slot empty even with flag")
+    void testFillerWhenHiddenNoFiller() {
+        MenuItem hiddenItem = MenuItem.item()
+            .material(Material.GOLD_INGOT)
+            .visible(false)
+            .fillerWhenHidden()
+            .build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 3)
+            .item(0, 1, hiddenItem)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(1)).isNull();
+    }
+
+    @Test
+    @DisplayName("visibleOrFiller: shorthand sets both visible and fillerWhenHidden")
+    void testVisibleOrFiller() {
+        MenuItem filler = MenuItem.item().material(Material.GRAY_STAINED_GLASS_PANE).build();
+        MenuItem item = MenuItem.item()
+            .material(Material.GOLD_INGOT)
+            .visibleOrFiller(ctx -> false)
+            .build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 3)
+            .filler(filler)
+            .item(0, 1, item)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+    }
+
+    @Test
+    @DisplayName("fillerWhenHidden: visible item with visibleOrFiller renders the item, not filler")
+    void testVisibleOrFillerWhenVisible() {
+        MenuItem filler = MenuItem.item().material(Material.GRAY_STAINED_GLASS_PANE).build();
+        MenuItem item = MenuItem.item()
+            .material(Material.DIAMOND)
+            .visibleOrFiller(ctx -> true)
+            .build();
+
+        StaticPane pane = staticPane()
+            .name("test")
+            .bounds(0, 0, 1, 3)
+            .filler(filler)
+            .item(0, 1, item)
+            .build();
+
+        Inventory inventory = this.server.createInventory(null, 54);
+        pane.render(inventory, this.context);
+
+        assertThat(inventory.getItem(0).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+        assertThat(inventory.getItem(1).getType()).isEqualTo(Material.DIAMOND);
+        assertThat(inventory.getItem(2).getType()).isEqualTo(Material.GRAY_STAINED_GLASS_PANE);
+    }
 }

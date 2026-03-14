@@ -7,6 +7,7 @@ import eu.okaeri.menu.state.ViewerProp;
 import lombok.Getter;
 import lombok.NonNull;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
@@ -56,6 +57,9 @@ public class MenuItem {
     private final boolean allowPlacement;
     private Consumer<MenuItemChangeContext> itemChangeHandler;
 
+    // When true, hidden items don't reserve their slot, allowing pane filler to fill it
+    private final boolean fillerWhenHidden;
+
     // Declarative filters for pagination
     private final List<ItemFilter<?>> filters = new ArrayList<>();
 
@@ -81,6 +85,7 @@ public class MenuItem {
         this.allowPickup = builder.allowPickup;
         this.allowPlacement = builder.allowPlacement;
         this.itemChangeHandler = builder.itemChangeHandler;
+        this.fillerWhenHidden = builder.fillerWhenHidden;
         this.filters.addAll(builder.filters);
     }
 
@@ -123,12 +128,22 @@ public class MenuItem {
             // Override name if set (Component.empty() means keep base name)
             Component displayName = this.name.get(context);
             if ((displayName != null) && !displayName.equals(Component.empty())) {
+                // Prevent Minecraft's default italic on custom item names
+                if (displayName.decoration(TextDecoration.ITALIC) == TextDecoration.State.NOT_SET) {
+                    displayName = displayName.decoration(TextDecoration.ITALIC, false);
+                }
                 meta.displayName(displayName);
             }
 
             // Override lore if set (empty list means keep base lore)
             List<Component> loreLines = this.lore.get(context);
             if ((loreLines != null) && !loreLines.isEmpty()) {
+                // Prevent Minecraft's default italic on custom lore lines
+                loreLines = loreLines.stream()
+                    .map(line -> line.decoration(TextDecoration.ITALIC) == TextDecoration.State.NOT_SET
+                        ? line.decoration(TextDecoration.ITALIC, false)
+                        : line)
+                    .toList();
                 meta.lore(loreLines);
             }
 
@@ -310,6 +325,7 @@ public class MenuItem {
         private boolean allowPickup = false;
         private boolean allowPlacement = false;
         private Consumer<MenuItemChangeContext> itemChangeHandler;
+        private boolean fillerWhenHidden = false;
 
         // Item-level variables shared across name, lore, etc.
         private ViewerProp<Map<String, Object>> itemLevelVars = ViewerProp.of(Map.of());
@@ -593,6 +609,27 @@ public class MenuItem {
         }
 
         /**
+         * Sets the item name from a context-aware function returning a locale-specific map.
+         * Enables dynamic locale template selection based on runtime state.
+         * Re-evaluated on {@link MenuContext#invalidate()}.
+         * Uses item-level variables set via {@link #vars(Map)}.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .name(ctx -> ctx.getBool("active") ? activeName : inactiveName)
+         * }</pre>
+         *
+         * @param function Function that provides the locale map based on context
+         * @return This builder
+         */
+        @NonNull
+        public Builder name(@NonNull Function<MenuContext, Map<Locale, String>> function) {
+            this.name = ViewerProp.ofContext(ctx -> this.joinComponents(this.resolve(ctx, function.apply(ctx), null)));
+            this.nameExplicitlySet = true;
+            return this;
+        }
+
+        /**
          * Sets the item name from a locale-specific map.
          * The menu's MessageProvider selects the appropriate locale for each viewer.
          * Uses item-level variables set via {@link #vars(Map)}.
@@ -743,6 +780,28 @@ public class MenuItem {
          */
         @NonNull
         public Builder lore(@NonNull Function<MenuContext, String> function) {
+            this.lore = ViewerProp.ofContext(ctx -> this.resolve(ctx, function.apply(ctx), null));
+            this.loreExplicitlySet = true;
+            return this;
+        }
+
+        /**
+         * Sets the item lore from a context-aware function returning a locale-specific map.
+         * Enables dynamic locale template selection based on runtime state.
+         * The locale-specific template is split into lines on {@code \n} character.
+         * Re-evaluated on {@link MenuContext#invalidate()}.
+         * Uses item-level variables set via {@link #vars(Map)}.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * .lore(ctx -> ctx.getBool("maxed") ? maxedLore : upgradeLore)
+         * }</pre>
+         *
+         * @param function Function that provides the locale map based on context
+         * @return This builder
+         */
+        @NonNull
+        public Builder lore(@NonNull Function<MenuContext, Map<Locale, String>> function) {
             this.lore = ViewerProp.ofContext(ctx -> this.resolve(ctx, function.apply(ctx), null));
             this.loreExplicitlySet = true;
             return this;
@@ -917,6 +976,23 @@ public class MenuItem {
         @NonNull
         public Builder visible(@NonNull Function<MenuContext, Boolean> function) {
             this.visible = ViewerProp.ofContext(function::apply);
+            return this;
+        }
+
+        /**
+         * Sets context-aware visibility and enables filler when hidden.
+         * When the predicate returns false, the pane's filler is rendered
+         * in this item's slot instead of leaving an empty gap.
+         *
+         * <p>Shorthand for {@code .visible(predicate).fillerWhenHidden()}.
+         *
+         * @param predicate Function that returns whether the item should be visible
+         * @return This builder
+         */
+        @NonNull
+        public Builder visibleOrFiller(@NonNull Function<MenuContext, Boolean> predicate) {
+            this.visible = ViewerProp.ofContext(predicate::apply);
+            this.fillerWhenHidden = true;
             return this;
         }
 
@@ -1192,6 +1268,18 @@ public class MenuItem {
         public Builder interactive() {
             this.allowPickup = true;
             this.allowPlacement = true;
+            return this;
+        }
+
+        /**
+         * When this item is hidden (visible returns false), the pane's filler
+         * will be rendered in its slot instead of leaving an empty gap.
+         *
+         * @return This builder
+         */
+        @NonNull
+        public Builder fillerWhenHidden() {
+            this.fillerWhenHidden = true;
             return this;
         }
 
