@@ -40,7 +40,7 @@ Modern, reactive GUI framework for Minecraft (Paper) with pane-based architectur
 <repositories>
     <repository>
         <id>okaeri-repo</id>
-        <url>https://storehouse.okaeri.eu/repository/maven-public/</url>
+        <url>https://repo.okaeri.cloud/releases</url>
     </repository>
 </repositories>
 ```
@@ -48,19 +48,19 @@ Modern, reactive GUI framework for Minecraft (Paper) with pane-based architectur
 <dependency>
     <groupId>eu.okaeri</groupId>
     <artifactId>okaeri-menu-bukkit</artifactId>
-    <version>2.0.1-beta.3</version>
+    <version>2.0.1-beta.4</version>
 </dependency>
 ```
 
 ### Gradle (Kotlin DSL)
 ```kotlin
 repositories {
-    maven("https://storehouse.okaeri.eu/repository/maven-public/")
+    maven("https://repo.okaeri.cloud/releases")
 }
 ```
 ```kotlin
 dependencies {
-    implementation("eu.okaeri:okaeri-menu-bukkit:2.0.1-beta.3")
+    implementation("eu.okaeri:okaeri-menu-bukkit:2.0.1-beta.4")
 }
 ```
 

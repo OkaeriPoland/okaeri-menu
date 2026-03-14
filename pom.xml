@@ -7,7 +7,7 @@
     <groupId>eu.okaeri</groupId>
     <artifactId>okaeri-menu</artifactId>
     <packaging>pom</packaging>
-    <version>2.0.1-beta.3</version>
+    <version>2.0.1-beta.4</version>
 
     <modules>
         <module>bukkit</module>
@@ -175,12 +175,12 @@
 
     <distributionManagement>
         <repository>
-            <id>storehouse-releases</id>
-            <url>https://storehouse.okaeri.eu/repository/maven-releases/</url>
+            <id>okaeri-releases</id>
+            <url>https://repo.okaeri.cloud/releases</url>
         </repository>
         <snapshotRepository>
-            <id>storehouse-snapshots</id>
-            <url>https://storehouse.okaeri.eu/repository/maven-snapshots/</url>
+            <id>okaeri-snapshots</id>
+            <url>https://repo.okaeri.cloud/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
