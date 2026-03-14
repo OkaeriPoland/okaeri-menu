@@ -50,6 +50,7 @@ public class Menu implements InventoryHolder {
     private @NonNull final MessageProvider messageProvider;
     private @NonNull final Map<String, Object> stateDefaults;
     private @NonNull final AsyncLoader asyncLoader;
+    private final Consumer<MenuContext> closeHandler;
     private @NonNull final MenuUpdateTask updateTask;
 
     private Menu(@NonNull Builder builder) {
@@ -62,6 +63,7 @@ public class Menu implements InventoryHolder {
         this.messageProvider = (builder.messageProvider != null) ? builder.messageProvider : new DefaultMessageProvider();
         this.stateDefaults = builder.stateDefaults.isEmpty() ? Map.of() : Map.copyOf(builder.stateDefaults);
         this.asyncLoader = builder.asyncLoader;
+        this.closeHandler = builder.closeHandler;
         this.updateTask = new MenuUpdateTask(this);
 
         // Auto-register MenuListener (idempotent - safe to call multiple times)
@@ -398,6 +400,16 @@ public class Menu implements InventoryHolder {
      * @param player The player
      */
     public void close(@NonNull HumanEntity player) {
+        // Fire onClose handler before cleanup (ViewerState still accessible)
+        if (this.closeHandler != null && this.viewerStates.containsKey(player.getUniqueId())) {
+            try {
+                MenuContext context = new MenuContext(this, player);
+                this.closeHandler.accept(context);
+            } catch (Exception exception) {
+                this.plugin.getLogger().log(Level.WARNING, "Exception in menu onClose handler", exception);
+            }
+        }
+
         this.viewerStates.remove(player.getUniqueId());  // Cleans up all state including pagination!
 
         // Stop update task if this was the last viewer
@@ -465,6 +477,7 @@ public class Menu implements InventoryHolder {
         private MessageProvider messageProvider = null;
         private @NonNull final Map<String, Object> stateDefaults = new HashMap<>();
         private @NonNull final AsyncLoader asyncLoader = new AsyncLoader();
+        private Consumer<MenuContext> closeHandler = null;
 
         private Builder(@NonNull Plugin plugin) {
             this.plugin = plugin;
@@ -609,6 +622,33 @@ public class Menu implements InventoryHolder {
         public Builder state(@NonNull Consumer<StateDefaults> configurator) {
             StateDefaults defaults = new StateDefaults(this.stateDefaults);
             configurator.accept(defaults);
+            return this;
+        }
+
+        /**
+         * Sets a handler that is called when the menu is closed by a player.
+         * The handler fires before ViewerState cleanup, so all per-player state
+         * (inventory contents, pagination, custom state) is still accessible.
+         *
+         * <p>Exceptions thrown by the handler are caught and logged - they will not
+         * crash the server or prevent cleanup.
+         *
+         * <p>Example:
+         * <pre>{@code
+         * Menu.builder(plugin)
+         *     .onClose(ctx -> {
+         *         List<ItemStack> items = ctx.getSlotContents("editor");
+         *         saveItems(ctx.getPlayer(), items);
+         *     })
+         *     .build();
+         * }</pre>
+         *
+         * @param handler The close handler
+         * @return This builder
+         */
+        @NonNull
+        public Builder onClose(@NonNull Consumer<MenuContext> handler) {
+            this.closeHandler = handler;
             return this;
         }
 

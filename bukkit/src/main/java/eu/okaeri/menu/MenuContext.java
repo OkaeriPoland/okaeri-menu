@@ -17,10 +17,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -334,6 +336,57 @@ public class MenuContext {
         if (viewerState != null) {
             viewerState.getInventory().setItem(globalSlot, item);
         }
+    }
+
+    /**
+     * Reads all non-null, non-AIR items from a pane's bounds in the inventory.
+     * Items are returned as clones - modifying the returned list does not affect the inventory.
+     * Useful for reading interactive slot contents on menu close.
+     *
+     * <p>Example:
+     * <pre>{@code
+     * Menu.builder(plugin)
+     *     .onClose(ctx -> {
+     *         List<ItemStack> items = ctx.getSlotContents("editor");
+     *         reward.setItems(items);
+     *     })
+     *     .build();
+     * }</pre>
+     *
+     * @param paneName The pane name
+     * @return List of cloned ItemStacks (never null, may be empty)
+     * @throws IllegalArgumentException if pane not found
+     */
+    @NonNull
+    public List<ItemStack> getSlotContents(@NonNull String paneName) {
+        Pane pane = this.menu.getPanes().get(paneName);
+        if (pane == null) {
+            throw new IllegalArgumentException("Pane not found: " + paneName);
+        }
+
+        ViewerState state = this.menu.getViewerState(this.entity.getUniqueId());
+        if (state == null) {
+            return List.of();
+        }
+
+        Inventory inventory = state.getInventory();
+        List<ItemStack> items = new ArrayList<>();
+
+        pane.getBounds().slots().forEach((localRow, localCol, globalSlot) -> {
+            if (globalSlot < inventory.getSize()) {
+                // Only include items from interactive slots (skip filler, buttons, etc.)
+                MenuItem menuItem = pane.getItem(localRow, localCol, this);
+                if ((menuItem == null) || !menuItem.isInteractive()) {
+                    return;
+                }
+                ItemStack item = inventory.getItem(globalSlot);
+                if ((item != null) && !item.getType().isAir()) {
+                    items.add(item.clone());
+                }
+            }
+        });
+
+        return items;
     }
 
     // ========================================
