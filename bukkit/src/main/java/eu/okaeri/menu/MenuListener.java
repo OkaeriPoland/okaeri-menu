@@ -14,6 +14,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -286,6 +287,15 @@ public class MenuListener implements Listener {
             return;
         }
 
+        // Shift-click out: only allow when player has a fully empty slot
+        // Prevents partial moves where the slot wouldn't fully empty (inaccurate newItem)
+        if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+            if (player.getInventory().firstEmpty() == -1) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+
         // Capture current state
         ItemStack previousItem = inventory.getItem(rawSlot);
         ItemStack previousItemClone = (previousItem != null) ? previousItem.clone() : null;
@@ -324,6 +334,14 @@ public class MenuListener implements Listener {
 
         // If handler called ctx.cancel(), event is now cancelled and action won't proceed
         // Otherwise, event remains un-cancelled and Bukkit will handle the item interaction
+
+        // Mark the slot as touched so re-renders don't overwrite player modifications
+        if (!event.isCancelled()) {
+            ViewerState viewerState = menu.getViewerState(player.getUniqueId());
+            if (viewerState != null) {
+                viewerState.markInteractiveSlotTouched(rawSlot);
+            }
+        }
     }
 
     /**
@@ -338,7 +356,7 @@ public class MenuListener implements Listener {
     ) {
         return switch (event.getAction()) {
             // Pickup actions - require allowPickup
-            case PICKUP_ALL, PICKUP_HALF, PICKUP_ONE, PICKUP_SOME, DROP_ALL_SLOT, DROP_ONE_SLOT -> item.isAllowPickup();
+            case PICKUP_ALL, PICKUP_HALF, PICKUP_ONE, PICKUP_SOME, DROP_ALL_SLOT, DROP_ONE_SLOT, MOVE_TO_OTHER_INVENTORY -> item.isAllowPickup();
 
             // Placement actions - require allowPlacement
             case PLACE_ALL, PLACE_SOME, PLACE_ONE -> item.isAllowPlacement();
@@ -449,6 +467,12 @@ public class MenuListener implements Listener {
                 if (!changeContext.isCancelled()) {
                     menuInventory.setItem(globalSlot, movedItem);
                     event.getClickedInventory().setItem(event.getSlot(), null);
+
+                    // Mark the slot as touched so re-renders don't overwrite the placed item
+                    ViewerState viewerState = menu.getViewerState(player.getUniqueId());
+                    if (viewerState != null) {
+                        viewerState.markInteractiveSlotTouched(globalSlot);
+                    }
                 }
 
                 return;

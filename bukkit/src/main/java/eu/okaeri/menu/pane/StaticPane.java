@@ -35,15 +35,17 @@ public class StaticPane extends AbstractPane {
         // Step 1: Render static positioned items
         this.bounds.slots().forEachMap(this.staticItems, (localSlot, globalSlot, menuItem) -> {
             // Interactive items: always mark as occupied (protect from filler/clear),
-            // but only render if the slot is currently empty (preserves player-placed items)
+            // but only render if the slot is currently empty and untouched (preserves player-placed items)
             if (menuItem.isInteractive()) {
                 occupiedSlots.put(localSlot, true);
                 if (globalSlot < inventory.getSize()) {
                     ItemStack current = inventory.getItem(globalSlot);
                     if ((current == null) || current.getType().isAir()) {
-                        ItemStack rendered = menuItem.render(context);
-                        if (rendered != null) {
-                            inventory.setItem(globalSlot, rendered);
+                        if (!context.getViewerState().isInteractiveSlotTouched(globalSlot)) {
+                            ItemStack rendered = menuItem.render(context);
+                            if (rendered != null) {
+                                inventory.setItem(globalSlot, rendered);
+                            }
                         }
                     }
                 }

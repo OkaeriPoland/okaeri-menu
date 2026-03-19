@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -42,9 +43,34 @@ public class ViewerState {
     // Used by StaticPane for auto-item reflow cache and other panes that need per-player item tracking
     private @NonNull final Map<String, Map<Integer, MenuItem>> paneRenderCaches = new ConcurrentHashMap<>();
 
+    // Tracks interactive slots that have been modified by player interaction (click/shift-click)
+    // Prevents re-rendering of interactive slots that the player has already touched
+    private final Set<Integer> touchedInteractiveSlots = ConcurrentHashMap.newKeySet();
+
     // Effective itemsPerPage overrides (paneName -> effective count based on visible auto-items)
     // Used by PaginatedPane to dynamically adjust pagination when auto-items have varying visibility
     private @NonNull final Map<String, Integer> effectiveItemsPerPage = new ConcurrentHashMap<>();
+
+    /**
+     * Marks an interactive slot as touched by player interaction.
+     * Touched slots are not re-rendered with their default item on subsequent renders,
+     * preserving the player's modifications.
+     *
+     * @param globalSlot The global inventory slot that was touched
+     */
+    public void markInteractiveSlotTouched(int globalSlot) {
+        this.touchedInteractiveSlots.add(globalSlot);
+    }
+
+    /**
+     * Checks if an interactive slot has been touched by player interaction.
+     *
+     * @param globalSlot The global inventory slot to check
+     * @return true if the slot was previously touched
+     */
+    public boolean isInteractiveSlotTouched(int globalSlot) {
+        return this.touchedInteractiveSlots.contains(globalSlot);
+    }
 
     // Dirty flag for tracking state changes (used by MenuUpdateTask)
     private volatile boolean dirty = false;
