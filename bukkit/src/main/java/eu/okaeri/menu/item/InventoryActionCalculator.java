@@ -50,9 +50,11 @@ public final class InventoryActionCalculator {
             // Nothing happens
             case NOTHING -> cloneOrNull(currentItem);
 
+            // Shift-click out of menu slot - item leaves entirely
+            case MOVE_TO_OTHER_INVENTORY -> null;
+
             // Complex actions that we cannot/should not support for interactive slots
-            case MOVE_TO_OTHER_INVENTORY,      // Shift-click - requires full inventory scan
-                 COLLECT_TO_CURSOR,            // Double-click collect - requires full inventory scan
+            case COLLECT_TO_CURSOR,            // Double-click collect - requires full inventory scan
                  HOTBAR_MOVE_AND_READD,        // Complex inventory shuffling
                  CLONE_STACK,                  // Creative mode only
                  DROP_ALL_CURSOR,              // Doesn't affect slot
@@ -72,6 +74,7 @@ public final class InventoryActionCalculator {
                  SWAP_WITH_CURSOR,
                  DROP_ALL_SLOT, DROP_ONE_SLOT,
                  HOTBAR_SWAP,
+                 MOVE_TO_OTHER_INVENTORY,
                  NOTHING -> true;
             default -> false;
         };
