@@ -104,6 +104,11 @@ public class MenuItem {
         ItemStack stack;
 
         if ((base != null) && (base.getType() != Material.AIR)) {
+            // Interactive items with a base: return as-is, don't modify meta
+            if (this.isInteractive()) {
+                return base.clone();
+            }
+
             // Start from base ItemStack (preserves NBT, meta, custom model data, etc.)
             stack = base.clone();
 
