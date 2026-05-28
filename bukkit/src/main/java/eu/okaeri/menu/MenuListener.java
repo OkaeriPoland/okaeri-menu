@@ -388,19 +388,10 @@ public class MenuListener implements Listener {
                 this.plugin.getLogger().fine("Blocked collect-to-cursor while menu open");
             }
 
-            // Block hotbar swaps that could affect menu slots
-            case HOTBAR_SWAP, HOTBAR_MOVE_AND_READD -> {
-                // Only block if it would affect the menu inventory
-                int hotbarButton = event.getHotbarButton();
-                if ((hotbarButton >= 0) && (hotbarButton <= 8)) {
-                    event.setCancelled(true);
-                    this.plugin.getLogger().fine("Blocked hotbar swap while menu open");
-                }
-            }
-
-            // Allow all other actions in player inventory (PICKUP, PLACE, etc.)
+            // Note: a number-key/hotbar swap from a player-inventory slot only moves items between
+            // the player's own slots (hovered slot and hotbar slot), never into the menu, so it is
+            // safe. Swaps that target a menu slot arrive via the clicked-in-menu path instead.
             default -> {
-                // Don't cancel - allow normal inventory interactions
             }
         }
     }
